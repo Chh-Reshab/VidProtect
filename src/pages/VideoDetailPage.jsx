@@ -10,12 +10,11 @@ import {
 } from 'lucide-react';
 import {
   getVideoById, getCourseById, checkEnrollment, createDemoStreamToken,
-  validateDemoToken, recordAccessEvent,
+  recordAccessEvent,
 } from '../services/mockServices';
 import { DEMO_USERS as USERS } from '../data/seedData';
 import { useApp } from '../context/AppContext';
-import {
-  SectionLabel, DemoBanner, VideoThumbnail, StatusBadge,
+  SectionLabel, DemoBanner, VideoThumbnail,
   TokenCountdown, Modal,
 } from '../components/SharedComponents';
 
@@ -23,7 +22,7 @@ import {
 const DEMO_VIDEO_SRC = 'https://www.w3schools.com/html/mov_bbb.mp4';
 
 // ── SECURE PLAYER ─────────────────────────
-const SecurePlayer = ({ video, token, student, onRevoke }) => {
+const SecurePlayer = ({ video, token, student }) => {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -339,7 +338,7 @@ export default function VideoDetailPage() {
 
             {authState === 'checking' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {['Authenticating identity (JWT demo)...', 'Checking course enrollment...', 'Validating access rights...'].map((step, i) => (
+                {['Authenticating identity (JWT demo)...', 'Checking course enrollment...', 'Validating access rights...'].map((step, _i) => (
                   <div key={step} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0' }}>
                     <div className="spinner" style={{ width: 12, height: 12 }} />
                     <span className="mono" style={{ fontSize: '0.6rem', color: '#A0A0A0' }}>{step}</span>

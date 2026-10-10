@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield, Lock, Eye, Zap, AlertTriangle, CheckCircle, X,
-  ChevronRight, ArrowRight, Play, Users, Activity,
+  ArrowRight
 } from 'lucide-react';
 import { Logo, SectionLabel } from '../components/SharedComponents';
 
