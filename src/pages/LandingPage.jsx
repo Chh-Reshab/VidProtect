@@ -134,8 +134,8 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
   };
 
   return (
-    <div style={{ marginTop: '1.5rem', minHeight: '15rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-      <h1 className="hero-headline" style={{ marginBottom: '0' }}>
+    <div style={{ marginTop: '1.5rem', minHeight: '15rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
+      <h1 className="hero-headline" style={{ marginBottom: '0', textAlign: 'center' }}>
         <span style={style}>{current.line1}</span><br />
         <span style={{ ...style, transitionDelay: '0.05s' }}>{current.line2}</span><br />
         <span style={{ ...style, transitionDelay: '0.10s' }}>
@@ -372,9 +372,9 @@ export default function LandingPage() {
         }} />
         <CursorParticles />
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }} className="hero-grid">
-            {/* Left: Copy */}
-            <div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            {/* Center: Copy */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.6s ease, transform 0.6s ease', transitionDelay: '0ms' }}>
                 <SectionLabel>VIDPROTECT AI / CONTENT SECURITY SYSTEM</SectionLabel>
               </div>
@@ -384,13 +384,13 @@ export default function LandingPage() {
               </div>
 
               <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '300ms' }}>
-                <p style={{ marginTop: '2rem', color: '#A0A0A0', maxWidth: '480px', lineHeight: 1.7, fontSize: '1rem' }}>
+                <p style={{ marginTop: '2rem', color: '#A0A0A0', maxWidth: '600px', lineHeight: 1.7, fontSize: '1rem', marginLeft: 'auto', marginRight: 'auto' }}>
                   Protect your premium video content with encrypted storage, verified learners, temporary streaming access, and intelligent security monitoring. Built for creators who take content security seriously.
                 </p>
               </div>
 
               <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '450ms' }}>
-                <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Link to="/login" className="btn btn-primary">
                     PROTECT YOUR VIDEOS <ArrowRight size={14} />
                   </Link>
@@ -401,26 +401,13 @@ export default function LandingPage() {
               </div>
 
               <div style={{ opacity: heroVisible ? 1 : 0, transition: 'opacity 0.7s ease', transitionDelay: '600ms' }}>
-                <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>AES-256 ENCRYPTION</span>
                   <span style={{ color: '#292929' }}>·</span>
                   <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>JWT AUTH</span>
                   <span style={{ color: '#292929' }}>·</span>
                   <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>TEMPORARY ACCESS</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Right: Illustration */}
-            <div style={{
-              display: 'flex', justifyContent: 'center',
-              opacity: heroVisible ? 1 : 0,
-              transform: heroVisible ? 'translateY(0)' : 'translateY(40px)',
-              transition: 'opacity 0.8s ease, transform 0.8s ease',
-              transitionDelay: '250ms',
-            }}>
-              <div style={{ animation: 'float 5s ease-in-out infinite' }}>
-                <HeroIllustration />
               </div>
             </div>
           </div>
