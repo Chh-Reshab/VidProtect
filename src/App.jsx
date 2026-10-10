@@ -5,6 +5,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { AppLayout } from './components/AppLayout';
+import { InitialLoader } from './components/InitialLoader';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import OverviewPage from './pages/OverviewPage';
@@ -59,7 +60,9 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
-        <AppRoutes />
+        <InitialLoader>
+          <AppRoutes />
+        </InitialLoader>
       </BrowserRouter>
     </AppProvider>
   );
