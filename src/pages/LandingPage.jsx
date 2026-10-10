@@ -27,10 +27,10 @@ const useScrollReveal = (threshold = 0.15) => {
 
 // ── CYCLING TEXT PHRASES ──────────────────
 const HERO_LINES = [
-  { line1: 'YOUR VIDEOS.', line2: 'YOUR IP.', highlight: 'UNDER LOCK.' },
+  { line1: 'YOUR', line2: 'VIDEOS.', highlight: 'LOCKED IN.' },
   { line1: 'STOP', line2: 'PIRACY.', highlight: 'DEAD COLD.' },
   { line1: 'ENCRYPT.', line2: 'PROTECT.', highlight: 'DELIVER.' },
-  { line1: 'SECURE', line2: 'BY DESIGN.', highlight: 'NOT BY LUCK.' },
+  { line1: 'SECURE.', line2: 'ALWAYS.', highlight: 'PERIOD.' },
 ];
 
 // ── ANIMATED CYCLING TEXT ─────────────────
@@ -51,33 +51,19 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
 
   const current = phrases[index];
 
-  // Compute max char length across all 3 lines of this phrase
-  const maxLen = Math.max(current.line1.length, current.line2.length, current.highlight.length);
-  // Slightly scale down via transform (keeps the base font-size intact)
-  const scaleVal = maxLen > 12 ? 0.82 : maxLen > 9 ? 0.91 : 1;
-
   const style = {
     transition: 'opacity 0.35s ease, transform 0.35s ease',
     opacity: animating ? 0 : 1,
-    transform: animating ? 'translateY(-10px)' : 'translateY(0)',
+    transform: animating ? 'translateY(-12px)' : 'translateY(0)',
     display: 'inline-block',
   };
 
   return (
-    // Fixed height prevents layout shift between phrases
-    <div style={{ marginTop: '1.5rem', minHeight: '18rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-      <h1
-        className="hero-headline"
-        style={{
-          marginBottom: '0',
-          transform: `scale(${scaleVal})`,
-          transformOrigin: 'left top',
-          transition: 'transform 0.35s ease',
-        }}
-      >
+    <div style={{ marginTop: '1.5rem', minHeight: '15rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+      <h1 className="hero-headline" style={{ marginBottom: '0' }}>
         <span style={style}>{current.line1}</span><br />
-        <span style={{ ...style, transitionDelay: '0.04s' }}>{current.line2}</span><br />
-        <span style={{ ...style, transitionDelay: '0.08s' }}>
+        <span style={{ ...style, transitionDelay: '0.05s' }}>{current.line2}</span><br />
+        <span style={{ ...style, transitionDelay: '0.10s' }}>
           <span className="red-highlight">{current.highlight}</span>
         </span>
       </h1>
