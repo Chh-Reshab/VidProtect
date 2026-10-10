@@ -25,6 +25,81 @@ const useScrollReveal = (threshold = 0.15) => {
   return [ref, visible];
 };
 
+// ── CURSOR PARTICLES ANIMATION ───────────────
+const CursorParticles = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 2 + 0.5;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.size = Math.random() * 2 + 1;
+        this.life = 1;
+        this.decay = Math.random() * 0.015 + 0.01;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+      }
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 32, 40, ${this.life})`;
+        ctx.fill();
+      }
+    }
+
+    const onMouseMove = (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      // Add a few particles on mouse move
+      for (let i = 0; i < 3; i++) {
+        particles.push(new Particle(mouse.x, mouse.y));
+      }
+    };
+    window.addEventListener('mousemove', onMouseMove);
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, index) => {
+        p.update();
+        p.draw(ctx);
+        if (p.life <= 0) particles.splice(index, 1);
+      });
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }} />;
+};
+
 // ── CYCLING TEXT PHRASES ──────────────────
 const HERO_LINES = [
   { line1: 'YOUR', line2: 'VIDEOS.', highlight: 'LOCKED IN.' },
@@ -295,7 +370,8 @@ export default function LandingPage() {
           animation: 'blobPulse 6s ease-in-out infinite',
           pointerEvents: 'none',
         }} />
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%' }}>
+        <CursorParticles />
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }} className="hero-grid">
             {/* Left: Copy */}
             <div>
