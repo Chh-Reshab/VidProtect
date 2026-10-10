@@ -25,6 +25,27 @@ const useScrollReveal = (threshold = 0.15) => {
   return [ref, visible];
 };
 
+// ── PARALLAX HOOK ────────────────────────────
+const useParallax = (speed = 0.5) => {
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    let animationFrameId;
+    const handleScroll = () => {
+      // Use requestAnimationFrame for smooth performance
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(() => {
+        setOffset(window.scrollY * speed);
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [speed]);
+  return offset;
+};
+
 // ── CURSOR PARTICLES ANIMATION ───────────────
 const CursorParticles = () => {
   const canvasRef = useRef(null);
@@ -339,6 +360,9 @@ export default function LandingPage() {
   const [workflowRef, workflowVisible] = useScrollReveal();
   const [comparisonRef, comparisonVisible] = useScrollReveal();
   const [ctaRef, ctaVisible] = useScrollReveal(0.3);
+  
+  // Parallax offset for hero (moves slower than scroll)
+  const heroParallax = useParallax(0.35);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 100);
@@ -370,7 +394,12 @@ export default function LandingPage() {
           pointerEvents: 'none',
         }} />
         <CursorParticles />
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%', position: 'relative', zIndex: 2 }}>
+        <div style={{
+          maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%',
+          position: 'relative', zIndex: 2,
+          transform: `translateY(${heroParallax}px)`,
+          transition: 'transform 0.1s cubic-bezier(0.1, 0.5, 0.1, 1)' // smooth catching up
+        }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             {/* Center: Copy */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
