@@ -25,6 +25,49 @@ const useScrollReveal = (threshold = 0.15) => {
   return [ref, visible];
 };
 
+// ── CYCLING TEXT PHRASES ──────────────────
+const HERO_LINES = [
+  { line1: 'YOUR VIDEOS.', line2: 'YOUR IP.', highlight: 'UNDER LOCK.' },
+  { line1: 'STOP', line2: 'PIRACY.', highlight: 'DEAD COLD.' },
+  { line1: 'ENCRYPT.', line2: 'PROTECT.', highlight: 'DELIVER.' },
+  { line1: 'SECURE', line2: 'BY DESIGN.', highlight: 'NOT BY LUCK.' },
+];
+
+// ── ANIMATED CYCLING TEXT ─────────────────
+const CyclingText = ({ phrases, interval = 3000 }) => {
+  const [index, setIndex] = useState(0);
+  const [animating, setAnimating] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setAnimating(true);
+      setTimeout(() => {
+        setIndex(i => (i + 1) % phrases.length);
+        setAnimating(false);
+      }, 350);
+    }, interval);
+    return () => clearInterval(t);
+  }, [phrases.length, interval]);
+
+  const current = phrases[index];
+  const style = {
+    transition: 'opacity 0.35s ease, transform 0.35s ease',
+    opacity: animating ? 0 : 1,
+    transform: animating ? 'translateY(-10px)' : 'translateY(0)',
+    display: 'inline-block',
+  };
+
+  return (
+    <h1 className="hero-headline" style={{ marginTop: '1.5rem', marginBottom: '0' }}>
+      <span style={style}>{current.line1}</span><br />
+      <span style={{ ...style, transitionDelay: '0.04s' }}>{current.line2}</span><br />
+      <span style={{ ...style, transitionDelay: '0.08s' }}>
+        <span className="red-highlight">{current.highlight}</span>
+      </span>
+    </h1>
+  );
+};
+
 // ── NAV ──────────────────────────────────────
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -258,11 +301,7 @@ export default function LandingPage() {
               </div>
 
               <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(32px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '150ms' }}>
-                <h1 className="hero-headline" style={{ marginTop: '1.5rem', marginBottom: '0' }}>
-                  YOUR VIDEOS.<br />
-                  YOUR IP.<br />
-                  <span className="red-highlight">UNDER LOCK.</span>
-                </h1>
+                <CyclingText phrases={HERO_LINES} interval={3200} />
               </div>
 
               <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '300ms' }}>

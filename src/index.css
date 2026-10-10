@@ -60,9 +60,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .hero-headline {
   font-family: var(--font-heading);
-  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-size: clamp(2.2rem, 5.5vw, 5rem);
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.03em;
   text-transform: uppercase;
   color: var(--text-main);
