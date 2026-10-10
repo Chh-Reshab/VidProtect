@@ -189,6 +189,31 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
   );
 };
 
+// ── FLOATING SHAPES ──────────────────────────
+const FloatingShapes = () => (
+  <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
+    {/* Triangle */}
+    <svg style={{ position: 'absolute', top: '25%', left: '8%', animation: 'float1 8s ease-in-out infinite' }} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1" strokeLinejoin="round">
+      <path d="M12 2L22 20H2L12 2Z" />
+    </svg>
+    
+    {/* Circle */}
+    <svg style={{ position: 'absolute', top: '65%', right: '10%', animation: 'float2 10s ease-in-out infinite' }} width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+
+    {/* Square */}
+    <svg style={{ position: 'absolute', bottom: '20%', left: '15%', animation: 'float3 9s ease-in-out infinite' }} width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF2028" strokeOpacity="0.3" strokeWidth="1.5">
+      <rect x="3" y="3" width="18" height="18" />
+    </svg>
+
+    {/* Plus */}
+    <svg style={{ position: 'absolute', top: '30%', right: '18%', animation: 'float1 12s ease-in-out infinite' }} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1.5">
+      <path d="M12 5V19M5 12H19" />
+    </svg>
+  </div>
+);
+
 // ── NAV ──────────────────────────────────────
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -552,6 +577,7 @@ export default function LandingPage() {
           animation: 'blobPulse 6s ease-in-out infinite',
           pointerEvents: 'none',
         }} />
+        <FloatingShapes />
         <CursorParticles />
         <div style={{
           maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%',
