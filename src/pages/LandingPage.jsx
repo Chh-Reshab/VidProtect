@@ -2,13 +2,28 @@
 // LANDING PAGE — VidProtect AI
 // ============================================
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield, Lock, Eye, Zap, AlertTriangle, CheckCircle, X,
   ChevronRight, ArrowRight, Play, Users, Activity,
 } from 'lucide-react';
 import { Logo, SectionLabel } from '../components/SharedComponents';
+
+// ── SCROLL REVEAL HOOK ─────────────────────
+const useScrollReveal = (threshold = 0.15) => {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return [ref, visible];
+};
 
 // ── NAV ──────────────────────────────────────
 const Navbar = () => {
@@ -198,6 +213,17 @@ const PROBLEMS = [
 // ── MAIN LANDING PAGE ─────────────────────────
 export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(0);
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [problemsRef, problemsVisible] = useScrollReveal();
+  const [featuresRef, featuresVisible] = useScrollReveal();
+  const [workflowRef, workflowVisible] = useScrollReveal();
+  const [comparisonRef, comparisonVisible] = useScrollReveal();
+  const [ctaRef, ctaVisible] = useScrollReveal(0.3);
+
+  useEffect(() => {
+    const t = setTimeout(() => setHeroVisible(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div style={{ background: '#101010', minHeight: '100vh' }}>
@@ -214,62 +240,99 @@ export default function LandingPage() {
         position: 'relative',
         overflow: 'hidden',
       }}>
+        {/* Animated red glow blob */}
+        <div style={{
+          position: 'absolute', top: '20%', right: '10%',
+          width: '500px', height: '500px',
+          background: 'radial-gradient(circle, rgba(255,32,40,0.07) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'blobPulse 6s ease-in-out infinite',
+          pointerEvents: 'none',
+        }} />
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', width: '100%' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }} className="hero-grid">
             {/* Left: Copy */}
             <div>
-              <SectionLabel>VIDPROTECT AI / CONTENT SECURITY SYSTEM</SectionLabel>
-
-              <h1 className="hero-headline" style={{ marginTop: '1.5rem', marginBottom: '0' }}>
-                YOUR VIDEOS.<br />
-                YOUR IP.<br />
-                <span className="red-highlight">UNDER LOCK.</span>
-              </h1>
-
-              <p style={{ marginTop: '2rem', color: '#A0A0A0', maxWidth: '480px', lineHeight: 1.7, fontSize: '1rem' }}>
-                Protect your premium video content with encrypted storage, verified learners, temporary streaming access, and intelligent security monitoring. Built for creators who take content security seriously.
-              </p>
-
-              <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <Link to="/login" className="btn btn-primary">
-                  PROTECT YOUR VIDEOS <ArrowRight size={14} />
-                </Link>
-                <button className="btn btn-secondary" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
-                  EXPLORE SECURITY
-                </button>
+              <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.6s ease, transform 0.6s ease', transitionDelay: '0ms' }}>
+                <SectionLabel>VIDPROTECT AI / CONTENT SECURITY SYSTEM</SectionLabel>
               </div>
 
-              <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>AES-256 ENCRYPTION</span>
-                <span style={{ color: '#292929' }}>·</span>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>JWT AUTH</span>
-                <span style={{ color: '#292929' }}>·</span>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>TEMPORARY ACCESS</span>
+              <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(32px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '150ms' }}>
+                <h1 className="hero-headline" style={{ marginTop: '1.5rem', marginBottom: '0' }}>
+                  YOUR VIDEOS.<br />
+                  YOUR IP.<br />
+                  <span className="red-highlight">UNDER LOCK.</span>
+                </h1>
+              </div>
+
+              <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '300ms' }}>
+                <p style={{ marginTop: '2rem', color: '#A0A0A0', maxWidth: '480px', lineHeight: 1.7, fontSize: '1rem' }}>
+                  Protect your premium video content with encrypted storage, verified learners, temporary streaming access, and intelligent security monitoring. Built for creators who take content security seriously.
+                </p>
+              </div>
+
+              <div style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.7s ease, transform 0.7s ease', transitionDelay: '450ms' }}>
+                <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <Link to="/login" className="btn btn-primary">
+                    PROTECT YOUR VIDEOS <ArrowRight size={14} />
+                  </Link>
+                  <button className="btn btn-secondary" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
+                    EXPLORE SECURITY
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ opacity: heroVisible ? 1 : 0, transition: 'opacity 0.7s ease', transitionDelay: '600ms' }}>
+                <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>AES-256 ENCRYPTION</span>
+                  <span style={{ color: '#292929' }}>·</span>
+                  <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>JWT AUTH</span>
+                  <span style={{ color: '#292929' }}>·</span>
+                  <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>TEMPORARY ACCESS</span>
+                </div>
               </div>
             </div>
 
             {/* Right: Illustration */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <HeroIllustration />
+            <div style={{
+              display: 'flex', justifyContent: 'center',
+              opacity: heroVisible ? 1 : 0,
+              transform: heroVisible ? 'translateY(0)' : 'translateY(40px)',
+              transition: 'opacity 0.8s ease, transform 0.8s ease',
+              transitionDelay: '250ms',
+            }}>
+              <div style={{ animation: 'float 5s ease-in-out infinite' }}>
+                <HeroIllustration />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── PROBLEMS ── */}
-      <section style={{ background: '#101010', padding: '6rem 1.5rem', borderTop: '1px solid #292929' }}>
+      <section ref={problemsRef} style={{ background: '#101010', padding: '6rem 1.5rem', borderTop: '1px solid #292929' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
-            YOUR CONTENT DESERVES
-            <br /><span className="red-highlight">BETTER PROTECTION.</span>
-          </h2>
-          <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Four real problems VidProtect AI addresses.</p>
+          <div style={{ opacity: problemsVisible ? 1 : 0, transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+            <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
+              YOUR CONTENT DESERVES
+              <br /><span className="red-highlight">BETTER PROTECTION.</span>
+            </h2>
+            <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Four real problems VidProtect AI addresses.</p>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-            {PROBLEMS.map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="card" style={{ border: '1px solid #292929', transition: 'border-color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#565656'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = '#292929'}>
+            {PROBLEMS.map(({ icon: Icon, label, desc }, i) => (
+              <div key={label} className="card"
+                style={{
+                  border: '1px solid #292929',
+                  transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
+                  opacity: problemsVisible ? 1 : 0,
+                  transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)',
+                  transitionDelay: `${i * 100 + 200}ms`,
+                  transitionProperty: 'opacity, transform, border-color, box-shadow',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF2028'; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(255,32,40,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#292929'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                 <Icon size={24} color="#FF2028" strokeWidth={1.5} style={{ marginBottom: '1rem' }} />
                 <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>{label}</div>
                 <p style={{ color: '#A0A0A0', fontSize: '0.85rem', lineHeight: 1.6 }}>{desc}</p>
@@ -280,18 +343,28 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" style={{ background: '#171717', padding: '6rem 1.5rem', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
+      <section id="features" ref={featuresRef} style={{ background: '#171717', padding: '6rem 1.5rem', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
-          <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
-            FOUR LAYERS.
-            <br /><span className="red-highlight">ONE PROTECTED EXPERIENCE.</span>
-          </h2>
-          <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Each layer works in combination to strengthen content security.</p>
+          <div style={{ opacity: featuresVisible ? 1 : 0, transform: featuresVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+            <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
+            <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+              FOUR LAYERS.
+              <br /><span className="red-highlight">ONE PROTECTED EXPERIENCE.</span>
+            </h2>
+            <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Each layer works in combination to strengthen content security.</p>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#292929', border: '1px solid #292929' }}>
-            {FEATURES.map(({ icon: Icon, label, desc, tag }) => (
-              <div key={label} style={{ background: '#1D1D1D', padding: '2rem 1.5rem' }}>
+            {FEATURES.map(({ icon: Icon, label, desc, tag }, i) => (
+              <div key={label}
+                style={{
+                  background: '#1D1D1D', padding: '2rem 1.5rem',
+                  opacity: featuresVisible ? 1 : 0,
+                  transform: featuresVisible ? 'translateY(0)' : 'translateY(20px)',
+                  transition: `opacity 0.5s ease ${i * 120 + 200}ms, transform 0.5s ease ${i * 120 + 200}ms`,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#222'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#1D1D1D'; }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <Icon size={28} color="#FF2028" strokeWidth={1.5} />
                   <span className="badge badge-red" style={{ fontSize: '0.55rem' }}>{tag}</span>
@@ -314,13 +387,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── WORKFLOW ── */}
-      <section id="how-it-works" style={{ background: '#101010', padding: '6rem 1.5rem', borderBottom: '1px solid #292929' }}>
+      <section id="how-it-works" ref={workflowRef} style={{ background: '#101010', padding: '6rem 1.5rem', borderBottom: '1px solid #292929' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <SectionLabel>SECURITY WORKFLOW</SectionLabel>
-          <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '3rem' }}>
-            FROM UPLOAD
-            <br /><span className="red-highlight">TO SECURE STREAM.</span>
-          </h2>
+          <div style={{ opacity: workflowVisible ? 1 : 0, transform: workflowVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+            <SectionLabel>SECURITY WORKFLOW</SectionLabel>
+            <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '3rem' }}>
+              FROM UPLOAD
+              <br /><span className="red-highlight">TO SECURE STREAM.</span>
+            </h2>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'flex-start' }} className="workflow-grid">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -367,13 +442,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── COMPARISON ── */}
-      <section id="comparison" style={{ background: '#171717', padding: '6rem 1.5rem', borderBottom: '1px solid #292929' }}>
+      <section id="comparison" ref={comparisonRef} style={{ background: '#171717', padding: '6rem 1.5rem', borderBottom: '1px solid #292929' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <SectionLabel>SECURITY COMPARISON</SectionLabel>
-          <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '3rem' }}>
-            TRADITIONAL VS.
-            <br /><span className="red-highlight">VIDPROTECT AI.</span>
-          </h2>
+          <div style={{ opacity: comparisonVisible ? 1 : 0, transform: comparisonVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+            <SectionLabel>SECURITY COMPARISON</SectionLabel>
+            <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '3rem' }}>
+              TRADITIONAL VS.
+              <br /><span className="red-highlight">VIDPROTECT AI.</span>
+            </h2>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#292929' }}>
             {/* Traditional */}
@@ -450,18 +527,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section style={{ background: '#171717', padding: '8rem 1.5rem', borderBottom: '1px solid #292929', textAlign: 'center' }}>
+      <section ref={ctaRef} style={{ background: '#171717', padding: '8rem 1.5rem', borderBottom: '1px solid #292929', textAlign: 'center' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2 className="section-headline" style={{ marginBottom: '1rem' }}>
-            YOUR CONTENT.<br />
-            <span className="red-highlight">YOUR RULES.</span>
-          </h2>
-          <p style={{ color: '#A0A0A0', fontSize: '1rem', marginBottom: '2.5rem', lineHeight: 1.7 }}>
-            Build a safer learning experience with VidProtect AI.
-          </p>
-          <Link to="/login" className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '1rem 2rem' }}>
-            ENTER VIDPROTECT <ArrowRight size={16} />
-          </Link>
+          <div style={{ opacity: ctaVisible ? 1 : 0, transform: ctaVisible ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.97)', transition: 'opacity 0.7s ease, transform 0.7s ease' }}>
+            <h2 className="section-headline" style={{ marginBottom: '1rem' }}>
+              YOUR CONTENT.<br />
+              <span className="red-highlight">YOUR RULES.</span>
+            </h2>
+            <p style={{ color: '#A0A0A0', fontSize: '1rem', marginBottom: '2.5rem', lineHeight: 1.7 }}>
+              Build a safer learning experience with VidProtect AI.
+            </p>
+            <Link to="/login" className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '1rem 2rem' }}>
+              ENTER VIDPROTECT <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -507,6 +586,14 @@ export default function LandingPage() {
         @media (max-width: 900px) {
           .hero-grid { grid-template-columns: 1fr !important; }
           .workflow-grid { grid-template-columns: 1fr !important; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-14px); }
+        }
+        @keyframes blobPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.15); opacity: 0.7; }
         }
       `}</style>
     </div>
