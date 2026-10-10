@@ -102,10 +102,10 @@ const CursorParticles = () => {
 
 // ── CYCLING TEXT PHRASES ──────────────────
 const HERO_LINES = [
-  { line1: 'YOUR', line2: 'VIDEOS.', highlight: 'LOCKED IN.' },
-  { line1: 'STOP', line2: 'PIRACY.', highlight: 'DEAD COLD.' },
-  { line1: 'ENCRYPT.', line2: 'PROTECT.', highlight: 'DELIVER.' },
-  { line1: 'SECURE.', line2: 'ALWAYS.', highlight: 'PERIOD.' },
+  { line1: 'YOUR VIDEOS.', highlight: 'LOCKED IN.' },
+  { line1: 'STOP PIRACY.', highlight: 'DEAD COLD.' },
+  { line1: 'ENCRYPT IT.', highlight: 'DELIVER IT.' },
+  { line1: 'SECURE NOW.', highlight: 'PERIOD.' },
 ];
 
 // ── ANIMATED CYCLING TEXT ─────────────────
@@ -134,11 +134,10 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
   };
 
   return (
-    <div style={{ marginTop: '1.5rem', minHeight: '15rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
+    <div style={{ marginTop: '1.5rem', minHeight: '11rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
       <h1 className="hero-headline" style={{ marginBottom: '0', textAlign: 'center' }}>
         <span style={style}>{current.line1}</span><br />
-        <span style={{ ...style, transitionDelay: '0.05s' }}>{current.line2}</span><br />
-        <span style={{ ...style, transitionDelay: '0.10s' }}>
+        <span style={{ ...style, transitionDelay: '0.05s' }}>
           <span className="red-highlight">{current.highlight}</span>
         </span>
       </h1>
