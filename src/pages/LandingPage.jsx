@@ -405,73 +405,75 @@ const ScrollCardDeck = ({ cards, renderCard, bg = '#101010', headerContent }) =>
     <div ref={sectionRef} style={{ height: `${cards.length * 100}vh`, position: 'relative' }}>
       <div style={{
         position: 'sticky', top: 0, height: '100vh',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', flexDirection: 'column',
         perspective: '1400px', overflow: 'hidden', background: bg,
       }}>
         {headerContent && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20 }}>
+          <div style={{ position: 'relative', zIndex: 20 }}>
             {headerContent}
           </div>
         )}
 
-        {/* Progress dots — use rounded index for display */}
-        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
-          {cards.map((_, i) => (
-            <div key={i} style={{
-              width: i === activeIndex ? 24 : 8, height: 8,
-              background: i === activeIndex ? '#FF2028' : '#3a3a3a',
-              borderRadius: 4,
-              transition: 'all 0.3s ease',
-            }} />
-          ))}
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+          {/* Progress dots — use rounded index for display */}
+          <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+            {cards.map((_, i) => (
+              <div key={i} style={{
+                width: i === activeIndex ? 24 : 8, height: 8,
+                background: i === activeIndex ? '#FF2028' : '#3a3a3a',
+                borderRadius: 4,
+                transition: 'all 0.3s ease',
+              }} />
+            ))}
+          </div>
+
+          {/* Card counter */}
+          <div style={{ position: 'absolute', top: '1rem', right: '2rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem', color: '#565656', zIndex: 10 }}>
+            {String(activeIndex + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
+          </div>
+
+          {cards.map((card, i) => {
+            // Continuous offset — fractional so animation is frame-accurate
+            const offset = i - scrollProg;
+            const isActive = Math.abs(offset) < 0.5;
+
+            // Clamp depth for performance
+            const clampedOffset = Math.max(-2, Math.min(4, offset));
+
+            // Cards ahead (offset>0): stacked behind, pushed right+back with Y rotation
+            // Active card (offset≈0): front and center
+            // Past cards (offset<0): swept far left, faded out
+            const translateX = clampedOffset < 0
+              ? clampedOffset * 600          // exit left, proportional to progress
+              : clampedOffset * 85;          // stack right, proportional
+            const translateZ = clampedOffset <= 0
+              ? Math.max(-400, clampedOffset * 300)   // past cards go behind
+              : -clampedOffset * 110;                  // future cards stack back
+            const rotateY = clampedOffset > 0 ? -clampedOffset * 10 : 0;
+            const scale = Math.max(0.68, 1 - Math.abs(clampedOffset) * 0.09);
+            const opacity = clampedOffset < -0.4
+              ? Math.max(0, 1 + clampedOffset * 4)  // quick fade as it leaves left
+              : clampedOffset > 0
+                ? Math.max(0, 1 - clampedOffset * 0.3) // gentle fade as depth increases
+                : 1;
+
+            return (
+              <div key={i} style={{
+                position: 'absolute',
+                width: 'min(520px, 90vw)',
+                opacity,
+                // NO CSS transition — position is computed directly per scroll frame = perfectly smooth
+                transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                zIndex: Math.round(cards.length * 10 - Math.abs(offset) * 10),
+                transformStyle: 'preserve-3d',
+                willChange: 'transform, opacity',
+                pointerEvents: isActive ? 'all' : 'none',
+              }}>
+                {renderCard(card, i, isActive)}
+              </div>
+            );
+          })}
         </div>
-
-        {/* Card counter */}
-        <div style={{ position: 'absolute', top: '2rem', right: '2rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem', color: '#565656', zIndex: 10 }}>
-          {String(activeIndex + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
-        </div>
-
-        {cards.map((card, i) => {
-          // Continuous offset — fractional so animation is frame-accurate
-          const offset = i - scrollProg;
-          const isActive = Math.abs(offset) < 0.5;
-
-          // Clamp depth for performance
-          const clampedOffset = Math.max(-2, Math.min(4, offset));
-
-          // Cards ahead (offset>0): stacked behind, pushed right+back with Y rotation
-          // Active card (offset≈0): front and center
-          // Past cards (offset<0): swept far left, faded out
-          const translateX = clampedOffset < 0
-            ? clampedOffset * 600          // exit left, proportional to progress
-            : clampedOffset * 85;          // stack right, proportional
-          const translateZ = clampedOffset <= 0
-            ? Math.max(-400, clampedOffset * 300)   // past cards go behind
-            : -clampedOffset * 110;                  // future cards stack back
-          const rotateY = clampedOffset > 0 ? -clampedOffset * 10 : 0;
-          const scale = Math.max(0.68, 1 - Math.abs(clampedOffset) * 0.09);
-          const opacity = clampedOffset < -0.4
-            ? Math.max(0, 1 + clampedOffset * 4)  // quick fade as it leaves left
-            : clampedOffset > 0
-              ? Math.max(0, 1 - clampedOffset * 0.3) // gentle fade as depth increases
-              : 1;
-
-          return (
-            <div key={i} style={{
-              position: 'absolute',
-              width: 'min(520px, 90vw)',
-              opacity,
-              // NO CSS transition — position is computed directly per scroll frame = perfectly smooth
-              transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-              zIndex: Math.round(cards.length * 10 - Math.abs(offset) * 10),
-              transformStyle: 'preserve-3d',
-              willChange: 'transform, opacity',
-              pointerEvents: isActive ? 'all' : 'none',
-            }}>
-              {renderCard(card, i, isActive)}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
