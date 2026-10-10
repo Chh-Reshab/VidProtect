@@ -7,7 +7,7 @@ import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Video, Upload, BookOpen, ScrollText,
   ShieldAlert, Settings, LogOut, Bell, Search,
-  Menu, X
+  Menu, X, Activity
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Logo, NotificationToast } from './SharedComponents';
