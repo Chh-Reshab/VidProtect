@@ -192,24 +192,37 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
 // ── FLOATING SHAPES ──────────────────────────
 const FloatingShapes = () => (
   <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>
-    {/* Triangle */}
+    {/* Left Side Shapes */}
     <svg style={{ position: 'absolute', top: '25%', left: '8%', animation: 'float1 8s ease-in-out infinite' }} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1" strokeLinejoin="round">
       <path d="M12 2L22 20H2L12 2Z" />
     </svg>
-    
-    {/* Circle */}
-    <svg style={{ position: 'absolute', top: '65%', right: '10%', animation: 'float2 10s ease-in-out infinite' }} width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1">
-      <circle cx="12" cy="12" r="10" />
-    </svg>
-
-    {/* Square */}
     <svg style={{ position: 'absolute', bottom: '20%', left: '15%', animation: 'float3 9s ease-in-out infinite' }} width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF2028" strokeOpacity="0.3" strokeWidth="1.5">
       <rect x="3" y="3" width="18" height="18" />
     </svg>
+    <svg style={{ position: 'absolute', top: '50%', left: '4%', animation: 'float2 11s ease-in-out infinite' }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    <svg style={{ position: 'absolute', bottom: '10%', left: '25%', animation: 'float1 14s ease-in-out infinite' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#565656" strokeWidth="2">
+      <path d="M12 5V19M5 12H19" />
+    </svg>
 
-    {/* Plus */}
+    {/* Right Side Shapes */}
     <svg style={{ position: 'absolute', top: '30%', right: '18%', animation: 'float1 12s ease-in-out infinite' }} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1.5">
       <path d="M12 5V19M5 12H19" />
+    </svg>
+    <svg style={{ position: 'absolute', top: '65%', right: '10%', animation: 'float2 10s ease-in-out infinite' }} width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+    <svg style={{ position: 'absolute', top: '15%', right: '8%', animation: 'float3 15s ease-in-out infinite' }} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF2028" strokeOpacity="0.15" strokeWidth="1.5" strokeLinejoin="round">
+      <path d="M12 2L22 20H2L12 2Z" />
+    </svg>
+    <svg style={{ position: 'absolute', bottom: '25%', right: '22%', animation: 'float2 13s ease-in-out infinite' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeWidth="1.5">
+      <rect x="3" y="3" width="18" height="18" />
+    </svg>
+
+    {/* Center background (very faint/distant) */}
+    <svg style={{ position: 'absolute', top: '10%', left: '45%', animation: 'float3 16s ease-in-out infinite' }} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#292929" strokeOpacity="0.5" strokeWidth="1">
+      <circle cx="12" cy="12" r="10" />
     </svg>
   </div>
 );
