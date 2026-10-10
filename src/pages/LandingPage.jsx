@@ -374,70 +374,117 @@ const PROBLEMS = [
   { icon: Eye, label: 'Suspicious Activity Goes Unnoticed', desc: 'Repeated denials, expired-token reuse, and unusual access frequency can indicate misuse. VidProtect AI logs events and surfaces patterns for review.' },
 ];
 
-// ── PROBLEMS CARDS (3D right-to-left stagger) ─
-const ProblemsCards = () => {
-  const [containerRef, visibleCount] = useStaggerReveal(PROBLEMS.length, 0.15);
+// ── 3D SCROLL CARD DECK ─────────────────────────
+// Pins to the viewport and advances cards one-by-one as user scrolls
+const ScrollCardDeck = ({ cards, renderCard, bg = '#101010' }) => {
+  const sectionRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    let raf;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const el = sectionRef.current;
+        if (!el) return;
+        const { top, height } = el.getBoundingClientRect();
+        const scrollable = height - window.innerHeight;
+        const progress = Math.max(0, Math.min(1, -top / scrollable));
+        const idx = Math.min(
+          Math.floor(progress * cards.length),
+          cards.length - 1
+        );
+        setActiveIndex(idx);
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
+  }, [cards.length]);
+
   return (
-    <div ref={containerRef} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-      {PROBLEMS.map(({ icon: Icon, label, desc }, i) => {
-        const revealed = i < visibleCount;
-        return (
-          <div key={label} className="card"
-            style={{
-              border: '1px solid #292929',
-              opacity: revealed ? 1 : 0,
-              transform: revealed
-                ? 'translateX(0) rotateY(0deg) scale(1)'
-                : 'translateX(80px) rotateY(18deg) scale(0.95)',
-              transition: 'opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1), border-color 0.2s, box-shadow 0.2s',
+    // Tall container: 100vh per card to give scroll room
+    <div ref={sectionRef} style={{ height: `${cards.length * 100}vh`, position: 'relative' }}>
+      <div style={{
+        position: 'sticky', top: 0, height: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        perspective: '1200px', overflow: 'hidden', background: bg,
+      }}>
+        {/* Progress dots */}
+        <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+          {cards.map((_, i) => (
+            <div key={i} style={{
+              width: i === activeIndex ? 24 : 8, height: 8,
+              background: i === activeIndex ? '#FF2028' : '#292929',
+              borderRadius: 4,
+              transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)',
+            }} />
+          ))}
+        </div>
+
+        {cards.map((card, i) => {
+          const offset = i - activeIndex;
+          // Active card: front center
+          // Cards behind (offset > 0): stacked back-right in 3D
+          // Past cards (offset < 0): slid off to the left
+          const isActive = offset === 0;
+          const depth = Math.min(Math.abs(offset), 3);
+          const translateX = isActive ? 0 : offset < 0 ? -900 : offset * 90;
+          const translateZ = isActive ? 0 : offset > 0 ? -depth * 120 : -600;
+          const rotateY = isActive ? 0 : offset > 0 ? -depth * 10 : 0;
+          const scale = isActive ? 1 : offset > 0 ? Math.max(0.7, 1 - depth * 0.08) : 0.6;
+          const opacity = isActive ? 1 : offset < 0 ? 0 : Math.max(0, 1 - depth * 0.25);
+
+          return (
+            <div key={i} style={{
+              position: 'absolute',
+              width: 'min(480px, 90vw)',
+              opacity,
+              transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+              transition: 'transform 0.7s cubic-bezier(0.22,1,0.36,1), opacity 0.5s ease',
+              zIndex: cards.length - Math.abs(offset),
               transformStyle: 'preserve-3d',
               willChange: 'transform, opacity',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#FF2028'; e.currentTarget.style.transform = 'translateX(0) rotateY(0deg) scale(1) translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(255,32,40,0.15)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#292929'; e.currentTarget.style.transform = 'translateX(0) rotateY(0deg) scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>
-            <Icon size={24} color="#FF2028" strokeWidth={1.5} style={{ marginBottom: '1rem' }} />
-            <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>{label}</div>
-            <p style={{ color: '#A0A0A0', fontSize: '0.85rem', lineHeight: 1.6 }}>{desc}</p>
-          </div>
-        );
-      })}
+              pointerEvents: isActive ? 'all' : 'none',
+            }}>
+              {renderCard(card, i, isActive)}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
-// ── FEATURES CARDS (3D right-to-left stagger) ─
-const FeaturesCards = () => {
-  const [containerRef, visibleCount] = useStaggerReveal(FEATURES.length, 0.15);
-  return (
-    <div ref={containerRef} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1px', background: '#292929', border: '1px solid #292929' }}>
-      {FEATURES.map(({ icon: Icon, label, desc, tag }, i) => {
-        const revealed = i < visibleCount;
-        return (
-          <div key={label}
-            style={{
-              background: '#1D1D1D', padding: '2rem 1.5rem',
-              opacity: revealed ? 1 : 0,
-              transform: revealed
-                ? 'translateX(0) rotateY(0deg) scale(1)'
-                : 'translateX(100px) rotateY(20deg) scale(0.94)',
-              transition: 'opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1), background 0.2s',
-              transformStyle: 'preserve-3d',
-              willChange: 'transform, opacity',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#232323'; e.currentTarget.style.transform = 'translateX(0) rotateY(0deg) scale(1) translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(255,32,40,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#1D1D1D'; e.currentTarget.style.transform = 'translateX(0) rotateY(0deg) scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-              <Icon size={28} color="#FF2028" strokeWidth={1.5} />
-              <span className="badge badge-red" style={{ fontSize: '0.55rem' }}>{tag}</span>
-            </div>
-            <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1rem', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '-0.01em' }}>{label}</div>
-            <p style={{ color: '#A0A0A0', fontSize: '0.85rem', lineHeight: 1.6 }}>{desc}</p>
-          </div>
-        );
-      })}
+const renderProblemCard = ({ icon: Icon, label, desc }, _i, isActive) => (
+  <div style={{
+    background: '#171717',
+    border: `1px solid ${isActive ? '#FF2028' : '#292929'}`,
+    padding: '2.5rem 2rem',
+    boxShadow: isActive ? '0 24px 60px rgba(255,32,40,0.18)' : '0 8px 24px rgba(0,0,0,0.4)',
+    transition: 'border-color 0.4s, box-shadow 0.4s',
+  }}>
+    <Icon size={32} color="#FF2028" strokeWidth={1.5} style={{ marginBottom: '1.25rem' }} />
+    <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.1rem', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '-0.01em', color: '#F8F8F8' }}>{label}</div>
+    <p style={{ color: '#A0A0A0', fontSize: '0.9rem', lineHeight: 1.7 }}>{desc}</p>
+  </div>
+);
+
+const renderFeatureCard = ({ icon: Icon, label, desc, tag }, _i, isActive) => (
+  <div style={{
+    background: '#1D1D1D',
+    border: `1px solid ${isActive ? '#FF2028' : '#292929'}`,
+    padding: '2.5rem 2rem',
+    boxShadow: isActive ? '0 24px 60px rgba(255,32,40,0.18)' : '0 8px 24px rgba(0,0,0,0.4)',
+    transition: 'border-color 0.4s, box-shadow 0.4s',
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+      <Icon size={32} color="#FF2028" strokeWidth={1.5} />
+      <span className="badge badge-red" style={{ fontSize: '0.6rem' }}>{tag}</span>
     </div>
-  );
-};
+    <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.1rem', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '-0.01em', color: '#F8F8F8' }}>{label}</div>
+    <p style={{ color: '#A0A0A0', fontSize: '0.9rem', lineHeight: 1.7 }}>{desc}</p>
+  </div>
+);
 
 // ── MAIN LANDING PAGE ─────────────────────────
 export default function LandingPage() {
@@ -530,37 +577,39 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PROBLEMS ── */}
-      <section ref={problemsRef} style={{ background: '#101010', padding: '6rem 1.5rem', borderTop: '1px solid #292929', perspective: '1200px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+      {/* ── PROBLEMS (scroll-driven 3D card deck) ── */}
+      <div style={{ background: '#101010', borderTop: '1px solid #292929' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 3rem' }}>
           <div style={{ opacity: problemsVisible ? 1 : 0, transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
             <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
               YOUR CONTENT DESERVES
               <br /><span className="red-highlight">BETTER PROTECTION.</span>
             </h2>
-            <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Four real problems VidProtect AI addresses.</p>
+            <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to reveal the four real problems VidProtect AI addresses.</p>
           </div>
-
-          <ProblemsCards />
         </div>
-      </section>
+        <div ref={problemsRef}>
+          <ScrollCardDeck cards={PROBLEMS} renderCard={renderProblemCard} bg="#101010" />
+        </div>
+      </div>
 
-      {/* ── FEATURES ── */}
-      <section id="features" ref={featuresRef} style={{ background: '#171717', padding: '6rem 1.5rem', borderTop: '1px solid #292929', borderBottom: '1px solid #292929', perspective: '1200px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+      {/* ── FEATURES (scroll-driven 3D card deck) ── */}
+      <div id="features" style={{ background: '#171717', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 3rem' }}>
           <div style={{ opacity: featuresVisible ? 1 : 0, transform: featuresVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
             <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
             <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
               FOUR LAYERS.
               <br /><span className="red-highlight">ONE PROTECTED EXPERIENCE.</span>
             </h2>
-            <p style={{ color: '#A0A0A0', marginBottom: '3rem', fontSize: '0.95rem' }}>Each layer works in combination to strengthen content security.</p>
+            <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to explore each security layer.</p>
           </div>
-
-          <FeaturesCards />
-
-          {/* Security formula */}
-          <div style={{ marginTop: '3rem', padding: '1.5rem', border: '1px solid #FF2028', background: 'rgba(255,32,40,0.04)' }}>
+        </div>
+        <div ref={featuresRef}>
+          <ScrollCardDeck cards={FEATURES} renderCard={renderFeatureCard} bg="#171717" />
+        </div>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
+          <div style={{ padding: '1.5rem', border: '1px solid #FF2028', background: 'rgba(255,32,40,0.04)' }}>
             <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.5rem' }}>CORE SECURITY FORMULA</div>
             <div className="mono" style={{ fontSize: '0.75rem', color: '#F8F8F8', lineHeight: 1.8, letterSpacing: '0.05em' }}>
               AES-256 ENCRYPTION + JWT AUTHENTICATION + ENROLLMENT VERIFICATION
@@ -568,7 +617,7 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── WORKFLOW ── */}
       <section id="how-it-works" ref={workflowRef} style={{ background: '#101010', padding: '6rem 1.5rem', borderBottom: '1px solid #292929' }}>
