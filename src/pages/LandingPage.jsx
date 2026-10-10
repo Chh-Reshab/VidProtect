@@ -376,7 +376,7 @@ const PROBLEMS = [
 
 // ── 3D SCROLL CARD DECK ─────────────────────────
 // Uses continuous scroll progress (not discrete indices) for perfectly smooth animation
-const ScrollCardDeck = ({ cards, renderCard, bg = '#101010' }) => {
+const ScrollCardDeck = ({ cards, renderCard, bg = '#101010', headerContent }) => {
   const sectionRef = useRef(null);
   // scrollProg: continuous 0 → (cards.length-1) based on scroll position
   const [scrollProg, setScrollProg] = useState(0);
@@ -408,6 +408,12 @@ const ScrollCardDeck = ({ cards, renderCard, bg = '#101010' }) => {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         perspective: '1400px', overflow: 'hidden', background: bg,
       }}>
+        {headerContent && (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20 }}>
+            {headerContent}
+          </div>
+        )}
+
         {/* Progress dots — use rounded index for display */}
         <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
           {cards.map((_, i) => (
@@ -595,34 +601,46 @@ export default function LandingPage() {
 
       {/* ── PROBLEMS (scroll-driven 3D card deck) ── */}
       <div style={{ background: '#101010', borderTop: '1px solid #292929' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1rem' }}>
-          <div style={{ opacity: problemsVisible ? 1 : 0, transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
-            <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
-              YOUR CONTENT DESERVES
-              <br /><span className="red-highlight">BETTER PROTECTION.</span>
-            </h2>
-            <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to reveal the four real problems VidProtect AI addresses.</p>
-          </div>
-        </div>
         <div ref={problemsRef}>
-          <ScrollCardDeck cards={PROBLEMS} renderCard={renderProblemCard} bg="#101010" />
+          <ScrollCardDeck 
+            cards={PROBLEMS} 
+            renderCard={renderProblemCard} 
+            bg="#101010" 
+            headerContent={
+              <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 0' }}>
+                <div style={{ opacity: problemsVisible ? 1 : 0, transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+                  <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
+                    YOUR CONTENT DESERVES
+                    <br /><span className="red-highlight">BETTER PROTECTION.</span>
+                  </h2>
+                  <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to reveal the four real problems VidProtect AI addresses.</p>
+                </div>
+              </div>
+            }
+          />
         </div>
       </div>
 
       {/* ── FEATURES (scroll-driven 3D card deck) ── */}
       <div id="features" style={{ background: '#171717', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1rem' }}>
-          <div style={{ opacity: featuresVisible ? 1 : 0, transform: featuresVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
-            <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
-            <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
-              FOUR LAYERS.
-              <br /><span className="red-highlight">ONE PROTECTED EXPERIENCE.</span>
-            </h2>
-            <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to explore each security layer.</p>
-          </div>
-        </div>
         <div ref={featuresRef}>
-          <ScrollCardDeck cards={FEATURES} renderCard={renderFeatureCard} bg="#171717" />
+          <ScrollCardDeck 
+            cards={FEATURES} 
+            renderCard={renderFeatureCard} 
+            bg="#171717" 
+            headerContent={
+              <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 0' }}>
+                <div style={{ opacity: featuresVisible ? 1 : 0, transform: featuresVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
+                  <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
+                  <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+                    FOUR LAYERS.
+                    <br /><span className="red-highlight">ONE PROTECTED EXPERIENCE.</span>
+                  </h2>
+                  <p style={{ color: '#A0A0A0', marginBottom: '0', fontSize: '0.95rem' }}>Scroll to explore each security layer.</p>
+                </div>
+              </div>
+            }
+          />
         </div>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
           <div style={{ padding: '1.5rem', border: '1px solid #FF2028', background: 'rgba(255,32,40,0.04)' }}>
