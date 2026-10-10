@@ -50,6 +50,12 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
   }, [phrases.length, interval]);
 
   const current = phrases[index];
+
+  // Compute max char length across all 3 lines of this phrase
+  const maxLen = Math.max(current.line1.length, current.line2.length, current.highlight.length);
+  // Scale down font slightly for longer strings (threshold: 10 chars)
+  const fontScale = maxLen > 12 ? '0.78em' : maxLen > 9 ? '0.88em' : '1em';
+
   const style = {
     transition: 'opacity 0.35s ease, transform 0.35s ease',
     opacity: animating ? 0 : 1,
@@ -58,13 +64,16 @@ const CyclingText = ({ phrases, interval = 3000 }) => {
   };
 
   return (
-    <h1 className="hero-headline" style={{ marginTop: '1.5rem', marginBottom: '0' }}>
-      <span style={style}>{current.line1}</span><br />
-      <span style={{ ...style, transitionDelay: '0.04s' }}>{current.line2}</span><br />
-      <span style={{ ...style, transitionDelay: '0.08s' }}>
-        <span className="red-highlight">{current.highlight}</span>
-      </span>
-    </h1>
+    // Fixed height prevents layout shift between phrases
+    <div style={{ marginTop: '1.5rem', minHeight: '13rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+      <h1 className="hero-headline" style={{ marginBottom: '0', fontSize: fontScale, transition: 'font-size 0.35s ease' }}>
+        <span style={style}>{current.line1}</span><br />
+        <span style={{ ...style, transitionDelay: '0.04s' }}>{current.line2}</span><br />
+        <span style={{ ...style, transitionDelay: '0.08s' }}>
+          <span className="red-highlight">{current.highlight}</span>
+        </span>
+      </h1>
+    </div>
   );
 };
 
