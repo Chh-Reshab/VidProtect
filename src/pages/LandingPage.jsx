@@ -375,10 +375,11 @@ const PROBLEMS = [
 ];
 
 // ── 3D SCROLL CARD DECK ─────────────────────────
-// Pins to the viewport and advances cards one-by-one as user scrolls
+// Uses continuous scroll progress (not discrete indices) for perfectly smooth animation
 const ScrollCardDeck = ({ cards, renderCard, bg = '#101010' }) => {
   const sectionRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // scrollProg: continuous 0 → (cards.length-1) based on scroll position
+  const [scrollProg, setScrollProg] = useState(0);
 
   useEffect(() => {
     let raf;
@@ -389,59 +390,74 @@ const ScrollCardDeck = ({ cards, renderCard, bg = '#101010' }) => {
         if (!el) return;
         const { top, height } = el.getBoundingClientRect();
         const scrollable = height - window.innerHeight;
-        const progress = Math.max(0, Math.min(1, -top / scrollable));
-        const idx = Math.min(
-          Math.floor(progress * cards.length),
-          cards.length - 1
-        );
-        setActiveIndex(idx);
+        const p = Math.max(0, Math.min(1, -top / scrollable));
+        // Map 0→1 to 0→(cards.length-1) so each card gets equal scroll budget
+        setScrollProg(p * (cards.length - 1));
       });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
   }, [cards.length]);
 
+  const activeIndex = Math.round(scrollProg);
+
   return (
-    // Tall container: 100vh per card to give scroll room
     <div ref={sectionRef} style={{ height: `${cards.length * 100}vh`, position: 'relative' }}>
       <div style={{
         position: 'sticky', top: 0, height: '100vh',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        perspective: '1200px', overflow: 'hidden', background: bg,
+        perspective: '1400px', overflow: 'hidden', background: bg,
       }}>
-        {/* Progress dots */}
-        <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+        {/* Progress dots — use rounded index for display */}
+        <div style={{ position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
           {cards.map((_, i) => (
             <div key={i} style={{
               width: i === activeIndex ? 24 : 8, height: 8,
-              background: i === activeIndex ? '#FF2028' : '#292929',
+              background: i === activeIndex ? '#FF2028' : '#3a3a3a',
               borderRadius: 4,
-              transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)',
+              transition: 'all 0.3s ease',
             }} />
           ))}
         </div>
 
+        {/* Card counter */}
+        <div style={{ position: 'absolute', top: '2rem', right: '2rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem', color: '#565656', zIndex: 10 }}>
+          {String(activeIndex + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
+        </div>
+
         {cards.map((card, i) => {
-          const offset = i - activeIndex;
-          // Active card: front center
-          // Cards behind (offset > 0): stacked back-right in 3D
-          // Past cards (offset < 0): slid off to the left
-          const isActive = offset === 0;
-          const depth = Math.min(Math.abs(offset), 3);
-          const translateX = isActive ? 0 : offset < 0 ? -900 : offset * 90;
-          const translateZ = isActive ? 0 : offset > 0 ? -depth * 120 : -600;
-          const rotateY = isActive ? 0 : offset > 0 ? -depth * 10 : 0;
-          const scale = isActive ? 1 : offset > 0 ? Math.max(0.7, 1 - depth * 0.08) : 0.6;
-          const opacity = isActive ? 1 : offset < 0 ? 0 : Math.max(0, 1 - depth * 0.25);
+          // Continuous offset — fractional so animation is frame-accurate
+          const offset = i - scrollProg;
+          const isActive = Math.abs(offset) < 0.5;
+
+          // Clamp depth for performance
+          const clampedOffset = Math.max(-2, Math.min(4, offset));
+
+          // Cards ahead (offset>0): stacked behind, pushed right+back with Y rotation
+          // Active card (offset≈0): front and center
+          // Past cards (offset<0): swept far left, faded out
+          const translateX = clampedOffset < 0
+            ? clampedOffset * 600          // exit left, proportional to progress
+            : clampedOffset * 85;          // stack right, proportional
+          const translateZ = clampedOffset <= 0
+            ? Math.max(-400, clampedOffset * 300)   // past cards go behind
+            : -clampedOffset * 110;                  // future cards stack back
+          const rotateY = clampedOffset > 0 ? -clampedOffset * 10 : 0;
+          const scale = Math.max(0.68, 1 - Math.abs(clampedOffset) * 0.09);
+          const opacity = clampedOffset < -0.4
+            ? Math.max(0, 1 + clampedOffset * 4)  // quick fade as it leaves left
+            : clampedOffset > 0
+              ? Math.max(0, 1 - clampedOffset * 0.3) // gentle fade as depth increases
+              : 1;
 
           return (
             <div key={i} style={{
               position: 'absolute',
-              width: 'min(480px, 90vw)',
+              width: 'min(520px, 90vw)',
               opacity,
+              // NO CSS transition — position is computed directly per scroll frame = perfectly smooth
               transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-              transition: 'transform 0.7s cubic-bezier(0.22,1,0.36,1), opacity 0.5s ease',
-              zIndex: cards.length - Math.abs(offset),
+              zIndex: Math.round(cards.length * 10 - Math.abs(offset) * 10),
               transformStyle: 'preserve-3d',
               willChange: 'transform, opacity',
               pointerEvents: isActive ? 'all' : 'none',
@@ -579,7 +595,7 @@ export default function LandingPage() {
 
       {/* ── PROBLEMS (scroll-driven 3D card deck) ── */}
       <div style={{ background: '#101010', borderTop: '1px solid #292929' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 3rem' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1rem' }}>
           <div style={{ opacity: problemsVisible ? 1 : 0, transform: problemsVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
             <h2 className="section-headline" style={{ marginBottom: '0.5rem' }}>
               YOUR CONTENT DESERVES
@@ -595,7 +611,7 @@ export default function LandingPage() {
 
       {/* ── FEATURES (scroll-driven 3D card deck) ── */}
       <div id="features" style={{ background: '#171717', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '6rem 1.5rem 3rem' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1rem' }}>
           <div style={{ opacity: featuresVisible ? 1 : 0, transform: featuresVisible ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.6s ease, transform 0.6s ease' }}>
             <SectionLabel>SECURITY ARCHITECTURE</SectionLabel>
             <h2 className="section-headline" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
