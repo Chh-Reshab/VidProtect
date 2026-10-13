@@ -2,44 +2,44 @@
 // COURSES & ENROLLMENTS — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
-import { BookOpen, Users, Video, Plus, Trash2, Search, ChevronRight, UserPlus, X } from 'lucide-react';
+import { useState } from 'react';
+import { BookOpen, Users, Video, Plus, Trash2, ChevronRight, UserPlus, X, Globe, EyeOff } from 'lucide-react';
 import {
   getCourses, getStudentsForCourse, getAllStudents,
   enrollStudent, removeEnrollment, getVideos,
+  createCourse, updateCourse,
 } from '../services/mockServices';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, StatusBadge, EmptyState, ConfirmDialog, Modal, SearchInput, DemoBanner } from '../components/SharedComponents';
+import { SectionLabel, ConfirmDialog, Modal, SearchInput, DemoBanner } from '../components/SharedComponents';
 
 export default function CoursesPage() {
-  const { showNotification, refreshStats } = useApp();
-  const [courses, setCourses] = useState([]);
+  const { currentUser, showNotification, refreshStats } = useApp();
+  const [courses, setCourses] = useState(() => getCourses(currentUser.id));
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [students, setStudents] = useState([]);
-  const [allStudents, setAllStudents] = useState([]);
+  const [allStudents] = useState(() => getAllStudents().filter(u => u.id !== currentUser.id));
   const [courseVideos, setCourseVideos] = useState([]);
   const [studentSearch, setStudentSearch] = useState('');
   const [enrollSearch, setEnrollSearch] = useState('');
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [removeTarget, setRemoveTarget] = useState(null);
+  const [showNewCourse, setShowNewCourse] = useState(false);
+  const [newCourse, setNewCourse] = useState({ title: '', description: '', visibility: 'public' });
 
-  useEffect(() => {
-    setCourses(getCourses());
-    setAllStudents(getAllStudents());
-  }, []);
+  const myCourses = () => getCourses(currentUser.id);
 
   const openCourse = (course) => {
     setSelectedCourse(course);
     setStudents(getStudentsForCourse(course.id));
-    setCourseVideos(getVideos().filter(v => v.courseId === course.id));
+    setCourseVideos(getVideos(currentUser.id).filter(v => v.courseId === course.id));
     setStudentSearch('');
   };
 
   const handleEnroll = (studentId) => {
-    const result = enrollStudent(studentId, selectedCourse.id);
+    const result = enrollStudent(currentUser.id, studentId, selectedCourse.id);
     if (result.success) {
       setStudents(getStudentsForCourse(selectedCourse.id));
-      setCourses(getCourses());
+      setCourses(myCourses());
       refreshStats();
       showNotification('Student enrolled successfully.');
     } else {
@@ -49,12 +49,30 @@ export default function CoursesPage() {
   };
 
   const handleRemove = (enrollmentId) => {
-    removeEnrollment(enrollmentId, selectedCourse.id);
+    const result = removeEnrollment(currentUser.id, enrollmentId, selectedCourse.id);
+    if (!result.success) { showNotification(result.error, 'error'); setRemoveTarget(null); return; }
     setStudents(getStudentsForCourse(selectedCourse.id));
-    setCourses(getCourses());
+    setCourses(myCourses());
     refreshStats();
     showNotification('Enrollment removed.');
     setRemoveTarget(null);
+  };
+
+  const handleCreateCourse = () => {
+    const result = createCourse(currentUser.id, newCourse);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    setCourses(myCourses());
+    setShowNewCourse(false);
+    setNewCourse({ title: '', description: '', visibility: 'public' });
+    showNotification('Course created as a draft. Publish it when you are ready.');
+  };
+
+  const handlePatchCourse = (patch, message) => {
+    const result = updateCourse(currentUser.id, selectedCourse.id, patch);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    setSelectedCourse(result.course);
+    setCourses(myCourses());
+    showNotification(message);
   };
 
   const filteredStudents = students.filter(s =>
@@ -78,6 +96,9 @@ export default function CoursesPage() {
         <p style={{ color: '#A0A0A0', fontSize: '0.85rem', marginTop: '0.3rem' }}>
           Manage your courses and control student enrollment.
         </p>
+        <button className="btn btn-primary" style={{ fontSize: '0.7rem', marginTop: '1rem' }} onClick={() => setShowNewCourse(true)}>
+          <Plus size={14} /> NEW COURSE
+        </button>
       </div>
 
       <DemoBanner />
@@ -85,6 +106,11 @@ export default function CoursesPage() {
       <div style={{ display: 'grid', gridTemplateColumns: selectedCourse ? '320px 1fr' : '1fr', gap: '1.5rem' }} className="courses-grid">
         {/* Course List */}
         <div>
+          {courses.length === 0 && (
+            <div style={{ border: '1px dashed #292929', padding: '2rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>
+              You have no courses yet. Create one to start uploading videos.
+            </div>
+          )}
           {courses.map(course => (
             <div
               key={course.id}
@@ -112,8 +138,8 @@ export default function CoursesPage() {
                 <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Users size={10} /> {course.enrolledCount} learners
                 </span>
-                <span className={`badge ${course.status === 'active' ? 'badge-green' : 'badge-grey'}`} style={{ fontSize: '0.55rem' }}>
-                  {course.status.toUpperCase()}
+                <span className={`badge ${course.status === 'active' ? 'badge-green' : course.status === 'taken_down' ? 'badge-red' : 'badge-grey'}`} style={{ fontSize: '0.55rem' }}>
+                  {course.status === 'active' ? 'PUBLISHED' : course.status.replace('_', ' ').toUpperCase()}
                 </span>
               </div>
             </div>
@@ -139,9 +165,20 @@ export default function CoursesPage() {
                 <p style={{ color: '#A0A0A0', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '1rem' }}>
                   {selectedCourse.description}
                 </p>
-                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
-                  Created {formatDate(selectedCourse.createdAt)}
+                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '1rem' }}>
+                  Created {formatDate(selectedCourse.createdAt)} · {selectedCourse.visibility === 'invite_only' ? 'INVITE ONLY' : 'OPEN ENROLLMENT'}
                 </div>
+                {selectedCourse.status === 'taken_down' ? (
+                  <div className="mono" style={{ fontSize: '0.65rem', color: '#FF2028' }}>⊗ TAKEN DOWN BY A MODERATOR</div>
+                ) : selectedCourse.status === 'active' ? (
+                  <button className="btn btn-secondary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'draft' }, 'Course unpublished.')}>
+                    <EyeOff size={12} /> UNPUBLISH
+                  </button>
+                ) : (
+                  <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'active' }, 'Course published. Learners can now find it.')}>
+                    <Globe size={12} /> PUBLISH COURSE
+                  </button>
+                )}
               </div>
             </div>
 
@@ -254,6 +291,28 @@ export default function CoursesPage() {
               </div>
             ))
           )}
+        </div>
+      </Modal>
+
+      {/* New Course Modal */}
+      <Modal isOpen={showNewCourse} onClose={() => setShowNewCourse(false)} title="NEW COURSE">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="nc-title">Title</label>
+            <input id="nc-title" className="form-input" value={newCourse.title} onChange={e => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="e.g. React Testing in Practice" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="nc-desc">Description</label>
+            <textarea id="nc-desc" className="form-input" rows={3} value={newCourse.description} onChange={e => setNewCourse({ ...newCourse, description: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="nc-vis">Enrollment</label>
+            <select id="nc-vis" className="form-input" value={newCourse.visibility} onChange={e => setNewCourse({ ...newCourse, visibility: e.target.value })}>
+              <option value="public">Open — learners can enrol themselves</option>
+              <option value="invite_only">Invite only — I enrol learners</option>
+            </select>
+          </div>
+          <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={handleCreateCourse}>CREATE COURSE</button>
         </div>
       </Modal>
 

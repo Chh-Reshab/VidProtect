@@ -6,23 +6,43 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Video, Upload, BookOpen, ScrollText,
-  ShieldAlert, Settings, LogOut, Bell, Search,
-  Menu, X, Activity
+  ShieldAlert, Settings, LogOut, Bell,
+  Menu, X, Activity, Compass, History, User, Users,
+  UserCheck, Layers, ClipboardList, Repeat
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Logo, NotificationToast } from './SharedComponents';
 
-const NAV_ITEMS = [
-  { to: '/app/overview', icon: LayoutDashboard, label: 'Overview' },
-  { to: '/app/library', icon: Video, label: 'Video Library' },
-  { to: '/app/upload', icon: Upload, label: 'Upload Video' },
-  { to: '/app/courses', icon: BookOpen, label: 'Courses & Enrollments' },
-  { to: '/app/logs', icon: ScrollText, label: 'Access Logs' },
-  { to: '/app/alerts', icon: ShieldAlert, label: 'Security Alerts' },
-  { to: '/app/settings', icon: Settings, label: 'Settings' },
+const STUDIO_NAV = [
+  { to: '/studio/overview', icon: LayoutDashboard, label: 'Overview' },
+  { to: '/studio/library', icon: Video, label: 'Video Library' },
+  { to: '/studio/upload', icon: Upload, label: 'Upload Video' },
+  { to: '/studio/courses', icon: BookOpen, label: 'Courses & Enrollments' },
+  { to: '/studio/logs', icon: ScrollText, label: 'Access Logs' },
+  { to: '/studio/alerts', icon: ShieldAlert, label: 'Security Alerts' },
+  { to: '/studio/settings', icon: Settings, label: 'Settings' },
 ];
 
-export const AppLayout = () => {
+const LEARNER_NAV = [
+  { to: '/learn', icon: LayoutDashboard, label: 'Home', end: true },
+  { to: '/learn/courses', icon: BookOpen, label: 'My Courses' },
+  { to: '/learn/catalog', icon: Compass, label: 'Browse Courses' },
+  { to: '/learn/history', icon: History, label: 'Watch History' },
+  { to: '/learn/account', icon: User, label: 'Account' },
+];
+
+const ADMIN_NAV = [
+  { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
+  { to: '/admin/creators', icon: UserCheck, label: 'Creator Approvals' },
+  { to: '/admin/users', icon: Users, label: 'Users' },
+  { to: '/admin/content', icon: Layers, label: 'Content Moderation' },
+  { to: '/admin/audit', icon: ClipboardList, label: 'Audit Log' },
+];
+
+const initials = (name) =>
+  name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
+
+const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
   const { currentUser, logout } = useApp();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,7 +77,7 @@ export const AppLayout = () => {
       }} className="sidebar">
         {/* Sidebar header */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/app/overview" style={{ textDecoration: 'none' }}>
+          <Link to={homePath} style={{ textDecoration: 'none' }}>
             <Logo size="sm" />
           </Link>
           <button
@@ -80,21 +100,22 @@ export const AppLayout = () => {
             color: '#fff',
             flexShrink: 0,
           }}>
-            {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'CR'}
+            {initials(currentUser?.name)}
           </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F8F8F8', lineHeight: 1.2 }}>{currentUser?.name || 'Creator'}</div>
-            <div className="mono" style={{ fontSize: '0.58rem', color: '#FF2028' }}>CREATOR / ADMIN</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F8F8F8', lineHeight: 1.2 }}>{currentUser?.name}</div>
+            <div className="mono" style={{ fontSize: '0.58rem', color: '#FF2028' }}>{roleLabel}</div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '0.75rem 0', overflowY: 'auto' }}>
           <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', padding: '0.5rem 1rem 0.25rem', letterSpacing: '0.12em' }}>NAVIGATION</div>
-          {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
+              end={end}
               onClick={() => setSidebarOpen(false)}
               style={({ isActive }) => ({
                 display: 'flex',
@@ -115,6 +136,17 @@ export const AppLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {switchTo && (
+          <Link
+            to={switchTo.to}
+            onClick={() => setSidebarOpen(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderTop: '1px solid #292929', color: '#A0A0A0', textDecoration: 'none', fontSize: '0.8rem' }}
+          >
+            <Repeat size={14} />
+            <span>{switchTo.label}</span>
+          </Link>
+        )}
 
         {/* System status */}
         <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
@@ -175,7 +207,7 @@ export const AppLayout = () => {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: 28, height: 28, background: '#FF2028', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.65rem', color: '#fff' }}>
-                {currentUser?.name ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'CR'}
+                {initials(currentUser?.name)}
               </div>
             </div>
           </div>
@@ -214,3 +246,29 @@ export const AppLayout = () => {
     </div>
   );
 };
+
+// ── Role-specific shells ──────────────────────
+export const StudioLayout = () => (
+  <DashboardShell
+    navItems={STUDIO_NAV}
+    roleLabel="CREATOR STUDIO"
+    homePath="/studio/overview"
+    switchTo={{ to: '/learn', label: 'Switch to learner view' }}
+  />
+);
+
+export const LearnerLayout = () => {
+  const { currentUser } = useApp();
+  return (
+    <DashboardShell
+      navItems={LEARNER_NAV}
+      roleLabel="LEARNER"
+      homePath="/learn"
+      switchTo={currentUser?.role === 'creator' ? { to: '/studio/overview', label: 'Back to Creator Studio' } : null}
+    />
+  );
+};
+
+export const AdminLayout = () => (
+  <DashboardShell navItems={ADMIN_NAV} roleLabel="PLATFORM ADMIN" homePath="/admin" />
+);

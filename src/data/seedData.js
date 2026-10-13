@@ -3,24 +3,52 @@
 // All demo/mock data for the prototype
 // ============================================
 
+// All demo accounts share the password "demo1234" (checked in mockServices,
+// never stored on the user record or in the session).
+export const DEMO_PASSWORD = 'demo1234';
+
 export const DEMO_USERS = {
+  admin: {
+    id: 'admin-001',
+    name: 'Alex Morgan',
+    email: 'admin@vidprotect.demo',
+    role: 'admin',
+    status: 'active',
+    demo: true,
+    joinDate: '2024-01-01',
+  },
   creator: {
     id: 'creator-001',
     name: 'Reshab Basnet',
     email: 'creator@vidprotect.demo',
-    password: 'demo1234',
     role: 'creator',
-    avatar: 'RB',
+    status: 'active',
+    demo: true,
     joinDate: '2024-01-15',
   },
+  creators: [
+    {
+      id: 'creator-002',
+      name: 'Maya Okafor',
+      email: 'maya@creator.demo',
+      role: 'creator',
+      status: 'active',
+      demo: true,
+      joinDate: '2024-05-02',
+    },
+  ],
   students: [
-    { id: 'stu-001', name: 'Sarah Chen', email: 'sarah@student.demo', role: 'student', status: 'active', enrolledCourses: ['course-001', 'course-003'] },
-    { id: 'stu-002', name: 'Marcus Johnson', email: 'marcus@student.demo', role: 'student', status: 'active', enrolledCourses: ['course-001', 'course-002'] },
-    { id: 'stu-003', name: 'Priya Patel', email: 'priya@student.demo', role: 'student', status: 'active', enrolledCourses: ['course-002', 'course-004'] },
-    { id: 'stu-004', name: 'James Kim', email: 'james@student.demo', role: 'student', status: 'suspended', enrolledCourses: ['course-001'] },
-    { id: 'stu-005', name: 'Elena Rodriguez', email: 'elena@student.demo', role: 'student', status: 'active', enrolledCourses: ['course-003', 'course-005'] },
-    { id: 'stu-006', name: 'Omar Hassan', email: 'omar@student.demo', role: 'student', status: 'active', enrolledCourses: ['course-004'] },
-    { id: 'stu-007', name: 'Lily Zhang', email: 'lily@student.demo', role: 'student', status: 'active', enrolledCourses: [] },
+    { id: 'stu-001', name: 'Sarah Chen', email: 'sarah@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-001', 'course-003'] },
+    { id: 'stu-002', name: 'Marcus Johnson', email: 'marcus@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-001', 'course-002', 'course-006'] },
+    { id: 'stu-003', name: 'Priya Patel', email: 'priya@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-002', 'course-004'] },
+    { id: 'stu-004', name: 'James Kim', email: 'james@student.demo', role: 'learner', status: 'suspended', demo: true, enrolledCourses: ['course-001'] },
+    { id: 'stu-005', name: 'Elena Rodriguez', email: 'elena@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-003', 'course-005'] },
+    { id: 'stu-006', name: 'Omar Hassan', email: 'omar@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-004'] },
+    { id: 'stu-007', name: 'Lily Zhang', email: 'lily@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: [] },
+  ],
+  // A learner who has applied to become a creator (shows up in the admin approval queue).
+  applicants: [
+    { id: 'stu-008', name: 'Daniel Reyes', email: 'daniel@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-001'], creatorStatus: 'pending', creatorProfile: { displayName: 'Daniel Reyes', bio: 'Full-stack developer who wants to publish a React testing course.' } },
   ],
 };
 
@@ -64,6 +92,7 @@ export const DEMO_COURSES = [
     description: 'Master firewalls, intrusion detection, VPNs, cryptography, and secure network architecture principles.',
     creatorId: 'creator-001',
     status: 'active',
+    visibility: 'invite_only',
     videoCount: 1,
     enrolledCount: 2,
     createdAt: '2024-04-01T08:30:00Z',
@@ -79,6 +108,17 @@ export const DEMO_COURSES = [
     enrolledCount: 1,
     createdAt: '2024-04-15T11:00:00Z',
     thumbnail: '#171717',
+  },
+  {
+    id: 'course-006',
+    title: 'Data Visualization with D3',
+    description: 'Turn raw data into interactive, accessible charts. Scales, axes, transitions and responsive SVG layouts.',
+    creatorId: 'creator-002',
+    status: 'active',
+    videoCount: 1,
+    enrolledCount: 1,
+    createdAt: '2024-05-10T09:00:00Z',
+    thumbnail: '#3a0d12',
   },
 ];
 
@@ -185,6 +225,23 @@ export const DEMO_VIDEOS = [
     sessions: 18,
     thumbnail: null,
   },
+  {
+    id: 'vid-007',
+    title: 'D3 Scales, Axes and Your First Chart',
+    description: 'Build a bar chart from scratch: linear and band scales, axes, margins and responsive resizing.',
+    courseId: 'course-006',
+    courseName: 'Data Visualization with D3',
+    creatorId: 'creator-002',
+    duration: '36:40',
+    durationSeconds: 2200,
+    fileSize: '1.1 GB',
+    uploadDate: '2024-05-10T09:00:00Z',
+    encryptionStatus: 'encrypted',
+    protectionStatus: 'protected',
+    uploadStatus: 'complete',
+    sessions: 12,
+    thumbnail: null,
+  },
 ];
 
 const now = new Date();
@@ -203,6 +260,8 @@ export const DEMO_ACCESS_LOGS = [
   { id: 'log-010', timestamp: ts(75), userId: 'stu-001', userName: 'Sarah Chen', videoId: 'vid-006', videoTitle: 'Secure Coding Fundamentals', courseId: 'course-005', eventType: 'access_denied', result: 'denied', reason: 'Enrollment verification failed — not enrolled', sessionRef: 'sess-s9t0', tokenRef: null },
   { id: 'log-011', timestamp: ts(90), userId: 'stu-006', userName: 'Omar Hassan', videoId: 'vid-005', videoTitle: 'Network Security Fundamentals', courseId: 'course-004', eventType: 'stream_authorized', result: 'success', reason: 'Enrollment verified, token issued', sessionRef: 'sess-u1v2', tokenRef: 'tok-g9h0' },
   { id: 'log-012', timestamp: ts(110), userId: 'unknown', userName: 'Unknown', videoId: 'vid-003', videoTitle: 'Advanced JS Masterclass', courseId: 'course-002', eventType: 'token_expired', result: 'denied', reason: 'Expired token reuse attempt detected', sessionRef: 'sess-w3x4', tokenRef: 'tok-exp-002' },
+  { id: 'log-013', timestamp: ts(8), userId: 'stu-002', userName: 'Marcus Johnson', videoId: 'vid-007', videoTitle: 'D3 Scales, Axes and Your First Chart', courseId: 'course-006', eventType: 'stream_authorized', result: 'success', reason: 'Enrollment verified, token issued', sessionRef: 'sess-y5z6', tokenRef: 'tok-i1j2' },
+  { id: 'log-014', timestamp: ts(33), userId: 'stu-006', userName: 'Omar Hassan', videoId: 'vid-007', videoTitle: 'D3 Scales, Axes and Your First Chart', courseId: 'course-006', eventType: 'access_denied', result: 'denied', reason: 'Enrollment verification failed — not enrolled', sessionRef: 'sess-a7b8', tokenRef: null },
 ];
 
 export const DEMO_SECURITY_ALERTS = [
@@ -274,6 +333,20 @@ export const DEMO_SECURITY_ALERTS = [
     explanation: 'A streaming request was received with a token that could not be matched to any issued session record. The token format appears valid but no corresponding issuance log exists. This may indicate token forgery or a logging failure.',
     reviewStatus: 'open',
     recommendedAction: 'Investigate token validity. Check session logs for gaps. Verify token signing integrity. Consider rotating signing secrets if forgery is suspected.',
+    resolvedAt: null,
+  },
+  {
+    id: 'alert-006',
+    severity: 'low',
+    alertType: 'enrollment_failure',
+    timestamp: ts(33),
+    userId: 'stu-006',
+    userName: 'Omar Hassan',
+    videoId: 'vid-007',
+    videoTitle: 'D3 Scales, Axes and Your First Chart',
+    explanation: 'Account stu-006 attempted to open a video from a course they are not enrolled in. Single event.',
+    reviewStatus: 'open',
+    recommendedAction: 'No immediate action required. Monitor for repeated attempts.',
     resolvedAt: null,
   },
 ];

@@ -2,31 +2,30 @@
 // SECURITY ALERTS — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
-import { ShieldAlert, CheckCircle, Eye, Search, Filter } from 'lucide-react';
+import { useState } from 'react';
+import { ShieldAlert, CheckCircle, Eye } from 'lucide-react';
 import { getSecurityAlerts, updateAlertStatus } from '../services/mockServices';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
 
 export default function SecurityAlertsPage() {
-  const { showNotification } = useApp();
-  const [alerts, setAlerts] = useState([]);
+  const { currentUser, showNotification } = useApp();
+  const [alerts, setAlerts] = useState(() => getSecurityAlerts(currentUser.id));
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedAlert, setSelectedAlert] = useState(null);
 
-  useEffect(() => {
-    setAlerts(getSecurityAlerts());
-  }, []);
-
-  const refresh = () => setAlerts(getSecurityAlerts());
+  const refresh = () => setAlerts(getSecurityAlerts(currentUser.id));
 
   const handleUpdateStatus = (alertId, newStatus) => {
-    updateAlertStatus(alertId, newStatus);
+    if (!updateAlertStatus(alertId, newStatus, currentUser.id)) {
+      showNotification('Alert not found.', 'error');
+      return;
+    }
     refresh();
     if (selectedAlert?.id === alertId) {
-      const updated = getSecurityAlerts().find(a => a.id === alertId);
+      const updated = getSecurityAlerts(currentUser.id).find(a => a.id === alertId);
       setSelectedAlert(updated);
     }
     showNotification(`Alert marked as ${newStatus}.`);

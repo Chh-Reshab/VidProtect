@@ -2,7 +2,7 @@
 // SETTINGS — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Save, LogOut, Shield, Bell, User, Lock } from 'lucide-react';
 import { getSettings, updateSettings } from '../services/mockServices';
@@ -57,12 +57,8 @@ const SettingsSection = ({ title, icon: Icon, children }) => (
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { logout, currentUser, showNotification } = useApp();
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState(() => getSettings(currentUser));
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setSettings(getSettings());
-  }, []);
 
   const update = (path, value) => {
     setSettings(prev => {
@@ -80,7 +76,7 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    updateSettings(settings);
+    updateSettings(currentUser, settings);
     setSaved(true);
     showNotification('Settings saved.');
     setTimeout(() => setSaved(false), 3000);
@@ -202,7 +198,7 @@ export default function SettingsPage() {
               <button className="btn btn-primary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={handleSave}>
                 <Save size={14} /> SAVE ALL SETTINGS
               </button>
-              <button className="btn btn-secondary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={() => navigate('/app/overview')}>
+              <button className="btn btn-secondary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={() => navigate('/studio/overview')}>
                 RETURN TO DASHBOARD
               </button>
               <button className="btn btn-danger" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={handleLogout}>

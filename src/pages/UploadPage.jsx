@@ -18,9 +18,9 @@ const STAGES = [
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { showNotification, refreshStats } = useApp();
+  const { currentUser, showNotification, refreshStats } = useApp();
   const fileRef = useRef(null);
-  const [courses] = useState(getCourses);
+  const [courses] = useState(() => getCourses(currentUser.id));
   const [file, setFile] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [errors, setErrors] = useState({});
@@ -91,17 +91,23 @@ export default function UploadPage() {
 
     // Create video record
     const course = courses.find(c => c.id === form.courseId);
-    const newVideo = uploadVideo({
+    const result = uploadVideo(currentUser.id, {
       title: form.title,
       description: form.description,
       courseId: form.courseId,
       courseName: course?.title || '',
       duration: '--:--',
       fileSize: file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : '0 MB',
-      creatorId: 'creator-001',
     });
 
-    setNewVideoId(newVideo.id);
+    if (!result.success) {
+      showNotification(result.error, 'error');
+      setStage(null);
+      setProgress(0);
+      return;
+    }
+
+    setNewVideoId(result.video.id);
     setStage('done');
     setProgress(100);
     refreshStats();
@@ -150,7 +156,7 @@ export default function UploadPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-            <button className="btn btn-primary" style={{ fontSize: '0.7rem' }} onClick={() => navigate(`/app/video/${newVideoId}`)}>
+            <button className="btn btn-primary" style={{ fontSize: '0.7rem' }} onClick={() => navigate(`/studio/video/${newVideoId}`)}>
               VIEW DETAILS
             </button>
             <button className="btn btn-secondary" style={{ fontSize: '0.7rem' }} onClick={() => {

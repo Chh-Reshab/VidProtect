@@ -10,9 +10,8 @@ import {
 } from 'lucide-react';
 import {
   getVideoById, getCourseById, checkEnrollment, createDemoStreamToken,
-  recordAccessEvent,
+  recordAccessEvent, getUsers,
 } from '../services/mockServices';
-import { DEMO_USERS as USERS } from '../data/seedData';
 import { useApp } from '../context/AppContext';
 import {
   SectionLabel, DemoBanner, VideoThumbnail,
@@ -146,7 +145,7 @@ export default function VideoDetailPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { showNotification } = useApp();
+  const { currentUser, showNotification } = useApp();
   const [video, setVideo] = useState(null);
   const [course, setCourse] = useState(null);
 
@@ -162,7 +161,8 @@ export default function VideoDetailPage() {
 
   useEffect(() => {
     const v = getVideoById(id);
-    if (!v) { navigate('/app/library'); return; }
+    // Creators can only open their own videos (same response as a missing video)
+    if (!v || v.creatorId !== currentUser.id) { navigate('/studio/library'); return; }
     setVideo(v);
     setCourse(getCourseById(v.courseId));
     if (autoPlay) {
@@ -170,7 +170,7 @@ export default function VideoDetailPage() {
     }
   }, [id]);
 
-  const students = USERS.students;
+  const students = getUsers().filter(u => u.role === 'learner');
 
   const handleVerify = async () => {
     if (!selectedStudent && scenario !== 'expired') {
@@ -250,7 +250,7 @@ export default function VideoDetailPage() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       {/* Back */}
-      <button className="btn btn-ghost" style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }} onClick={() => navigate('/app/library')}>
+      <button className="btn btn-ghost" style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }} onClick={() => navigate('/studio/library')}>
         <ChevronLeft size={14} /> BACK TO LIBRARY
       </button>
 

@@ -2,9 +2,10 @@
 // ACCESS LOGS — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ScrollText, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAccessLogs } from '../services/mockServices';
+import { useApp } from '../context/AppContext';
 import { SectionLabel, ResultBadge, SearchInput, SelectFilter, EmptyState, Modal, DemoBanner } from '../components/SharedComponents';
 
 const EVENT_TYPES = [
@@ -13,21 +14,19 @@ const EVENT_TYPES = [
   { value: 'token_expired', label: 'Token Expired' },
   { value: 'repeated_attempt', label: 'Repeated Attempt' },
   { value: 'suspicious_session', label: 'Suspicious Session' },
+  { value: 'creator_preview', label: 'Owner Preview' },
 ];
 
 const PAGE_SIZE = 10;
 
 export default function AccessLogsPage() {
-  const [logs, setLogs] = useState([]);
+  const { currentUser } = useApp();
+  const [logs] = useState(() => getAccessLogs(currentUser.id));
   const [search, setSearch] = useState('');
   const [resultFilter, setResultFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedLog, setSelectedLog] = useState(null);
-
-  useEffect(() => {
-    setLogs(getAccessLogs());
-  }, []);
 
   const filtered = logs.filter(log => {
     const matchSearch = !search || log.userName?.toLowerCase().includes(search.toLowerCase()) || log.videoTitle?.toLowerCase().includes(search.toLowerCase()) || log.sessionRef?.includes(search);

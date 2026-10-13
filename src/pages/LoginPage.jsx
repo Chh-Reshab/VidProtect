@@ -8,6 +8,13 @@ import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authLogin, authRegister } from '../services/mockServices';
 import { Logo } from '../components/SharedComponents';
+import { homeFor } from '../auth/permissions';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Learner', email: 'sarah@student.demo' },
+  { label: 'Creator', email: 'creator@vidprotect.demo' },
+  { label: 'Admin', email: 'admin@vidprotect.demo' },
+];
 
 export default function LoginPage() {
   const { login, showNotification } = useApp();
@@ -35,12 +42,12 @@ export default function LoginPage() {
     if (!loginEmail || !loginPassword) { setError('Email and password are required.'); return; }
     setLoading(true);
     await new Promise(r => setTimeout(r, 800)); // Simulate network delay
-    const result = authLogin(loginEmail, loginPassword);
+    const result = await authLogin(loginEmail, loginPassword);
     setLoading(false);
     if (result.success) {
       login(result.user);
       showNotification(`Welcome back, ${result.user.name}!`);
-      navigate('/app/overview');
+      navigate(homeFor(result.user));
     } else {
       setError(result.error);
     }
@@ -51,10 +58,10 @@ export default function LoginPage() {
     setError('');
     if (!regName || !regEmail || !regPassword) { setError('All fields are required.'); return; }
     if (regPassword !== regConfirm) { setError('Passwords do not match.'); return; }
-    if (regPassword.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (regPassword.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setLoading(true);
     await new Promise(r => setTimeout(r, 1000));
-    const result = authRegister(regName, regEmail, regPassword);
+    const result = await authRegister(regName, regEmail, regPassword);
     setLoading(false);
     if (result.success) {
       setSuccess(result.message);
@@ -65,8 +72,8 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemo = () => {
-    setLoginEmail('creator@vidprotect.demo');
+  const fillDemo = (email) => {
+    setLoginEmail(email);
     setLoginPassword('demo1234');
     setError('');
   };
@@ -134,17 +141,20 @@ export default function LoginPage() {
                     SECURE ACCESS
                   </h1>
                   <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>
-                    Sign in to your VidProtect AI creator account.
+                    Sign in to your VidProtect AI account.
                   </p>
                 </div>
 
                 {/* Demo banner */}
                 <div style={{ background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #FF2028', padding: '0.75rem 1rem', marginBottom: '1.5rem' }}>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.3rem' }}>DEMO CREDENTIALS</div>
-                  <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>creator@vidprotect.demo / demo1234</div>
-                  <button onClick={fillDemo} className="btn btn-ghost" style={{ marginTop: '0.5rem', fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>
-                    AUTO-FILL DEMO
-                  </button>
+                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.3rem' }}>DEMO ACCOUNTS · PASSWORD demo1234</div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                    {DEMO_ACCOUNTS.map(a => (
+                      <button key={a.email} type="button" onClick={() => fillDemo(a.email)} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>
+                        {a.label.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {success && (
@@ -167,7 +177,7 @@ export default function LoginPage() {
                       id="login-email"
                       type="email"
                       className="form-input"
-                      placeholder="creator@example.com"
+                      placeholder="you@example.com"
                       value={loginEmail}
                       onChange={e => setLoginEmail(e.target.value)}
                       autoComplete="email"
@@ -219,7 +229,7 @@ export default function LoginPage() {
                     CREATE ACCOUNT
                   </h1>
                   <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>
-                    Register a new VidProtect AI creator account.
+                    Join as a learner. You can apply to become a creator later.
                   </p>
                 </div>
 
@@ -236,12 +246,12 @@ export default function LoginPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-email">Email Address</label>
-                    <input id="reg-email" type="email" className="form-input" placeholder="creator@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+                    <input id="reg-email" type="email" className="form-input" placeholder="you@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-password">Password</label>
                     <div style={{ position: 'relative' }}>
-                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 6 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
+                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
                       <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#565656', cursor: 'pointer' }}>
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>

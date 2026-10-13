@@ -2,27 +2,22 @@
 // VIDEO LIBRARY — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, Search, Filter, Shield, Clock, Play, Info, Trash2, Video } from 'lucide-react';
+import { Upload, Clock, Play, Info, Trash2, Video } from 'lucide-react';
 import { getVideos, getCourses, deleteVideo } from '../services/mockServices';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, StatusBadge, EmptyState, ConfirmDialog, VideoThumbnail, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
+import { SectionLabel, EmptyState, ConfirmDialog, VideoThumbnail, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
 
 export default function LibraryPage() {
   const navigate = useNavigate();
-  const { showNotification, refreshStats } = useApp();
-  const [videos, setVideos] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const { currentUser, showNotification, refreshStats } = useApp();
+  const [videos, setVideos] = useState(() => getVideos(currentUser.id));
+  const [courses] = useState(() => getCourses(currentUser.id));
   const [search, setSearch] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [deleteId, setDeleteId] = useState(null);
-
-  useEffect(() => {
-    setVideos(getVideos());
-    setCourses(getCourses());
-  }, []);
 
   const filtered = videos.filter(v => {
     const matchSearch = !search || v.title.toLowerCase().includes(search.toLowerCase()) || v.courseName?.toLowerCase().includes(search.toLowerCase());
@@ -32,8 +27,9 @@ export default function LibraryPage() {
   });
 
   const handleDelete = (id) => {
-    deleteVideo(id);
-    setVideos(getVideos());
+    const result = deleteVideo(currentUser.id, id);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    setVideos(getVideos(currentUser.id));
     refreshStats();
     showNotification('Video removed from library.');
   };
@@ -58,7 +54,7 @@ export default function LibraryPage() {
             {videos.length} protected video{videos.length !== 1 ? 's' : ''} in your library.
           </p>
         </div>
-        <Link to="/app/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>
+        <Link to="/studio/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>
           <Upload size={14} /> UPLOAD VIDEO
         </Link>
       </div>
@@ -83,7 +79,7 @@ export default function LibraryPage() {
           icon={Video}
           title="No Videos Found"
           description={search ? `No videos match "${search}"` : 'Upload your first video to get started.'}
-          action={<Link to="/app/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}><Upload size={14} /> UPLOAD VIDEO</Link>}
+          action={<Link to="/studio/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}><Upload size={14} /> UPLOAD VIDEO</Link>}
         />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1px', background: '#292929', border: '1px solid #292929' }}>
@@ -91,8 +87,8 @@ export default function LibraryPage() {
             <VideoCard
               key={video.id}
               video={video}
-              onOpen={() => navigate(`/app/video/${video.id}`)}
-              onPlay={() => navigate(`/app/video/${video.id}?play=1`)}
+              onOpen={() => navigate(`/studio/video/${video.id}`)}
+              onPlay={() => navigate(`/studio/video/${video.id}?play=1`)}
               onDelete={() => setDeleteId(video.id)}
               formatDate={formatDate}
             />

@@ -2,9 +2,9 @@
 // DASHBOARD OVERVIEW — VidProtect AI
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Video, Users, Play, ShieldAlert, Upload, BookOpen, ArrowRight, Activity, Lock, Shield } from 'lucide-react';
+import { Video, Users, Play, ShieldAlert, Upload, BookOpen, ArrowRight, Activity, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getAccessLogs, getSecurityAlerts } from '../services/mockServices';
 import { KpiCard, SectionLabel, DemoBanner, ProtectionStatusPanel, ResultBadge, SeverityBadge } from '../components/SharedComponents';
@@ -12,13 +12,10 @@ import { KpiCard, SectionLabel, DemoBanner, ProtectionStatusPanel, ResultBadge, 
 export default function OverviewPage() {
   const { dashboardStats, currentUser } = useApp();
   const navigate = useNavigate();
-  const [recentLogs, setRecentLogs] = useState([]);
-  const [recentAlerts, setRecentAlerts] = useState([]);
-
-  useEffect(() => {
-    setRecentLogs(getAccessLogs().slice(0, 5));
-    setRecentAlerts(getSecurityAlerts().filter(a => a.reviewStatus === 'open').slice(0, 3));
-  }, []);
+  // Everything on this page is scoped to the signed-in creator's own content
+  const [recentLogs] = useState(() => getAccessLogs(currentUser.id).slice(0, 5));
+  const [recentAlerts] = useState(() =>
+    getSecurityAlerts(currentUser.id).filter(a => a.reviewStatus === 'open').slice(0, 3));
 
   const formatTime = (iso) => {
     const d = new Date(iso);
@@ -46,10 +43,10 @@ export default function OverviewPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Link to="/app/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>
+          <Link to="/studio/upload" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>
             <Upload size={14} /> UPLOAD VIDEO
           </Link>
-          <Link to="/app/alerts" className="btn btn-secondary" style={{ fontSize: '0.7rem' }}>
+          <Link to="/studio/alerts" className="btn btn-secondary" style={{ fontSize: '0.7rem' }}>
             <ShieldAlert size={14} /> REVIEW ALERTS
           </Link>
         </div>
@@ -61,14 +58,14 @@ export default function OverviewPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: '#292929', border: '1px solid #292929', marginBottom: '2rem' }}>
         <KpiCard
           label="PROTECTED VIDEOS"
-          value={dashboardStats?.protectedVideos ?? 6}
+          value={dashboardStats?.protectedVideos ?? 0}
           sublabel="AES-256 encrypted (demo)"
           icon={Lock}
           accent
         />
         <KpiCard
           label="ENROLLED LEARNERS"
-          value={dashboardStats?.enrolledLearners ?? 7}
+          value={dashboardStats?.enrolledLearners ?? 0}
           sublabel="Across all courses"
           icon={Users}
         />
@@ -96,11 +93,11 @@ export default function OverviewPage() {
           <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.65rem' }}>QUICK ACTIONS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {[
-              { label: 'Upload New Video', icon: Upload, to: '/app/upload', variant: 'primary' },
-              { label: 'View Video Library', icon: Video, to: '/app/library', variant: 'secondary' },
-              { label: 'Manage Enrollments', icon: BookOpen, to: '/app/courses', variant: 'secondary' },
-              { label: 'Review Security Alerts', icon: ShieldAlert, to: '/app/alerts', variant: 'secondary' },
-              { label: 'View Access Logs', icon: Activity, to: '/app/logs', variant: 'secondary' },
+              { label: 'Upload New Video', icon: Upload, to: '/studio/upload', variant: 'primary' },
+              { label: 'View Video Library', icon: Video, to: '/studio/library', variant: 'secondary' },
+              { label: 'Manage Enrollments', icon: BookOpen, to: '/studio/courses', variant: 'secondary' },
+              { label: 'Review Security Alerts', icon: ShieldAlert, to: '/studio/alerts', variant: 'secondary' },
+              { label: 'View Access Logs', icon: Activity, to: '/studio/logs', variant: 'secondary' },
             ].map(action => (
               <Link key={action.label} to={action.to} className={`btn btn-${action.variant}`} style={{ fontSize: '0.7rem', justifyContent: 'space-between', width: '100%' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -118,7 +115,7 @@ export default function OverviewPage() {
       <div style={{ marginTop: '2rem', background: '#1D1D1D', border: '1px solid #292929' }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="mono" style={{ color: '#A0A0A0', fontSize: '0.65rem' }}>RECENT ACCESS ACTIVITY</div>
-          <Link to="/app/logs" className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>VIEW ALL</Link>
+          <Link to="/studio/logs" className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>VIEW ALL</Link>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="vp-table">
@@ -154,7 +151,7 @@ export default function OverviewPage() {
               <ShieldAlert size={16} color="#FF2028" />
               <div className="mono" style={{ color: '#FF2028', fontSize: '0.65rem' }}>OPEN SECURITY ALERTS — ACTION REQUIRED</div>
             </div>
-            <Link to="/app/alerts" className="btn btn-danger" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>REVIEW ALL</Link>
+            <Link to="/studio/alerts" className="btn btn-danger" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>REVIEW ALL</Link>
           </div>
           {recentAlerts.map(alert => (
             <div key={alert.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929' }}>
@@ -166,7 +163,7 @@ export default function OverviewPage() {
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#A0A0A0', maxWidth: '600px' }}>{alert.explanation.substring(0, 120)}...</div>
                 </div>
-                <button onClick={() => navigate('/app/alerts')} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }}>
+                <button onClick={() => navigate('/studio/alerts')} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }}>
                   REVIEW
                 </button>
               </div>
