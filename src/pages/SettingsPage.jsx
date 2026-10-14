@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Save, LogOut, Shield, Bell, User, Lock } from 'lucide-react';
-import { getSettings, updateSettings } from '../services/mockServices';
+import { getSettings, updateSettings } from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, DemoBanner } from '../components/SharedComponents';
 
@@ -75,15 +75,16 @@ export default function SettingsPage() {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    updateSettings(currentUser, settings);
+  const handleSave = async () => {
+    const result = await updateSettings(currentUser, settings);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
     setSaved(true);
     showNotification('Settings saved.');
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { UserCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { getUsers, reviewCreatorApplication } from '../../services/mockServices';
+import { getUsers, reviewCreatorApplication } from '../../services/dataService';
 import { EmptyState, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
@@ -13,8 +13,8 @@ export default function AdminCreators() {
   const { currentUser, showNotification } = useApp();
   const [applicants, setApplicants] = useState(() => getUsers().filter(u => u.creatorStatus === 'pending'));
 
-  const decide = (user, approve) => {
-    const result = reviewCreatorApplication(currentUser.id, user.id, approve);
+  const decide = async (user, approve) => {
+    const result = await reviewCreatorApplication(currentUser.id, user.id, approve);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setApplicants(getUsers().filter(u => u.creatorStatus === 'pending'));
     showNotification(approve ? `${user.name} is now a creator.` : `Application from ${user.name} rejected.`);

@@ -40,7 +40,12 @@ const LegacyRedirect = () => {
 };
 
 const AppRoutes = () => {
-  const { currentUser, isAuthenticated } = useApp();
+  const { currentUser, isAuthenticated, ready } = useApp();
+
+  // Wait until we know whether the refresh cookie restores a session
+  if (!ready) {
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>;
+  }
 
   return (
     <Routes>

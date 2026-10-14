@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { History } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { getWatchHistory } from '../../services/mockServices';
+import { getWatchHistory } from '../../services/dataService';
 import { ResultBadge, EmptyState, SelectFilter, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 

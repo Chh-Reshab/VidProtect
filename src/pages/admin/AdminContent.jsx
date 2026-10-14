@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { getCourses, getVideos, getUserById, moderateCourse, deleteVideo } from '../../services/mockServices';
+import { getCourses, getVideos, getUserById, moderateCourse, deleteVideo } from '../../services/dataService';
 import { ConfirmDialog, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
@@ -16,15 +16,15 @@ export default function AdminContent() {
   const [videos, setVideos] = useState(getVideos);
   const [removeTarget, setRemoveTarget] = useState(null);
 
-  const toggleCourse = (course) => {
-    const result = moderateCourse(currentUser.id, course.id, course.status !== 'taken_down');
+  const toggleCourse = async (course) => {
+    const result = await moderateCourse(currentUser.id, course.id, course.status !== 'taken_down');
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setCourses(getCourses());
     showNotification(course.status === 'taken_down' ? 'Course restored as a draft.' : 'Course taken down.');
   };
 
-  const removeVideo = () => {
-    const result = deleteVideo(currentUser.id, removeTarget.id);
+  const removeVideo = async () => {
+    const result = await deleteVideo(currentUser.id, removeTarget.id);
     if (!result.success) showNotification(result.error, 'error');
     else showNotification('Video removed.');
     setVideos(getVideos());
@@ -68,6 +68,9 @@ export default function AdminContent() {
               <div style={{ fontSize: '0.9rem', color: '#F8F8F8' }}>{v.title}</div>
               <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{v.courseName} · BY {getUserById(v.creatorId)?.name || v.creatorId}</div>
             </div>
+            {v.encryptionStatus === 'encrypted'
+              ? <span className="badge badge-green" style={{ fontSize: '0.5rem' }}>AES-256</span>
+              : <span className="badge badge-grey" style={{ fontSize: '0.5rem' }}>UNENCRYPTED</span>}
             <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.7rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setRemoveTarget(v)}>REMOVE</button>
           </div>
         ))}

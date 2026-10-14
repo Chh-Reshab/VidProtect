@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { ShieldAlert, CheckCircle, Eye } from 'lucide-react';
-import { getSecurityAlerts, updateAlertStatus } from '../services/mockServices';
+import { getSecurityAlerts, updateAlertStatus } from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
 
@@ -18,8 +18,8 @@ export default function SecurityAlertsPage() {
 
   const refresh = () => setAlerts(getSecurityAlerts(currentUser.id));
 
-  const handleUpdateStatus = (alertId, newStatus) => {
-    if (!updateAlertStatus(alertId, newStatus, currentUser.id)) {
+  const handleUpdateStatus = async (alertId, newStatus) => {
+    if (!(await updateAlertStatus(alertId, newStatus))) {
       showNotification('Alert not found.', 'error');
       return;
     }
@@ -49,7 +49,14 @@ export default function SecurityAlertsPage() {
     return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   };
 
-  const alertTypeLabel = (type) => type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const alertTypeLabel = (type) => {
+    const labels = {
+      repeated_denial: 'Repeated Access Denial',
+      velocity_burst: 'Velocity Burst (Scraping Risk)',
+      off_hours_access: 'Off-Hours Access Pattern',
+    };
+    return labels[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   const statusColor = { open: '#FF2028', reviewed: '#eab308', resolved: '#22c55e' };
 
@@ -215,7 +222,7 @@ export default function SecurityAlertsPage() {
 
             <div style={{ padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
               <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>
-                ◐ DEMO ALERT — Rule-based simulation. Not connected to a live AI detection service.
+                ◈ AI ANOMALY DETECTION — Rule-based engine running server-side on every access event. Velocity · Denials · Off-hours patterns.
               </span>
             </div>
           </div>

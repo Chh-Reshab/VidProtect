@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Clapperboard, Clock, XCircle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { changePassword, requestCreatorAccess } from '../../services/mockServices';
+import { changePassword, requestCreatorAccess } from '../../services/dataService';
 import { DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
@@ -28,11 +28,11 @@ export default function LearnerAccount() {
     showNotification('Password updated.');
   };
 
-  const handleApply = (e) => {
+  const handleApply = async (e) => {
     e.preventDefault();
-    const result = requestCreatorAccess(currentUser.id, apply);
+    const result = await requestCreatorAccess(currentUser.id, apply);
     if (!result.success) { showNotification(result.error, 'error'); return; }
-    refreshUser();
+    await refreshUser();
     showNotification('Application submitted. An admin will review it.');
   };
 
@@ -111,7 +111,7 @@ export default function LearnerAccount() {
         </form>
       </Panel>
 
-      <button className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => { logout(); navigate('/'); }}>
+      <button className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={async () => { await logout(); navigate('/'); }}>
         <LogOut size={14} /> SIGN OUT
       </button>
     </div>

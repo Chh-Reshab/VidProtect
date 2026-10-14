@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Video, Users, Play, ShieldAlert, Upload, BookOpen, ArrowRight, Activity, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getAccessLogs, getSecurityAlerts } from '../services/mockServices';
+import { getAccessLogs, getSecurityAlerts } from '../services/dataService';
 import { KpiCard, SectionLabel, DemoBanner, ProtectionStatusPanel, ResultBadge, SeverityBadge } from '../components/SharedComponents';
 
 export default function OverviewPage() {

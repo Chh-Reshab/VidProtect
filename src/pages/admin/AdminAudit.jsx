@@ -3,7 +3,7 @@
 // ============================================
 
 import { ClipboardList } from 'lucide-react';
-import { getAuditLog, getUserById } from '../../services/mockServices';
+import { getAuditLog, getUserById } from '../../services/dataService';
 import { EmptyState, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 

@@ -1,21 +1,26 @@
 // ============================================
-// SECURE PLAYER — requests a stream token, plays (simulated),
-// saves progress, renews the token, shows a watermark.
-// Access is decided by requestStreamAccess(); a real backend
-// would make the same checks before signing any stream URL.
+// SECURE PLAYER
+//  - asks the server for a playback session (enrollment is checked there)
+//  - streams the real file with HTTP range requests; the server re-checks
+//    access on every request, so a suspension or unenrolment stops playback
+//  - renews the 5-minute session while watching, saves progress, shows a watermark
+// Seeded sample videos have no media file and use a simulated clock instead.
 // ============================================
 
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronLeft, Play, Pause, RotateCcw, RotateCw, Lock, XCircle, Shield, SkipForward } from 'lucide-react';
+import {
+  ChevronLeft, Play, Pause, RotateCcw, RotateCw, Lock, XCircle, Shield, SkipForward, Maximize,
+} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
-  requestStreamAccess, saveProgress, getProgressMap, getCourseVideos,
-} from '../../services/mockServices';
+  startStream, renewStream, streamUrl, saveProgress, getProgressMap, getCourseVideos,
+} from '../../services/dataService';
 import { TokenCountdown } from '../../components/SharedComponents';
 import { formatDuration } from '../../components/DashboardKit';
 
-const SPEEDS = [1, 10, 60]; // demo speeds so a 40-minute video can be finished in a minute
+const MEDIA_SPEEDS = [1, 1.25, 1.5, 2];
+const SIM_SPEEDS = [1, 10, 60]; // sample videos only: finish a 40-minute video in a minute
 
 const Denied = ({ reason }) => (
   <div style={{ padding: '2rem' }}>
@@ -31,51 +36,68 @@ const Denied = ({ reason }) => (
 
 const Player = ({ access, user }) => {
   const { video, course } = access;
-  const duration = video.durationSeconds || 600;
+  const hasMedia = !!video.hasMedia;
 
   const [token, setToken] = useState(access.token);
+  const [duration, setDuration] = useState(video.durationSeconds || 600);
   const [position, setPosition] = useState(() => {
-    const p = getProgressMap(user.id)[video.id];
+    const p = getProgressMap()[video.id];
     return p && !p.completed ? p.positionSeconds : 0;
   });
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [stopReason, setStopReason] = useState(null);
+  const [mediaError, setMediaError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
+  const surfaceRef = useRef(null);
+  const mediaRef = useRef(null);
   const posRef = useRef(position);
+  const durRef = useRef(duration);
   const tickRef = useRef(0);
+  const retriedRef = useRef(false);
 
   const persist = () => {
-    if (posRef.current > 0) saveProgress(user.id, video.id, posRef.current, duration);
+    if (posRef.current > 0) saveProgress(user.id, video.id, posRef.current, durRef.current);
   };
 
-  // Playback clock
+  const stop = (reason) => {
+    persist();
+    mediaRef.current?.pause();
+    setPlaying(false);
+    setStopReason(reason);
+  };
+
+  // Simulated clock for sample videos with no file
   useEffect(() => {
-    if (!playing) return undefined;
+    if (hasMedia || !playing) return undefined;
     const timer = setInterval(() => {
-      posRef.current = Math.min(duration, posRef.current + speed);
+      posRef.current = Math.min(durRef.current, posRef.current + speed);
       setPosition(posRef.current);
       tickRef.current += 1;
       if (tickRef.current % 5 === 0) persist();
-      if (posRef.current >= duration) { persist(); setPlaying(false); }
+      if (posRef.current >= durRef.current) { persist(); setPlaying(false); }
     }, 1000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, speed, duration]);
+  }, [playing, speed, hasMedia]);
 
-  // Token renewal: tokens live 5 minutes; renew when <30s remain.
-  // Renewal re-runs every check, so a suspension or unenrolment stops playback.
+  // Real video: save progress every 5 seconds while playing
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (token.expiryMs - Date.now() > 30000) return;
-      const result = requestStreamAccess(user.id, video.id, { renew: true });
-      if (result.granted) {
-        setToken(result.token);
-      } else {
-        persist();
-        setPlaying(false);
-        setStopReason(result.reason);
-      }
+    if (!hasMedia || !playing) return undefined;
+    const timer = setInterval(persist, 5000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, hasMedia]);
+
+  // Keep the playback session alive. Renewal re-runs the server's access check,
+  // so a suspension or unenrolment ends playback here.
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      if (token.expiryMs - Date.now() > 60000) return;
+      const result = await renewStream(token.sessionId);
+      if (result.granted) setToken(result.token);
+      else stop(result.reason);
     }, 5000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,21 +108,79 @@ const Player = ({ access, user }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []);
 
+  // ── real <video> events ──
+  const onLoadedMetadata = () => {
+    const el = mediaRef.current;
+    if (!el) return;
+    if (Number.isFinite(el.duration) && el.duration > 0) {
+      durRef.current = el.duration;
+      setDuration(el.duration);
+    }
+    if (posRef.current > 0 && posRef.current < el.duration) el.currentTime = posRef.current; // resume
+    el.playbackRate = speed;
+    retriedRef.current = false;
+    setMediaError(null);
+  };
+
+  const onTimeUpdate = () => {
+    const el = mediaRef.current;
+    if (!el) return;
+    posRef.current = el.currentTime;
+    setPosition(el.currentTime);
+  };
+
+  // A failed load usually means the session lapsed (tab was in the background):
+  // renew once and reload at the same spot before blaming the file.
+  const onMediaError = async () => {
+    if (stopReason) return;
+    if (!retriedRef.current) {
+      retriedRef.current = true;
+      const result = await renewStream(token.sessionId);
+      if (result.granted) { setToken(result.token); setReloadKey(k => k + 1); return; }
+      stop(result.reason);
+      return;
+    }
+    setMediaError('This browser could not play the file. MP4 (H.264) and WebM play everywhere; MOV, MKV and AVI may not.');
+  };
+
   const seek = (to) => {
-    posRef.current = Math.max(0, Math.min(duration, to));
-    setPosition(posRef.current);
+    const clamped = Math.max(0, Math.min(durRef.current, to));
+    posRef.current = clamped;
+    setPosition(clamped);
+    if (hasMedia && mediaRef.current) mediaRef.current.currentTime = clamped;
   };
 
   const togglePlay = () => {
     if (stopReason) return;
+    if (hasMedia) {
+      const el = mediaRef.current;
+      if (!el) return;
+      if (el.paused) el.play().catch(() => setPlaying(false));
+      else el.pause();
+      return;
+    }
     if (playing) persist();
-    if (!playing && posRef.current >= duration) seek(0);
+    if (!playing && posRef.current >= durRef.current) seek(0);
     setPlaying(!playing);
+  };
+
+  const changeSpeed = (s) => {
+    setSpeed(s);
+    if (hasMedia && mediaRef.current) mediaRef.current.playbackRate = s;
+  };
+
+  const fullscreen = () => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen?.();
   };
 
   const siblings = getCourseVideos(course.id);
   const next = siblings[siblings.findIndex(v => v.id === video.id) + 1];
-  const finished = position >= duration;
+  const finished = position >= duration - 0.5 && duration > 0;
+  const speeds = hasMedia ? MEDIA_SPEEDS : SIM_SPEEDS;
+  const statusText = stopReason ? 'PLAYBACK STOPPED' : playing ? 'STREAMING' : finished ? 'FINISHED' : 'PAUSED';
 
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
@@ -111,24 +191,44 @@ const Player = ({ access, user }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '1.5rem', alignItems: 'flex-start' }} className="watch-grid">
         <div>
           {/* Player surface */}
-          <div style={{ position: 'relative', aspectRatio: '16 / 9', background: '#0a0a0a', border: '1px solid #292929', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.5 }} />
-            <div style={{ position: 'relative', textAlign: 'center' }}>
-              <Shield size={56} color="#FF2028" strokeWidth={1.2} />
-              <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginTop: '0.75rem' }}>
-                {stopReason ? 'PLAYBACK STOPPED' : playing ? 'STREAMING · ENCRYPTED' : finished ? 'FINISHED' : 'PAUSED'}
-              </div>
-              <div className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginTop: '0.25rem' }}>SIMULATED PLAYER — NO REAL VIDEO IN THIS DEMO</div>
-            </div>
+          <div ref={surfaceRef} style={{ position: 'relative', aspectRatio: '16 / 9', background: '#0a0a0a', border: '1px solid #292929', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {hasMedia ? (
+              <video
+                key={reloadKey}
+                ref={mediaRef}
+                src={streamUrl(video.id, token.sessionId)}
+                preload="metadata"
+                playsInline
+                controlsList="nodownload noremoteplayback"
+                disablePictureInPicture
+                onContextMenu={e => e.preventDefault()}
+                onLoadedMetadata={onLoadedMetadata}
+                onTimeUpdate={onTimeUpdate}
+                onPlay={() => setPlaying(true)}
+                onPause={() => { setPlaying(false); persist(); }}
+                onEnded={() => { setPlaying(false); persist(); }}
+                onError={onMediaError}
+                style={{ width: '100%', height: '100%', background: '#000', objectFit: 'contain' }}
+              />
+            ) : (
+              <>
+                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.5 }} />
+                <div style={{ position: 'relative', textAlign: 'center' }}>
+                  <Shield size={56} color="#FF2028" strokeWidth={1.2} />
+                  <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginTop: '0.75rem' }}>{statusText}</div>
+                  <div className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginTop: '0.25rem' }}>SAMPLE VIDEO — NO MEDIA FILE UPLOADED</div>
+                </div>
+              </>
+            )}
 
             {/* Dynamic watermark: identifies the viewer if the stream is recorded */}
-            <div className="vp-watermark mono">{user.email} · {token.sessionId}</div>
+            <div className="vp-watermark mono">{user.email} · {token.sessionId.slice(0, 12)}</div>
 
-            {stopReason && (
+            {(stopReason || mediaError) && (
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
                 <XCircle size={36} color="#FF2028" />
-                <div style={{ color: '#F8F8F8', fontSize: '0.9rem' }}>{stopReason}</div>
-                <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>STREAM TOKEN COULD NOT BE RENEWED</div>
+                <div style={{ color: '#F8F8F8', fontSize: '0.9rem', maxWidth: 420 }}>{stopReason || mediaError}</div>
+                {stopReason && <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>PLAYBACK SESSION COULD NOT BE RENEWED</div>}
               </div>
             )}
           </div>
@@ -136,7 +236,7 @@ const Player = ({ access, user }) => {
           {/* Controls */}
           <div style={{ background: '#171717', border: '1px solid #292929', borderTop: 'none', padding: '0.75rem 1rem' }}>
             <input
-              type="range" min={0} max={duration} value={position} disabled={!!stopReason}
+              type="range" min={0} max={Math.max(1, Math.floor(duration))} value={Math.min(Math.floor(position), Math.floor(duration))} disabled={!!stopReason}
               onChange={e => seek(Number(e.target.value))}
               aria-label="Seek"
               style={{ width: '100%', accentColor: '#FF2028' }}
@@ -149,10 +249,11 @@ const Player = ({ access, user }) => {
               <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem' }} onClick={() => seek(position + 10)} aria-label="Forward 10 seconds" disabled={!!stopReason}><RotateCw size={13} /></button>
               <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{formatDuration(position)} / {formatDuration(duration)}</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginRight: '0.25rem' }}>DEMO SPEED</span>
-                {SPEEDS.map(s => (
-                  <button key={s} onClick={() => setSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.6rem' }}>{s}×</button>
+                <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginRight: '0.25rem' }}>{hasMedia ? 'SPEED' : 'DEMO SPEED'}</span>
+                {speeds.map(s => (
+                  <button key={s} onClick={() => changeSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.6rem' }}>{s}×</button>
                 ))}
+                <button className="btn btn-ghost" style={{ padding: '0.3rem 0.5rem' }} onClick={fullscreen} aria-label="Fullscreen"><Maximize size={13} /></button>
               </div>
             </div>
           </div>
@@ -172,8 +273,9 @@ const Player = ({ access, user }) => {
           <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1rem' }}>
             <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.6rem' }}>SESSION PROTECTION</div>
             {[
-              'Enrollment verified',
-              'Short-lived stream token (5 min, auto-renewed)',
+              'Enrollment verified by the server',
+              'Checked again on every stream request',
+              '5-minute playback session, auto-renewed',
               'Viewer watermark on screen',
               'Access logged for the creator',
             ].map(t => (
@@ -189,7 +291,8 @@ const Player = ({ access, user }) => {
         .vp-watermark {
           position: absolute;
           font-size: 0.65rem;
-          color: rgba(248,248,248,0.28);
+          color: rgba(248,248,248,0.3);
+          text-shadow: 0 0 4px rgba(0,0,0,0.8);
           pointer-events: none;
           user-select: none;
           white-space: nowrap;
@@ -217,8 +320,8 @@ function WatchGate({ videoId }) {
   useEffect(() => {
     if (requested.current) return; // StrictMode runs effects twice in dev; log only once
     requested.current = true;
-    setAccess(requestStreamAccess(currentUser.id, videoId));
-  }, [currentUser.id, videoId]);
+    startStream(videoId).then(setAccess);
+  }, [videoId]);
 
   if (!access) {
     return <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}><div className="spinner" /></div>;
@@ -227,7 +330,7 @@ function WatchGate({ videoId }) {
   return <Player access={access} user={currentUser} />;
 }
 
-// key resets the gate (and the stream token) when moving to another video
+// key resets the gate (and the playback session) when moving to another video
 export default function LearnerWatch() {
   const { videoId } = useParams();
   return <WatchGate key={videoId} videoId={videoId} />;

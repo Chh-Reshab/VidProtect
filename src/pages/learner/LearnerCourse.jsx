@@ -8,7 +8,7 @@ import { ChevronLeft, CheckCircle, Lock, Play, Circle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
   getCourseById, getCourseVideos, getEnrollments, getProgressMap, getUserById, selfEnroll,
-} from '../../services/mockServices';
+} from '../../services/dataService';
 import { DemoBanner } from '../../components/SharedComponents';
 import { Panel, ProgressBar } from '../../components/DashboardKit';
 
@@ -34,8 +34,8 @@ export default function LearnerCourse() {
   const done = videos.filter(v => progress[v.id]?.completed).length;
   const percent = videos.length ? Math.round((done / videos.length) * 100) : 0;
 
-  const handleEnroll = () => {
-    const result = selfEnroll(currentUser.id, course.id);
+  const handleEnroll = async () => {
+    const result = await selfEnroll(currentUser.id, course.id);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setVersion(v => v + 1);
     showNotification('You are enrolled. Happy learning!');

@@ -1,65 +1,69 @@
 // ============================================
 // VIDPROTECT AI — APP CONTEXT
-// Auth session + global UI state
+// Auth session + global UI state.
+// The session lives in the server (httpOnly refresh cookie);
+// nothing identifying is kept in localStorage/sessionStorage.
 // ============================================
 
-import { createContext, useContext, useState, useCallback } from 'react';
-import { getDashboardStats, getUserById } from '../services/mockServices';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  getDashboardStats, getMe, loadData, restoreSession, authLogout, clearData,
+} from '../services/dataService';
+import { onAuthLost, setAccessToken } from '../services/api';
 
 const AppContext = createContext(null);
-
-// Only public fields are kept in the session (never a password or hash).
-// On load the user is re-read from the store so role/status changes
-// (e.g. an admin suspending the account) take effect immediately.
-const loadSessionUser = () => {
-  try {
-    const saved = JSON.parse(sessionStorage.getItem('vp_user'));
-    if (!saved?.id) return null;
-    const fresh = getUserById(saved.id);
-    return fresh && fresh.status === 'active' ? fresh : null;
-  } catch {
-    return null;
-  }
-};
 
 const statsFor = (user) =>
   user?.role === 'creator' ? getDashboardStats(user.id) : null;
 
 export const AppProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(loadSessionUser);
-  const [dashboardStats, setDashboardStats] = useState(() => statsFor(loadSessionUser()));
+  const [currentUser, setCurrentUser] = useState(null);
+  const [ready, setReady] = useState(false); // false until we know whether a session exists
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [notification, setNotification] = useState(null);
 
   const isAuthenticated = !!currentUser;
 
-  const refreshStats = useCallback(() => {
-    setDashboardStats(statsFor(currentUser));
-  }, [currentUser]);
-
-  // Re-read the signed-in user (after e.g. a creator application is approved)
-  const refreshUser = useCallback(() => {
-    if (!currentUser) return;
-    const fresh = getUserById(currentUser.id);
-    if (!fresh || fresh.status !== 'active') {
-      sessionStorage.removeItem('vp_user');
+  // Restore the session from the refresh cookie, and react to it dying later
+  useEffect(() => {
+    let alive = true;
+    restoreSession().then((user) => {
+      if (!alive) return;
+      setCurrentUser(user);
+      setDashboardStats(statsFor(user));
+      setReady(true);
+    });
+    onAuthLost(() => {
+      setAccessToken(null);
+      clearData();
       setCurrentUser(null);
-      return;
-    }
-    sessionStorage.setItem('vp_user', JSON.stringify(fresh));
+      setDashboardStats(null);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const refreshStats = useCallback(() => {
+    setDashboardStats(statsFor(getMe()));
+  }, []);
+
+  // Re-read the signed-in user from the server (e.g. a creator application was approved)
+  const refreshUser = useCallback(async () => {
+    const ok = await loadData();
+    const fresh = getMe();
+    if (!ok || !fresh) return;
     setCurrentUser(fresh);
     setDashboardStats(statsFor(fresh));
-  }, [currentUser]);
+  }, []);
 
   const login = (user) => {
     setCurrentUser(user);
-    sessionStorage.setItem('vp_user', JSON.stringify(user));
     setDashboardStats(statsFor(user));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authLogout();
     setCurrentUser(null);
     setDashboardStats(null);
-    sessionStorage.removeItem('vp_user');
   };
 
   const showNotification = (message, type = 'success') => {
@@ -71,6 +75,7 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       currentUser,
       isAuthenticated,
+      ready,
       dashboardStats,
       notification,
       login,

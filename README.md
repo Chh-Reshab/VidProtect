@@ -21,11 +21,18 @@ This repository contains the frontend web application, built with React and Vite
 
 Demo accounts (password `demo1234`): `sarah@student.demo` (learner), `creator@vidprotect.demo` and `maya@creator.demo` (creators), `admin@vidprotect.demo` (admin). New sign-ups are learners. `daniel@student.demo` has a pending creator application for the admin to review.
 
-> **Demo only:** auth and authorization run in the browser with `localStorage`, so they can be bypassed with DevTools. The rules (role guards, ownership checks, enrollment check before any stream token) are written the way a backend must enforce them. See [docs/PLAN-roles-auth-dashboards.md](docs/PLAN-roles-auth-dashboards.md) for the backend plan.
+Everything is enforced by the **Express API** in `server/`: JWT access tokens (15 min, in memory) plus an httpOnly rotating refresh cookie, role checks and ownership checks on every request, and an enrollment check on every video byte-range request. See [docs/PLAN-roles-auth-dashboards.md](docs/PLAN-roles-auth-dashboards.md) for the full design.
+
+### Real video uploads
+Creators upload real video files (MP4, WebM, MOV, MKV, AVI, up to 2 GB) through `POST /api/courses/:id/videos`. The server verifies course ownership *before* accepting the file, checks the real file signature, stores it under a random name in `server/uploads/`, and streams it back with HTTP range requests (seeking works). Learners get a 5-minute playback session that is re-checked on every request, so suspending a learner or removing their enrollment stops playback.
+
+Not yet done: encryption at rest, transcoding to HLS, cloud object storage, email verification, 2FA. The sample videos from the seed data have no media file and play a simulated clock.
+
 
 ## 🛠️ Technology Stack
 
-- **Core**: React 19, JavaScript
+- **Frontend**: React 19, JavaScript
+- **Backend**: Node.js + Express 5 (JWT, bcrypt, multer, helmet), JSON-file database
 - **Styling**: Vanilla CSS (Global Design System with CSS variables)
 - **Icons**: Lucide React
 - **Build Tool**: Vite
@@ -43,13 +50,21 @@ Demo accounts (password `demo1234`): `sarah@student.demo` (learner), `creator@vi
    npm install
    ```
 
-3. **Run the development server**
+3. **Run the app (web + API together)**
    ```bash
    npm run dev
    ```
+   This starts Vite on `http://localhost:5173` and the Express API on `http://localhost:4000` (Vite proxies `/api`). The database (`server/data/db.json`) and uploaded videos (`server/uploads/`) are created on first run and are git-ignored. Delete `server/data` to reset to the seed data.
 
 4. **Open your browser**
-   Navigate to `http://localhost:5173` to view the application.
+   Navigate to `http://localhost:5173`.
+
+### Production
+```bash
+npm run build
+JWT_SECRET=<long random string> NODE_ENV=production npm run server   # serves the API and the built app
+```
+Environment variables: `JWT_SECRET` (required in production), `API_PORT` (default 4000), `VP_DATA_DIR`, `VP_UPLOAD_DIR`, `AUTH_RATE_LIMIT` (login attempts per 15 min per IP, default 30).
 
 ## 🔐 Demo Accounts
 To explore the application locally, you can use the pre-configured demo credentials:

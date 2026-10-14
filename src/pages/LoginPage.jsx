@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { authLogin, authRegister } from '../services/mockServices';
+import { authLogin, authRegister } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
 
@@ -41,7 +41,6 @@ export default function LoginPage() {
     setError('');
     if (!loginEmail || !loginPassword) { setError('Email and password are required.'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800)); // Simulate network delay
     const result = await authLogin(loginEmail, loginPassword);
     setLoading(false);
     if (result.success) {
@@ -60,7 +59,6 @@ export default function LoginPage() {
     if (regPassword !== regConfirm) { setError('Passwords do not match.'); return; }
     if (regPassword.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
     const result = await authRegister(regName, regEmail, regPassword);
     setLoading(false);
     if (result.success) {
@@ -219,7 +217,7 @@ export default function LoginPage() {
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>AUTHENTICATION IS SIMULATED IN THIS DEMO</span>
+                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>DEMO ACCOUNTS ARE SEEDED ON THE SERVER</span>
                 </div>
               </>
             ) : (
@@ -269,7 +267,7 @@ export default function LoginPage() {
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>REGISTRATION IS SIMULATED IN THIS DEMO</span>
+                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>NEW ACCOUNTS START AS LEARNERS</span>
                 </div>
               </>
             )}

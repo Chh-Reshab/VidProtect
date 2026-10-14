@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { getUsers, setUserRole, setUserStatus } from '../../services/mockServices';
+import { getUsers, setUserRole, setUserStatus } from '../../services/dataService';
 import { SearchInput, SelectFilter, ConfirmDialog, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
@@ -27,15 +27,15 @@ export default function AdminUsers() {
     (!roleFilter || u.role === roleFilter) &&
     (!search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())));
 
-  const changeRole = (user, role) => {
-    const result = setUserRole(currentUser.id, user.id, role);
+  const changeRole = async (user, role) => {
+    const result = await setUserRole(currentUser.id, user.id, role);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     reload();
     showNotification(`${user.name} is now a ${role}.`);
   };
 
-  const changeStatus = (user, status) => {
-    const result = setUserStatus(currentUser.id, user.id, status);
+  const changeStatus = async (user, status) => {
+    const result = await setUserStatus(currentUser.id, user.id, status);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     reload();
     showNotification(status === 'suspended' ? `${user.name} suspended.` : `${user.name} reactivated.`);

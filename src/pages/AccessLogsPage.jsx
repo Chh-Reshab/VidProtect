@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { ScrollText, Info, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getAccessLogs } from '../services/mockServices';
+import { getAccessLogs } from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, ResultBadge, SearchInput, SelectFilter, EmptyState, Modal, DemoBanner } from '../components/SharedComponents';
 

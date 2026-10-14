@@ -4,7 +4,7 @@
 
 import { Link } from 'react-router-dom';
 import { Users, Clapperboard, Video, ShieldAlert, UserCheck, BookOpen } from 'lucide-react';
-import { getPlatformStats, getAuditLog, getUserById } from '../../services/mockServices';
+import { getPlatformStats, getAuditLog, getUserById } from '../../services/dataService';
 import { KpiCard, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 

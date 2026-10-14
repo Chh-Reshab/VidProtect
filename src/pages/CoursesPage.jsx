@@ -8,7 +8,7 @@ import {
   getCourses, getStudentsForCourse, getAllStudents,
   enrollStudent, removeEnrollment, getVideos,
   createCourse, updateCourse,
-} from '../services/mockServices';
+} from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, ConfirmDialog, Modal, SearchInput, DemoBanner } from '../components/SharedComponents';
 
@@ -35,8 +35,8 @@ export default function CoursesPage() {
     setStudentSearch('');
   };
 
-  const handleEnroll = (studentId) => {
-    const result = enrollStudent(currentUser.id, studentId, selectedCourse.id);
+  const handleEnroll = async (studentId) => {
+    const result = await enrollStudent(currentUser.id, studentId, selectedCourse.id);
     if (result.success) {
       setStudents(getStudentsForCourse(selectedCourse.id));
       setCourses(myCourses());
@@ -48,8 +48,8 @@ export default function CoursesPage() {
     setShowEnrollModal(false);
   };
 
-  const handleRemove = (enrollmentId) => {
-    const result = removeEnrollment(currentUser.id, enrollmentId, selectedCourse.id);
+  const handleRemove = async (enrollmentId) => {
+    const result = await removeEnrollment(currentUser.id, enrollmentId);
     if (!result.success) { showNotification(result.error, 'error'); setRemoveTarget(null); return; }
     setStudents(getStudentsForCourse(selectedCourse.id));
     setCourses(myCourses());
@@ -58,8 +58,8 @@ export default function CoursesPage() {
     setRemoveTarget(null);
   };
 
-  const handleCreateCourse = () => {
-    const result = createCourse(currentUser.id, newCourse);
+  const handleCreateCourse = async () => {
+    const result = await createCourse(currentUser.id, newCourse);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setCourses(myCourses());
     setShowNewCourse(false);
@@ -67,8 +67,8 @@ export default function CoursesPage() {
     showNotification('Course created as a draft. Publish it when you are ready.');
   };
 
-  const handlePatchCourse = (patch, message) => {
-    const result = updateCourse(currentUser.id, selectedCourse.id, patch);
+  const handlePatchCourse = async (patch, message) => {
+    const result = await updateCourse(currentUser.id, selectedCourse.id, patch);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setSelectedCourse(result.course);
     setCourses(myCourses());

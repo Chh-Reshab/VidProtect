@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Lock, Video } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { getEnrolledCourses, getCatalog, selfEnroll, getUserById } from '../../services/mockServices';
+import { getEnrolledCourses, getCatalog, selfEnroll, getUserById } from '../../services/dataService';
 import { SearchInput, SelectFilter, DemoBanner } from '../../components/SharedComponents';
 import { PageHeader, ProgressBar, CourseCard } from '../../components/DashboardKit';
 
@@ -37,9 +37,9 @@ export default function LearnerCourses({ mode }) {
     list = getCatalog().filter(c => c.creatorId !== currentUser.id).filter(matches);
   }
 
-  const handleEnroll = (e, course) => {
+  const handleEnroll = async (e, course) => {
     e.stopPropagation();
-    const result = selfEnroll(currentUser.id, course.id);
+    const result = await selfEnroll(currentUser.id, course.id);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setMine(getEnrolledCourses(currentUser.id));
     showNotification(`Enrolled in ${course.title}.`);

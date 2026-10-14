@@ -1,7 +1,7 @@
 // ============================================
 // PERMISSIONS — role → permission map + policies
-// UI uses this to hide controls; mockServices re-checks
-// ownership on every write (a real backend must do the same).
+// Shared by the SPA (to hide controls) and the Express server
+// (which enforces them: role checks + ownership on every request).
 // ============================================
 
 export const ROLES = { LEARNER: 'learner', CREATOR: 'creator', ADMIN: 'admin' };

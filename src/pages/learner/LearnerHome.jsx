@@ -7,7 +7,7 @@ import { BookOpen, CheckCircle, PlayCircle, Compass } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
   getEnrolledCourses, getProgressMap, getVideoById, getWatchHistory,
-} from '../../services/mockServices';
+} from '../../services/dataService';
 import { KpiCard, DemoBanner, ResultBadge } from '../../components/SharedComponents';
 import { PageHeader, Panel, ProgressBar, CourseCard, formatDate, formatDuration } from '../../components/DashboardKit';
 

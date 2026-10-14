@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Upload, Clock, Play, Info, Trash2, Video } from 'lucide-react';
-import { getVideos, getCourses, deleteVideo } from '../services/mockServices';
+import { getVideos, getCourses, deleteVideo } from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel, EmptyState, ConfirmDialog, VideoThumbnail, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
 
@@ -26,8 +26,8 @@ export default function LibraryPage() {
     return matchSearch && matchCourse && matchStatus;
   });
 
-  const handleDelete = (id) => {
-    const result = deleteVideo(currentUser.id, id);
+  const handleDelete = async (id) => {
+    const result = await deleteVideo(currentUser.id, id);
     if (!result.success) { showNotification(result.error, 'error'); return; }
     setVideos(getVideos(currentUser.id));
     refreshStats();
@@ -88,7 +88,7 @@ export default function LibraryPage() {
               key={video.id}
               video={video}
               onOpen={() => navigate(`/studio/video/${video.id}`)}
-              onPlay={() => navigate(`/studio/video/${video.id}?play=1`)}
+              onPlay={() => navigate(`/learn/watch/${video.id}`)}
               onDelete={() => setDeleteId(video.id)}
               formatDate={formatDate}
             />
