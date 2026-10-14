@@ -76,3 +76,13 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ---
 *Developed by Secure Sphere
+
+## Video encryption and keys
+
+Every uploaded video is encrypted at rest with **AES-256-GCM** (64 KiB authenticated chunks, so tampering or truncation is detected and seeking still works). Each video has its own random key. That key is stored only in encrypted ("wrapped") form, using a master key that is kept outside the database.
+
+- **Master key:** set `VP_MASTER_KEY` (64 hex characters) from your secrets manager. If it is not set, a key file is created at `server/data/master.key` on first run. **Back it up separately: without it, videos cannot be decrypted.**
+- **Rotate the master key:** stop the server, run `node server/scripts/rotate-master-key.js <new 64-hex key>`, then start with the new key. Only the small wrapped keys are re-encrypted; video files are untouched.
+- **Older videos** (AES-CTR or unencrypted) are re-encrypted automatically at startup and verified by hash before the old file is deleted.
+- Payments run in **beta test mode** (test card `4242 4242 4242 4242`); no real money moves until a live payment provider is connected.
+- **Upload processing:** after an upload the server verifies, encrypts and integrity-checks the video while the creator watches live progress; the video stays hidden from learners until it is ready. Each stage is shown for at least `VP_MIN_STAGE_MS` (default 1200 ms) so small files still show their progress; set it to `0` to run at full speed.

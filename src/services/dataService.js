@@ -8,10 +8,11 @@
 // ============================================
 
 import { request, uploadForm, setAccessToken, refreshAccess, toResult } from './api';
+import { courseProgress, localDay } from './learningStats';
 
 const emptyCache = () => ({
   me: null, users: [], courses: [], videos: [], enrollments: [],
-  logs: [], alerts: [], progress: {}, settings: {}, audit: [],
+  logs: [], alerts: [], progress: {}, settings: {}, audit: [], payments: [], activity: {},
 });
 
 let cache = emptyCache();
@@ -104,6 +105,23 @@ export const uploadVideoFile = async (courseId, { title, description, duration, 
   return toResult(r);
 };
 
+// Live processing state of an upload: { uploadStatus, processing: { stage, label, step, steps, percent, error? } }
+export const getVideoProcessing = async (videoId) => {
+  const r = await request('GET', `/videos/${videoId}/processing`);
+  return r.ok ? r.data : null;
+};
+
+// kind is 'course' or 'video'
+export const setThumbnail = async (kind, id, file) => {
+  const form = new FormData();
+  form.append('image', file);
+  const r = await uploadForm(`/${kind}s/${id}/thumbnail`, form);
+  if (r.ok) await loadData();
+  return toResult(r);
+};
+
+export const removeThumbnail = (kind, id) => write(request('DELETE', `/${kind}s/${id}/thumbnail`));
+
 export const deleteVideo = (userId, id) =>
   write(request('DELETE', cache.me?.role === 'admin' ? `/admin/videos/${id}` : `/videos/${id}`));
 
@@ -144,6 +162,17 @@ export const enrollStudent = (actorId, studentId, courseId) =>
 
 export const selfEnroll = (userId, courseId) => write(request('POST', `/courses/${courseId}/enroll`));
 
+// ─── PAYMENTS (beta test mode) ───────────────
+export const getPayments = () => cache.payments;
+
+// payload: { method: 'free' } or { method: 'card'|'upi'|'netbanking', ...fields }.
+// The server decides the amount; the browser never sends a price.
+export const checkoutCourse = async (courseId, payload) => {
+  const r = await request('POST', `/courses/${courseId}/checkout`, payload);
+  if (r.ok) await loadData();
+  return r.ok ? { success: true, payment: r.data.payment } : toResult(r);
+};
+
 export const removeEnrollment = (actorId, enrollmentId) =>
   write(request('DELETE', `/enrollments/${enrollmentId}`));
 
@@ -157,8 +186,10 @@ export const getProgressMap = () => cache.progress || {};
 
 // Saved on pause / every few seconds / on leave. The local copy updates
 // immediately so "continue watching" is right even before the request lands.
-export const saveProgress = (userId, videoId, positionSeconds, durationSeconds) => {
+// watchedSeconds = time actually played since the last save; it feeds the activity stats
+export const saveProgress = (userId, videoId, positionSeconds, durationSeconds, watchedSeconds = 0) => {
   const completed = durationSeconds > 0 && positionSeconds >= durationSeconds * 0.95;
+  const today = localDay();
   cache.progress = {
     ...cache.progress,
     [videoId]: {
@@ -167,8 +198,16 @@ export const saveProgress = (userId, videoId, positionSeconds, durationSeconds) 
       updatedAt: new Date().toISOString(),
     },
   };
-  return request('PUT', `/progress/${videoId}`, { positionSeconds, durationSeconds });
+  if (watchedSeconds > 0) cache.activity = { ...cache.activity, [today]: (cache.activity?.[today] || 0) + Math.round(watchedSeconds) };
+  return request('PUT', `/progress/${videoId}`, {
+    positionSeconds, durationSeconds, watchedSeconds: Math.round(watchedSeconds), localDate: today,
+  });
 };
+
+export const getActivity = () => cache.activity || {};
+
+// Percent complete for one course, weighted by video length
+export const getCourseProgress = (courseId) => courseProgress(getCourseVideos(courseId), getProgressMap());
 
 export const getEnrolledCourses = (userId) => {
   const progress = getProgressMap();
@@ -178,14 +217,16 @@ export const getEnrolledCourses = (userId) => {
       const course = getCourseById(e.courseId);
       if (!course) return null;
       const videos = getCourseVideos(course.id);
-      const done = videos.filter(v => progress[v.id]?.completed).length;
+      const prog = courseProgress(videos, progress);
       return {
         ...course,
         enrollmentId: e.id,
         enrollmentStatus: e.status,
         totalVideos: videos.length,
-        completedVideos: done,
-        percent: videos.length ? Math.round((done / videos.length) * 100) : 0,
+        completedVideos: prog.completed,
+        percent: prog.percent,
+        watchedSeconds: prog.watchedSeconds,
+        totalSeconds: prog.totalSeconds,
       };
     })
     .filter(Boolean);

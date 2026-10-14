@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Video, Users, Play, ShieldAlert, Upload, BookOpen, ArrowRight, Activity, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getAccessLogs, getSecurityAlerts } from '../services/dataService';
-import { KpiCard, SectionLabel, DemoBanner, ProtectionStatusPanel, ResultBadge, SeverityBadge } from '../components/SharedComponents';
+import { KpiCard, SectionLabel, ProtectionStatusPanel, ResultBadge, SeverityBadge } from '../components/SharedComponents';
 
 export default function OverviewPage() {
   const { dashboardStats, currentUser } = useApp();
@@ -52,14 +52,12 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <DemoBanner />
-
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1px', background: '#292929', border: '1px solid #292929', marginBottom: '2rem' }}>
         <KpiCard
           label="PROTECTED VIDEOS"
           value={dashboardStats?.protectedVideos ?? 0}
-          sublabel="AES-256 encrypted (demo)"
+          sublabel="AES-256-GCM encrypted"
           icon={Lock}
           accent
         />

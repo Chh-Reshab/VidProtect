@@ -145,7 +145,7 @@ export default function LoginPage() {
 
                 {/* Demo banner */}
                 <div style={{ background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #FF2028', padding: '0.75rem 1rem', marginBottom: '1.5rem' }}>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.3rem' }}>DEMO ACCOUNTS · PASSWORD demo1234</div>
+                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.3rem' }}>BETA TEST ACCOUNTS · PASSWORD demo1234</div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
                     {DEMO_ACCOUNTS.map(a => (
                       <button key={a.email} type="button" onClick={() => fillDemo(a.email)} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>
@@ -217,7 +217,7 @@ export default function LoginPage() {
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>DEMO ACCOUNTS ARE SEEDED ON THE SERVER</span>
+                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>BETA TEST ACCOUNTS ARE SEEDED ON THE SERVER</span>
                 </div>
               </>
             ) : (

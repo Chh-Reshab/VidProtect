@@ -11,14 +11,15 @@ import { DEMO_SETTINGS } from '../seedData.js';
 
 const router = Router();
 
-// Never expose where the file lives on disk or its encryption key
+// Never expose where the file lives on disk or anything about its key
 export const publicVideo = (v) => {
   // eslint-disable-next-line no-unused-vars
   const { file, ...rest } = v;
   return {
     ...rest,
     hasMedia: !!file,
-    encryptionStatus: file?.encKey ? 'encrypted' : (rest.encryptionStatus || 'access_controlled'),
+    encryptionStatus: file?.enc ? 'encrypted' : (rest.encryptionStatus || 'access_controlled'),
+    encryptionAlg: file?.enc?.alg || null,
   };
 };
 
@@ -42,7 +43,8 @@ router.get('/', requireAuth, (req, res) => {
   const courseIds = new Set(courses.map(c => c.id));
   const myCourseIds = new Set(myCourses.map(c => c.id));
 
-  const videos = db.videos.filter(v => courseIds.has(v.courseId));
+  const unfinished = (v) => v.uploadStatus === 'processing' || v.uploadStatus === 'failed';
+  const videos = db.videos.filter(v => courseIds.has(v.courseId) && (isAdmin || v.creatorId === me.id || !unfinished(v)));
   const myVideoIds = new Set(db.videos.filter(v => v.creatorId === me.id).map(v => v.id));
 
   const enrollments = db.enrollments.filter(e =>
@@ -59,7 +61,12 @@ router.get('/', requireAuth, (req, res) => {
   const logs = db.logs.filter(l => isAdmin || l.userId === me.id || (isCreator && myCourseIds.has(l.courseId)));
   const alerts = isAdmin ? db.alerts : isCreator ? db.alerts.filter(a => myVideoIds.has(a.videoId)) : [];
 
+  // Learners see their own payments, creators the payments for their courses, admins all
+  const payments = db.payments.filter(p =>
+    isAdmin || p.userId === me.id || (isCreator && myCourseIds.has(p.courseId)));
+
   res.json({
+    payments,
     me: toPublic(me),
     users,
     courses,
@@ -68,6 +75,7 @@ router.get('/', requireAuth, (req, res) => {
     logs,
     alerts,
     progress: db.progress[me.id] || {},
+    activity: db.activity[me.id] || {},
     settings: settingsFor(me),
     audit: isAdmin ? db.audit : [],
   });

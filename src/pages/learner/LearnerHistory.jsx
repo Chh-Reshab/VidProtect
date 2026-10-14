@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { History } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getWatchHistory } from '../../services/dataService';
-import { ResultBadge, EmptyState, SelectFilter, DemoBanner } from '../../components/SharedComponents';
+import { ResultBadge, EmptyState, SelectFilter } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 
 export default function LearnerHistory() {
@@ -19,8 +19,6 @@ export default function LearnerHistory() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="ACTIVITY" title="WATCH HISTORY" subtitle="Every playback request on your account, including any that were denied." />
-      <DemoBanner />
-
       <div style={{ marginBottom: '1rem' }}>
         <SelectFilter value={result} onChange={setResult} placeholder="All results" options={[{ value: 'success', label: 'Authorized' }, { value: 'denied', label: 'Denied' }]} />
       </div>

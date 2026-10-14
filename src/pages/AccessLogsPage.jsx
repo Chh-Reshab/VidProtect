@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { ScrollText, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAccessLogs } from '../services/dataService';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, ResultBadge, SearchInput, SelectFilter, EmptyState, Modal, DemoBanner } from '../components/SharedComponents';
+import { SectionLabel, ResultBadge, SearchInput, SelectFilter, EmptyState, Modal } from '../components/SharedComponents';
 
 const EVENT_TYPES = [
   { value: 'stream_authorized', label: 'Stream Authorized' },
@@ -56,8 +56,6 @@ export default function AccessLogsPage() {
           {filtered.length} events recorded · newest first
         </p>
       </div>
-
-      <DemoBanner />
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -182,7 +180,7 @@ export default function AccessLogsPage() {
               </div>
             ))}
             <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-              <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>DEMO EVENT — Not from a live security service</span>
+              <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>Recorded by the VidProtect server</span>
             </div>
           </div>
         )}

@@ -12,11 +12,14 @@ import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import './db.js';
+import { migrateEncryption, recoverInterruptedUploads, backfillActivity } from './migrate.js';
 import authRoutes from './routes/auth.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
 import videoRoutes from './routes/videos.js';
 import adminRoutes from './routes/admin.js';
+import thumbnailRoutes from './routes/thumbnails.js';
+import paymentRoutes from './routes/payments.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -33,6 +36,8 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', thumbnailRoutes);
+app.use('/api', paymentRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', videoRoutes);
 
@@ -50,5 +55,9 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: 'Something went wrong.' });
 });
+
+backfillActivity();
+recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
+await migrateEncryption(); // bring older videos up to AES-256-GCM before serving anything
 
 app.listen(PORT, () => console.log(`VidProtect API listening on http://localhost:${PORT}`));

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { getCourses, getVideos, getUserById, moderateCourse, deleteVideo } from '../../services/dataService';
-import { ConfirmDialog, DemoBanner } from '../../components/SharedComponents';
+import { ConfirmDialog } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
 const STATUS_BADGE = { active: ['badge-green', 'PUBLISHED'], draft: ['badge-grey', 'DRAFT'], taken_down: ['badge-red', 'TAKEN DOWN'] };
@@ -35,8 +35,6 @@ export default function AdminContent() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="PLATFORM ADMIN" title="CONTENT MODERATION" subtitle="Take down courses or remove videos that break the content policy. Actions are written to the audit log." />
-      <DemoBanner />
-
       <Panel title={`COURSES (${courses.length})`} style={{ marginBottom: '1.5rem' }}>
         {courses.map(c => {
           const [cls, label] = STATUS_BADGE[c.status] || STATUS_BADGE.draft;
@@ -69,7 +67,7 @@ export default function AdminContent() {
               <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{v.courseName} · BY {getUserById(v.creatorId)?.name || v.creatorId}</div>
             </div>
             {v.encryptionStatus === 'encrypted'
-              ? <span className="badge badge-green" style={{ fontSize: '0.5rem' }}>AES-256</span>
+              ? <span className="badge badge-green" style={{ fontSize: '0.5rem' }}>AES-256-GCM</span>
               : <span className="badge badge-grey" style={{ fontSize: '0.5rem' }}>UNENCRYPTED</span>}
             <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.7rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setRemoveTarget(v)}>REMOVE</button>
           </div>

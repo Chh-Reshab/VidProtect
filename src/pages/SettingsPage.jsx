@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Settings, Save, LogOut, Shield, Bell, User, Lock } from 'lucide-react';
 import { getSettings, updateSettings } from '../services/dataService';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, DemoBanner } from '../components/SharedComponents';
+import { SectionLabel } from '../components/SharedComponents';
 
 const Toggle = ({ checked, onChange, id, label }) => (
   <label htmlFor={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '0.6rem 0', borderBottom: '1px solid #292929' }}>
@@ -108,8 +108,6 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      <DemoBanner />
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'flex-start' }} className="settings-grid">
         <div>
           {/* Creator Profile */}
@@ -123,9 +121,6 @@ export default function SettingsPage() {
                 <label className="form-label" htmlFor="s-email">Email Address</label>
                 <input id="s-email" type="email" className="form-input" value={settings.email} onChange={e => update('email', e.target.value)} />
               </div>
-              <div style={{ padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-                <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>Profile changes are stored locally in this demo and do not update a real account.</span>
-              </div>
             </div>
           </SettingsSection>
 
@@ -133,10 +128,10 @@ export default function SettingsPage() {
           <SettingsSection title="ACCESS PREFERENCES" icon={Shield}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
-                <label className="form-label" htmlFor="s-token-expiry">Demo Token Expiry (minutes)</label>
+                <label className="form-label" htmlFor="s-token-expiry">Default Token Expiry (minutes)</label>
                 <input id="s-token-expiry" type="number" min="5" max="120" className="form-input" value={settings.defaultTokenExpiry}
                   onChange={e => update('defaultTokenExpiry', parseInt(e.target.value) || 30)} />
-                <div style={{ fontSize: '0.75rem', color: '#565656', marginTop: '0.25rem' }}>Default TTL for demo streaming tokens (5–120 min)</div>
+                <div style={{ fontSize: '0.75rem', color: '#565656', marginTop: '0.25rem' }}>Default TTL for streaming tokens (5–120 min)</div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="s-session">Session Display</label>
@@ -163,32 +158,27 @@ export default function SettingsPage() {
             <Toggle id="notif-denied" label="Access Denied Notifications" checked={settings.notifications.accessDenied} onChange={v => update('notifications.accessDenied', v)} />
             <Toggle id="notif-updates" label="Security Update Notifications" checked={settings.notifications.securityUpdates} onChange={v => update('notifications.securityUpdates', v)} />
             <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-              <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>Notification preferences are stored locally. No real notifications are sent in this demo.</span>
+              <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>Notifications appear in your dashboard. Email delivery is not available during beta.</span>
             </div>
           </SettingsSection>
 
           {/* Security Status */}
           <SettingsSection title="SECURITY CONFIGURATION" icon={Lock}>
             {[
-              { label: 'Authentication System', key: 'authStatus', activeLabel: 'JWT Auth (Backend)', demoLabel: 'Simulated (Frontend Demo)' },
-              { label: 'Video Encryption', key: 'encryptionStatus', activeLabel: 'AES-256 (Backend)', demoLabel: 'Simulated (Frontend Demo)' },
-              { label: 'Activity Monitoring', key: 'monitoringStatus', activeLabel: 'Active (Demo Logging)', demoLabel: 'Inactive' },
+              { label: 'Authentication', value: 'JWT + rotating refresh tokens' },
+              { label: 'Video encryption', value: 'AES-256-GCM, key per video' },
+              { label: 'Key management', value: 'Master-key wrapped keys' },
+              { label: 'Activity monitoring', value: 'Anomaly rules on every access' },
             ].map(item => (
-              <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #292929' }}>
+              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '0.6rem 0', borderBottom: '1px solid #292929' }}>
                 <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{item.label}</div>
-                <span className="badge" style={{
-                  color: settings.security[item.key] === 'demo_active' ? '#eab308' : settings.security[item.key] === 'demo_simulated' ? '#eab308' : '#22c55e',
-                  borderColor: settings.security[item.key] === 'demo_active' ? '#eab308' : settings.security[item.key] === 'demo_simulated' ? '#eab308' : '#22c55e',
-                  fontSize: '0.55rem',
-                }}>
-                  ◐ {settings.security[item.key] === 'demo_active' ? item.activeLabel : item.demoLabel}
-                </span>
+                <span className="badge" style={{ color: '#22c55e', borderColor: '#22c55e', fontSize: '0.55rem', textAlign: 'right' }}>● {item.value}</span>
               </div>
             ))}
             <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #eab308' }}>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#eab308', marginBottom: '0.35rem' }}>PROTOTYPE DISCLOSURE</div>
-              <p style={{ fontSize: '0.75rem', color: '#565656', lineHeight: 1.6 }}>
-                Security controls in this prototype are simulated for demonstration. Authentication is frontend-only. Encryption does not process real files. Monitoring logs events to localStorage, not a real database.
+              <div className="mono" style={{ fontSize: '0.6rem', color: '#eab308', marginBottom: '0.35rem' }}>BETA TESTING</div>
+              <p style={{ fontSize: '0.75rem', color: '#808080', lineHeight: 1.6 }}>
+                These protections run on the VidProtect server. Payments are in test mode while we are in beta, so no real money is charged.
               </p>
             </div>
           </SettingsSection>
@@ -199,7 +189,7 @@ export default function SettingsPage() {
               <button className="btn btn-primary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={handleSave}>
                 <Save size={14} /> SAVE ALL SETTINGS
               </button>
-              <button className="btn btn-secondary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={() => navigate('/studio/overview')}>
+              <button className="btn btn-secondary" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={() => navigate('/studio/library')}>
                 RETURN TO DASHBOARD
               </button>
               <button className="btn btn-danger" style={{ fontSize: '0.7rem', justifyContent: 'center' }} onClick={handleLogout}>

@@ -36,7 +36,7 @@ export const can = (user, permission) =>
 export const homeFor = (user) => {
   if (!user) return '/login';
   if (user.role === 'admin') return '/admin';
-  if (user.role === 'creator') return '/studio/overview';
+  if (user.role === 'creator') return '/studio/library';
   return '/learn';
 };
 

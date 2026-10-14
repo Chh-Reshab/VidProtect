@@ -350,7 +350,7 @@ const HeroIllustration = () => (
     {/* Token ID */}
     <div style={{ marginTop: '0.75rem', background: '#101010', padding: '0.5rem', border: '1px solid #1D1D1D' }}>
       <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', wordBreak: 'break-all' }}>
-        VP-TOK-X9K2M7N4P1Q8R3S6... [DEMO]
+        VP-TOK-X9K2M7N4P1Q8R3S6... [EXAMPLE]
       </span>
     </div>
 
@@ -391,7 +391,7 @@ const WorkflowStep = ({ num, label, desc, isActive, onClick }) => (
 
 const WORKFLOW_STEPS = [
   { num: 1, label: 'Upload', desc: 'Creators upload videos with metadata including title, course association, and access rules. The platform validates inputs and tracks upload progress.' },
-  { num: 2, label: 'Encrypt', desc: 'The intended architecture applies AES-256 encryption before the video reaches storage. This aims to protect stored content even if the storage layer is exposed. (Simulated in this prototype.)' },
+  { num: 2, label: 'Encrypt', desc: 'Every video is encrypted with AES-256-GCM, using its own random key, before it is written to storage. The key itself is encrypted by a master key kept outside the database, and every block is integrity-checked on playback.' },
   { num: 3, label: 'Store', desc: 'Encrypted video data and metadata are stored in a protected location. Metadata includes title, creator ID, course association, and protection status. No public URL to the original file is exposed.' },
   { num: 4, label: 'Verify', desc: 'When a learner requests access, the backend authenticates their identity via JWT, then verifies enrollment in the relevant course. Authentication establishes identity; authorization determines access rights.' },
   { num: 5, label: 'Stream', desc: 'Only after all authorization checks pass, the platform issues a short-lived streaming token tied to the specific learner and video session. The token expires automatically.' },
@@ -783,7 +783,7 @@ export default function LandingPage() {
             <div style={{ background: '#1D1D1D', padding: '2rem', borderLeft: '3px solid #FF2028' }}>
               <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginBottom: '1.5rem' }}>VIDPROTECT AI</div>
               {[
-                'Intended encrypted video storage (AES-256)',
+                'AES-256-GCM encrypted video storage, key per video',
                 'User-specific temporary stream tokens',
                 'Course enrollment verification before access',
                 'Auditable access activity log',
@@ -800,7 +800,7 @@ export default function LandingPage() {
 
           <div style={{ marginTop: '1.5rem', padding: '0.75rem 1rem', border: '1px solid #292929', background: '#101010' }}>
             <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
-              Note: Traditional platforms may include various security features. VidProtect AI does not guarantee complete piracy prevention. Features marked as "intended" refer to the planned production architecture.
+              Note: Traditional platforms may include various security features. VidProtect AI does not guarantee complete piracy prevention, and it is currently in beta testing.
             </span>
           </div>
         </div>
@@ -884,7 +884,7 @@ export default function LandingPage() {
               © 2024 VIDPROTECT AI. A SecureSphere — Cybersecurity & AI Product.
             </span>
             <span className="mono" style={{ fontSize: '0.6rem', color: '#292929' }}>
-              DEMO PROTOTYPE — Not production software.
+              BETA — Now in beta testing.
             </span>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { UserCheck } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getUsers, reviewCreatorApplication } from '../../services/dataService';
-import { EmptyState, DemoBanner } from '../../components/SharedComponents';
+import { EmptyState } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
 export default function AdminCreators() {
@@ -23,8 +23,6 @@ export default function AdminCreators() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="PLATFORM ADMIN" title="CREATOR APPROVALS" subtitle="Learners who applied to publish courses." />
-      <DemoBanner />
-
       {applicants.length === 0 ? (
         <EmptyState icon={UserCheck} title="NO PENDING APPLICATIONS" description="New applications will show up here." />
       ) : applicants.map(u => (

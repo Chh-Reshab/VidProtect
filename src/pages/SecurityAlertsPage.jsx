@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { ShieldAlert, CheckCircle, Eye } from 'lucide-react';
 import { getSecurityAlerts, updateAlertStatus } from '../services/dataService';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter, DemoBanner } from '../components/SharedComponents';
+import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter } from '../components/SharedComponents';
 
 export default function SecurityAlertsPage() {
   const { currentUser, showNotification } = useApp();
@@ -71,8 +71,6 @@ export default function SecurityAlertsPage() {
           {openCount} open alert{openCount !== 1 ? 's' : ''} require review · {highCount} high severity
         </p>
       </div>
-
-      <DemoBanner />
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: '1px', background: '#292929', marginBottom: '1.5rem' }}>

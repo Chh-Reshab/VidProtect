@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { getUsers, setUserRole, setUserStatus } from '../../services/dataService';
-import { SearchInput, SelectFilter, ConfirmDialog, DemoBanner } from '../../components/SharedComponents';
+import { SearchInput, SelectFilter, ConfirmDialog } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
 const ROLE_OPTIONS = [
@@ -44,8 +44,6 @@ export default function AdminUsers() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="PLATFORM ADMIN" title="USERS" subtitle={`${users.length} accounts on the platform.`} />
-      <DemoBanner />
-
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <SearchInput value={search} onChange={setSearch} placeholder="Search name or email..." />
         <SelectFilter value={roleFilter} onChange={setRoleFilter} options={ROLE_OPTIONS} placeholder="All roles" />

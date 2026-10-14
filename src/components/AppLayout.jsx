@@ -6,43 +6,47 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Video, Upload, BookOpen, ScrollText,
-  ShieldAlert, Settings, LogOut, Bell,
-  Menu, X, Activity, Compass, History, User, Users,
+  ShieldAlert, Settings, LogOut,
+  Menu, X, Compass, History, User, Users,
   UserCheck, Layers, ClipboardList, Repeat
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Logo, NotificationToast } from './SharedComponents';
+import { Logo, NotificationToast, BetaBanner } from './SharedComponents';
 
 const STUDIO_NAV = [
-  { to: '/studio/overview', icon: LayoutDashboard, label: 'Overview' },
-  { to: '/studio/library', icon: Video, label: 'Video Library' },
-  { to: '/studio/upload', icon: Upload, label: 'Upload Video' },
-  { to: '/studio/courses', icon: BookOpen, label: 'Courses & Enrollments' },
-  { to: '/studio/logs', icon: ScrollText, label: 'Access Logs' },
-  { to: '/studio/alerts', icon: ShieldAlert, label: 'Security Alerts' },
+  { to: '/studio/library', icon: Video, label: 'My Videos' },
+  { to: '/studio/upload', icon: Upload, label: 'Upload' },
+  { to: '/studio/courses', icon: BookOpen, label: 'Courses' },
+];
+const STUDIO_MORE = [
+  { to: '/studio/logs', icon: ScrollText, label: 'Who watched' },
+  { to: '/studio/alerts', icon: ShieldAlert, label: 'Security alerts' },
   { to: '/studio/settings', icon: Settings, label: 'Settings' },
 ];
 
 const LEARNER_NAV = [
   { to: '/learn', icon: LayoutDashboard, label: 'Home', end: true },
-  { to: '/learn/courses', icon: BookOpen, label: 'My Courses' },
-  { to: '/learn/catalog', icon: Compass, label: 'Browse Courses' },
-  { to: '/learn/history', icon: History, label: 'Watch History' },
-  { to: '/learn/account', icon: User, label: 'Account' },
+  { to: '/learn/catalog', icon: Compass, label: 'Browse courses' },
+];
+const LEARNER_MORE = [
+  { to: '/learn/history', icon: History, label: 'Watch history' },
+  { to: '/learn/account', icon: User, label: 'Profile' },
 ];
 
 const ADMIN_NAV = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/admin/creators', icon: UserCheck, label: 'Creator Approvals' },
+  { to: '/admin/creators', icon: UserCheck, label: 'Creator approvals' },
   { to: '/admin/users', icon: Users, label: 'Users' },
-  { to: '/admin/content', icon: Layers, label: 'Content Moderation' },
-  { to: '/admin/audit', icon: ClipboardList, label: 'Audit Log' },
+  { to: '/admin/content', icon: Layers, label: 'Content' },
+];
+const ADMIN_MORE = [
+  { to: '/admin/audit', icon: ClipboardList, label: 'Audit log' },
 ];
 
 const initials = (name) =>
   name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
 
-const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
+const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchTo, action }) => {
   const { currentUser, logout } = useApp();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -51,6 +55,31 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
     await logout();
     navigate('/');
   };
+
+  const renderLink = ({ to, icon: Icon, label, end }, primary) => (
+    <NavLink
+      key={to}
+      to={to}
+      end={end}
+      onClick={() => setSidebarOpen(false)}
+      style={({ isActive }) => ({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+        padding: primary ? '0.8rem 1rem' : '0.5rem 1rem',
+        textDecoration: 'none',
+        color: isActive ? '#F8F8F8' : primary ? '#C8C8C8' : '#808080',
+        background: isActive ? 'rgba(255,32,40,0.08)' : 'transparent',
+        borderLeft: isActive ? '3px solid #FF2028' : '3px solid transparent',
+        fontSize: primary ? '0.95rem' : '0.8rem',
+        fontWeight: primary ? 500 : 400,
+        transition: 'all 0.15s',
+      })}
+    >
+      <Icon size={primary ? 18 : 15} />
+      <span>{label}</span>
+    </NavLink>
+  );
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#101010' }}>
@@ -77,8 +106,9 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
       }} className="sidebar">
         {/* Sidebar header */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to={homePath} style={{ textDecoration: 'none' }}>
+          <Link to={homePath} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Logo size="sm" />
+            <span className="mono" style={{ fontSize: '0.5rem', color: '#eab308', border: '1px solid #eab308', padding: '1px 4px' }}>BETA</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -110,31 +140,13 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '0.75rem 0', overflowY: 'auto' }}>
-          <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', padding: '0.5rem 1rem 0.25rem', letterSpacing: '0.12em' }}>NAVIGATION</div>
-          {navItems.map(({ to, icon: Icon, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={() => setSidebarOpen(false)}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.65rem 1rem',
-                textDecoration: 'none',
-                color: isActive ? '#F8F8F8' : '#A0A0A0',
-                background: isActive ? 'rgba(255,32,40,0.08)' : 'transparent',
-                borderLeft: isActive ? '3px solid #FF2028' : '3px solid transparent',
-                fontSize: '0.85rem',
-                transition: 'all 0.15s',
-                marginBottom: '1px',
-              })}
-            >
-              <Icon size={16} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+          {navItems.map(item => renderLink(item, true))}
+          {moreItems.length > 0 && (
+            <>
+              <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', padding: '1.25rem 1rem 0.35rem', letterSpacing: '0.12em' }}>MORE</div>
+              {moreItems.map(item => renderLink(item, false))}
+            </>
+          )}
         </nav>
 
         {switchTo && (
@@ -147,15 +159,6 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
             <span>{switchTo.label}</span>
           </Link>
         )}
-
-        {/* System status */}
-        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #292929', borderBottom: '1px solid #292929' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Activity size={12} color="#22c55e" />
-            <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>SYSTEM OPERATIONAL</span>
-          </div>
-          <div className="mono" style={{ fontSize: '0.55rem', color: '#292929', marginTop: '0.25rem' }}>DEMO ENVIRONMENT</div>
-        </div>
 
         {/* Logout */}
         <button
@@ -201,17 +204,14 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
 
           <div style={{ flex: 1 }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button style={{ background: 'none', border: 'none', color: '#565656', cursor: 'pointer', display: 'flex', padding: '4px' }} aria-label="Notifications">
-              <Bell size={18} />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: 28, height: 28, background: '#FF2028', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.65rem', color: '#fff' }}>
-                {initials(currentUser?.name)}
-              </div>
-            </div>
-          </div>
+          {action && (
+            <Link to={action.to} className="btn btn-primary" style={{ fontSize: '0.75rem' }}>
+              <action.icon size={14} /> {action.label}
+            </Link>
+          )}
         </header>
+
+        <BetaBanner />
 
         {/* Page content */}
         <main style={{ flex: 1, overflow: 'auto' }}>
@@ -251,8 +251,10 @@ const DashboardShell = ({ navItems, roleLabel, homePath, switchTo }) => {
 export const StudioLayout = () => (
   <DashboardShell
     navItems={STUDIO_NAV}
-    roleLabel="CREATOR STUDIO"
-    homePath="/studio/overview"
+    moreItems={STUDIO_MORE}
+    roleLabel="CREATOR"
+    homePath="/studio/library"
+    action={{ to: '/studio/upload', icon: Upload, label: 'Upload video' }}
     switchTo={{ to: '/learn', label: 'Switch to learner view' }}
   />
 );
@@ -262,13 +264,14 @@ export const LearnerLayout = () => {
   return (
     <DashboardShell
       navItems={LEARNER_NAV}
+      moreItems={LEARNER_MORE}
       roleLabel="LEARNER"
       homePath="/learn"
-      switchTo={currentUser?.role === 'creator' ? { to: '/studio/overview', label: 'Back to Creator Studio' } : null}
+      switchTo={currentUser?.role === 'creator' ? { to: '/studio/library', label: 'Back to Creator Studio' } : null}
     />
   );
 };
 
 export const AdminLayout = () => (
-  <DashboardShell navItems={ADMIN_NAV} roleLabel="PLATFORM ADMIN" homePath="/admin" />
+  <DashboardShell navItems={ADMIN_NAV} moreItems={ADMIN_MORE} roleLabel="PLATFORM ADMIN" homePath="/admin" />
 );

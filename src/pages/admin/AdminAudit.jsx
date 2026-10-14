@@ -4,7 +4,7 @@
 
 import { ClipboardList } from 'lucide-react';
 import { getAuditLog, getUserById } from '../../services/dataService';
-import { EmptyState, DemoBanner } from '../../components/SharedComponents';
+import { EmptyState } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 
 export default function AdminAudit() {
@@ -13,8 +13,6 @@ export default function AdminAudit() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="PLATFORM ADMIN" title="AUDIT LOG" subtitle="Every approval, suspension, role change and takedown." />
-      <DemoBanner />
-
       {entries.length === 0 ? (
         <EmptyState icon={ClipboardList} title="NOTHING LOGGED YET" description="Admin actions will be recorded here." />
       ) : (

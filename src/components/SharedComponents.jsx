@@ -241,8 +241,8 @@ export const ProtectionStatusPanel = () => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
     <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.65rem' }}>PROTECTION STATUS</div>
     {[
-      { label: 'AES-256 Encryption', status: 'demo', desc: 'Simulated' },
-      { label: 'JWT Authentication', status: 'demo', desc: 'Simulated' },
+      { label: 'AES-256-GCM Encryption', status: 'active', desc: 'Active' },
+      { label: 'JWT Authentication', status: 'active', desc: 'Active' },
       { label: 'Enrollment Verification', status: 'active', desc: 'Active' },
       { label: 'Temporary Tokens', status: 'active', desc: 'Active' },
       { label: 'Access Monitoring', status: 'active', desc: 'Active' },
@@ -255,7 +255,7 @@ export const ProtectionStatusPanel = () => (
       </div>
     ))}
     <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-      <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>◐ DEMO SIMULATION — Not production security</span>
+      <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>● Enforced by the VidProtect server · Beta</span>
     </div>
   </div>
 );
@@ -279,9 +279,15 @@ export const VideoThumbnail = ({ video, size = 'md' }) => {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.4 }} />
-      <Shield size={size === 'sm' ? 20 : 32} color="#FF2028" strokeWidth={1.5} style={{ position: 'relative', zIndex: 1 }} />
-      <span className="mono" style={{ fontSize: '0.55rem', color: '#FF2028', marginTop: '0.4rem', position: 'relative', zIndex: 1 }}>PROTECTED</span>
+      {video.thumbUrl ? (
+        <img src={video.thumbUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.4 }} />
+          <Shield size={size === 'sm' ? 20 : 32} color="#FF2028" strokeWidth={1.5} style={{ position: 'relative', zIndex: 1 }} />
+          <span className="mono" style={{ fontSize: '0.55rem', color: '#FF2028', marginTop: '0.4rem', position: 'relative', zIndex: 1 }}>PROTECTED</span>
+        </>
+      )}
       {video.duration && (
         <span className="mono" style={{ position: 'absolute', bottom: '0.4rem', right: '0.4rem', fontSize: '0.6rem', color: '#A0A0A0', background: 'rgba(0,0,0,0.7)', padding: '1px 4px' }}>
           {video.duration}
@@ -320,24 +326,28 @@ export const ResultBadge = ({ result }) => {
   );
 };
 
-// ─── DEMO BANNER ──────────────────────────────
-export const DemoBanner = () => (
-  <div style={{
-    background: '#171717',
-    border: '1px solid #292929',
-    borderLeft: '3px solid #eab308',
-    padding: '0.6rem 1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    margin: '0 0 1.5rem 0',
-  }}>
-    <span style={{ color: '#eab308', fontSize: '0.7rem' }}>⚠</span>
-    <span className="mono" style={{ fontSize: '0.6rem', color: '#A0A0A0' }}>
-      DEMO ENVIRONMENT — Security operations are simulated for prototype demonstration purposes
-    </span>
-  </div>
-);
+// ─── BETA NOTICE ──────────────────────────────
+// Shown once at the top of the dashboards; dismissal is remembered in this browser.
+const BETA_KEY = 'vidprotect_beta_notice_dismissed';
+export const BetaBanner = () => {
+  const [hidden, setHidden] = useState(() => {
+    try { return localStorage.getItem(BETA_KEY) === '1'; } catch { return false; }
+  });
+  if (hidden) return null;
+  const dismiss = () => {
+    setHidden(true);
+    try { localStorage.setItem(BETA_KEY, '1'); } catch { /* private mode: it just returns next visit */ }
+  };
+  return (
+    <div role="note" style={{ background: '#171717', borderBottom: '1px solid #292929', borderLeft: '3px solid #eab308', padding: '0.55rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <span className="badge" style={{ color: '#eab308', borderColor: '#eab308', fontSize: '0.55rem', flexShrink: 0 }}>BETA</span>
+      <span style={{ fontSize: '0.75rem', color: '#A0A0A0', flex: 1 }}>
+        VidProtect AI is in beta testing. Payments run in test mode and you may hit rough edges. Tell us about anything that looks wrong.
+      </span>
+      <button type="button" onClick={dismiss} aria-label="Dismiss beta notice" style={{ background: 'none', border: 'none', color: '#565656', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>×</button>
+    </div>
+  );
+};
 
 // ─── TOKEN COUNTDOWN ──────────────────────────
 export const TokenCountdown = ({ token }) => {

@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { db, save, UPLOAD_DIR } from '../db.js';
 import { requireAuth, requireRole, revokeAllSessions, toPublic } from '../auth.js';
 import { audit, findCourse, findUser } from '../access.js';
+import { removeThumb } from './thumbnails.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
@@ -60,9 +61,10 @@ router.delete('/videos/:id', (req, res) => {
   const video = db.videos.find(v => v.id === req.params.id);
   if (!video) return res.status(404).json({ error: 'Video not found.' });
   if (video.file) fs.rm(path.join(UPLOAD_DIR, video.file.name), { force: true }, () => {});
+  removeThumb(video);
   db.videos = db.videos.filter(v => v.id !== video.id);
   const course = findCourse(video.courseId);
-  if (course) course.videoCount = Math.max(0, (course.videoCount || 1) - 1);
+  if (course && video.uploadStatus !== 'processing' && video.uploadStatus !== 'failed') course.videoCount = Math.max(0, (course.videoCount || 1) - 1);
   db.streamSessions = db.streamSessions.filter(s => s.videoId !== video.id);
   save();
   audit(req.user.id, 'video.remove', 'video', video.id);

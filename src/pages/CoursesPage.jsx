@@ -7,10 +7,11 @@ import { BookOpen, Users, Video, Plus, Trash2, ChevronRight, UserPlus, X, Globe,
 import {
   getCourses, getStudentsForCourse, getAllStudents,
   enrollStudent, removeEnrollment, getVideos,
-  createCourse, updateCourse,
+  createCourse, updateCourse, setThumbnail, removeThumbnail, getPayments,
 } from '../services/dataService';
+import { ThumbnailField, PriceBadge, formatPrice } from '../components/DashboardKit';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, ConfirmDialog, Modal, SearchInput, DemoBanner } from '../components/SharedComponents';
+import { ConfirmDialog, Modal, SearchInput } from '../components/SharedComponents';
 
 export default function CoursesPage() {
   const { currentUser, showNotification, refreshStats } = useApp();
@@ -24,12 +25,16 @@ export default function CoursesPage() {
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [removeTarget, setRemoveTarget] = useState(null);
   const [showNewCourse, setShowNewCourse] = useState(false);
-  const [newCourse, setNewCourse] = useState({ title: '', description: '', visibility: 'public' });
+  const [newCourse, setNewCourse] = useState({ title: '', description: '', visibility: 'public', price: '' });
+  const [newThumb, setNewThumb] = useState(null);
+  const [priceDraft, setPriceDraft] = useState('0');
+  const [publishNow, setPublishNow] = useState(true);
 
   const myCourses = () => getCourses(currentUser.id);
 
   const openCourse = (course) => {
     setSelectedCourse(course);
+    setPriceDraft(String(course.price || 0));
     setStudents(getStudentsForCourse(course.id));
     setCourseVideos(getVideos(currentUser.id).filter(v => v.courseId === course.id));
     setStudentSearch('');
@@ -59,12 +64,20 @@ export default function CoursesPage() {
   };
 
   const handleCreateCourse = async () => {
-    const result = await createCourse(currentUser.id, newCourse);
+    const price = newCourse.price === '' ? 0 : Number(newCourse.price);
+    const result = await createCourse(currentUser.id, { ...newCourse, price });
     if (!result.success) { showNotification(result.error, 'error'); return; }
+    let thumbFailed = false;
+    if (newThumb) thumbFailed = !(await setThumbnail('course', result.course.id, newThumb)).success;
+    let published = false;
+    if (publishNow) published = (await updateCourse(currentUser.id, result.course.id, { status: 'active' })).success;
     setCourses(myCourses());
     setShowNewCourse(false);
-    setNewCourse({ title: '', description: '', visibility: 'public' });
-    showNotification('Course created as a draft. Publish it when you are ready.');
+    setNewCourse({ title: '', description: '', visibility: 'public', price: '' });
+    setNewThumb(null);
+    if (thumbFailed) showNotification('Course created, but the thumbnail could not be uploaded. Add it from the course page.', 'error');
+    else if (published) showNotification('Course created and published. Learners can find it now.');
+    else showNotification('Course created as a draft. Publish it so learners can see it.');
   };
 
   const handlePatchCourse = async (patch, message) => {
@@ -74,6 +87,38 @@ export default function CoursesPage() {
     setCourses(myCourses());
     showNotification(message);
   };
+
+  const refreshSelected = () => {
+    const fresh = myCourses();
+    setCourses(fresh);
+    setSelectedCourse(fresh.find(c => c.id === selectedCourse.id) || null);
+  };
+
+  const changeThumb = async (file) => {
+    const result = await setThumbnail('course', selectedCourse.id, file);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    refreshSelected();
+    showNotification('Thumbnail updated.');
+  };
+
+  const clearThumb = async () => {
+    const result = await removeThumbnail('course', selectedCourse.id);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    refreshSelected();
+    showNotification('Thumbnail removed.');
+  };
+
+  const savePrice = async () => {
+    const price = priceDraft === '' ? 0 : Number(priceDraft);
+    const result = await updateCourse(currentUser.id, selectedCourse.id, { price });
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    setSelectedCourse(result.course);
+    setPriceDraft(String(result.course.price || 0));
+    setCourses(myCourses());
+    showNotification(price > 0 ? `Price set to ${formatPrice(price)}. New learners pay this; current learners keep access.` : 'Course is now free.');
+  };
+
+  const courseSales = (courseId) => getPayments().filter(p => p.courseId === courseId && p.status === 'succeeded' && p.amount > 0);
 
   const filteredStudents = students.filter(s =>
     !studentSearch || s.name?.toLowerCase().includes(studentSearch.toLowerCase()) || s.email?.toLowerCase().includes(studentSearch.toLowerCase())
@@ -88,27 +133,22 @@ export default function CoursesPage() {
 
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <SectionLabel>COURSE MANAGEMENT</SectionLabel>
-        <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '-0.02em', marginTop: '0.75rem', lineHeight: 1 }}>
-          COURSES & ENROLLMENTS
+      <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.6rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+          Courses
         </h1>
-        <p style={{ color: '#A0A0A0', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-          Manage your courses and control student enrollment.
-        </p>
-        <button className="btn btn-primary" style={{ fontSize: '0.7rem', marginTop: '1rem' }} onClick={() => setShowNewCourse(true)}>
-          <Plus size={14} /> NEW COURSE
+        <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => setShowNewCourse(true)}>
+          <Plus size={15} /> New course
         </button>
       </div>
-
-      <DemoBanner />
 
       <div style={{ display: 'grid', gridTemplateColumns: selectedCourse ? '320px 1fr' : '1fr', gap: '1.5rem' }} className="courses-grid">
         {/* Course List */}
         <div>
           {courses.length === 0 && (
             <div style={{ border: '1px dashed #292929', padding: '2rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>
-              You have no courses yet. Create one to start uploading videos.
+              <div style={{ marginBottom: '1rem' }}>You have no courses yet.</div>
+              <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => setShowNewCourse(true)}><Plus size={14} /> Create your first course</button>
             </div>
           )}
           {courses.map(course => (
@@ -138,6 +178,7 @@ export default function CoursesPage() {
                 <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Users size={10} /> {course.enrolledCount} learners
                 </span>
+                <PriceBadge price={course.price} />
                 <span className={`badge ${course.status === 'active' ? 'badge-green' : course.status === 'taken_down' ? 'badge-red' : 'badge-grey'}`} style={{ fontSize: '0.55rem' }}>
                   {course.status === 'active' ? 'PUBLISHED' : course.status.replace('_', ' ').toUpperCase()}
                 </span>
@@ -165,7 +206,47 @@ export default function CoursesPage() {
                 <p style={{ color: '#A0A0A0', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '1rem' }}>
                   {selectedCourse.description}
                 </p>
-                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '1rem' }}>
+                <ThumbnailField
+                  label="Course thumbnail"
+                  url={selectedCourse.thumbUrl}
+                  onSelect={changeThumb}
+                  onRemove={clearThumb}
+                  onError={(msg) => showNotification(msg, 'error')}
+                />
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label className="form-label" htmlFor="course-price">Price (₹) <span style={{ color: '#565656' }}>(0 = free)</span></label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <input
+                      id="course-price"
+                      type="number"
+                      min="0"
+                      step="1"
+                      className="form-input"
+                      style={{ width: 160 }}
+                      value={priceDraft}
+                      onChange={e => setPriceDraft(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') savePrice(); }}
+                    />
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.7rem' }}
+                      onClick={savePrice}
+                      disabled={String(selectedCourse.price || 0) === String(priceDraft === '' ? 0 : Number(priceDraft))}
+                    >
+                      Save price
+                    </button>
+                  </div>
+                  {(() => {
+                    const sales = courseSales(selectedCourse.id);
+                    const total = sales.reduce((sum, p) => sum + p.amount, 0);
+                    return sales.length > 0 && (
+                      <div className="mono" style={{ fontSize: '0.6rem', color: '#22c55e', marginTop: '0.5rem' }}>
+                        {sales.length} paid enrolment{sales.length !== 1 ? 's' : ''} · {formatPrice(total)} earned (beta test payments)
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', margin: '1rem 0' }}>
                   Created {formatDate(selectedCourse.createdAt)} · {selectedCourse.visibility === 'invite_only' ? 'INVITE ONLY' : 'OPEN ENROLLMENT'}
                 </div>
                 {selectedCourse.status === 'taken_down' ? (
@@ -175,9 +256,12 @@ export default function CoursesPage() {
                     <EyeOff size={12} /> UNPUBLISH
                   </button>
                 ) : (
-                  <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'active' }, 'Course published. Learners can now find it.')}>
-                    <Globe size={12} /> PUBLISH COURSE
-                  </button>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#eab308', marginBottom: '0.6rem' }}>Draft: learners cannot see this course until you publish it.</div>
+                    <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'active' }, 'Course published. Learners can now find it.')}>
+                      <Globe size={12} /> PUBLISH COURSE
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -295,7 +379,7 @@ export default function CoursesPage() {
       </Modal>
 
       {/* New Course Modal */}
-      <Modal isOpen={showNewCourse} onClose={() => setShowNewCourse(false)} title="NEW COURSE">
+      <Modal isOpen={showNewCourse} onClose={() => { setShowNewCourse(false); setNewThumb(null); }} title="NEW COURSE">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="form-group">
             <label className="form-label" htmlFor="nc-title">Title</label>
@@ -312,6 +396,26 @@ export default function CoursesPage() {
               <option value="invite_only">Invite only — I enrol learners</option>
             </select>
           </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="nc-price">Price (₹) <span style={{ color: '#565656' }}>(leave 0 for a free course)</span></label>
+            <input id="nc-price" type="number" min="0" step="1" className="form-input" placeholder="0" value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
+          </div>
+          <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.85rem', color: '#C8C8C8' }}>
+            <input type="checkbox" checked={publishNow} onChange={e => setPublishNow(e.target.checked)} style={{ marginTop: 3 }} />
+            <span>
+              Publish now
+              <span style={{ display: 'block', fontSize: '0.72rem', color: '#808080' }}>
+                {publishNow ? 'Learners can find and join this course right away.' : 'Saved as a draft. Learners cannot see it until you publish it.'}
+              </span>
+            </span>
+          </label>
+          <ThumbnailField
+            label="Thumbnail"
+            file={newThumb}
+            onSelect={setNewThumb}
+            onRemove={() => setNewThumb(null)}
+            onError={(msg) => showNotification(msg, 'error')}
+          />
           <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={handleCreateCourse}>CREATE COURSE</button>
         </div>
       </Modal>

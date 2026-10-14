@@ -106,6 +106,9 @@ export const checkVideoAccess = (user, video) => {
   const course = findCourse(video.courseId);
   if (!user || user.status !== 'active') return { ok: false, reason: 'Account suspended — access restricted' };
   if (!course) return { ok: false, reason: 'Video not found.', hidden: true };
+  if (video.uploadStatus === 'processing' || video.uploadStatus === 'failed') {
+    return { ok: false, reason: 'This video is not ready yet.', hidden: true };
+  }
 
   const isOwner = user.role === 'creator' && video.creatorId === user.id;
   const isAdmin = user.role === 'admin';

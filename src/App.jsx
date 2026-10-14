@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { StudioLayout, LearnerLayout, AdminLayout } from './components/AppLayout';
 import { InitialLoader } from './components/InitialLoader';
+import ErrorBoundary from './components/ErrorBoundary';
 import { RequireRole } from './auth/guards';
 import { homeFor } from './auth/permissions';
 import LandingPage from './pages/LandingPage';
@@ -25,6 +26,7 @@ import LearnerHome from './pages/learner/LearnerHome';
 import LearnerCourses from './pages/learner/LearnerCourses';
 import LearnerCourse from './pages/learner/LearnerCourse';
 import LearnerWatch from './pages/learner/LearnerWatch';
+import LearnerCheckout from './pages/learner/LearnerCheckout';
 import LearnerHistory from './pages/learner/LearnerHistory';
 import LearnerAccount from './pages/learner/LearnerAccount';
 import AdminOverview from './pages/admin/AdminOverview';
@@ -60,6 +62,7 @@ const AppRoutes = () => {
           <Route path="courses" element={<LearnerCourses mode="mine" />} />
           <Route path="catalog" element={<LearnerCourses mode="catalog" />} />
           <Route path="course/:courseId" element={<LearnerCourse />} />
+          <Route path="checkout/:courseId" element={<LearnerCheckout />} />
           <Route path="watch/:videoId" element={<LearnerWatch />} />
           <Route path="history" element={<LearnerHistory />} />
           <Route path="account" element={<LearnerAccount />} />
@@ -69,11 +72,12 @@ const AppRoutes = () => {
       {/* Creator Studio */}
       <Route element={<RequireRole roles={['creator']} />}>
         <Route path="/studio" element={<StudioLayout />}>
-          <Route index element={<Navigate to="/studio/overview" replace />} />
+          <Route index element={<Navigate to="/studio/library" replace />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="library" element={<LibraryPage />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="video/:id" element={<VideoDetailPage />} />
+          <Route path="preview/:videoId" element={<LearnerWatch />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="logs" element={<AccessLogsPage />} />
           <Route path="alerts" element={<SecurityAlertsPage />} />
@@ -106,7 +110,9 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <InitialLoader>
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </InitialLoader>
       </BrowserRouter>
     </AppProvider>

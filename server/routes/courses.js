@@ -14,12 +14,24 @@ import { canManageCourse } from '../../src/auth/permissions.js';
 const router = Router();
 const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const VISIBILITY = ['public', 'invite_only'];
+const MAX_PRICE = 100000; // whole rupees
+
+// Price in whole rupees; 0 means free. Returns null when the value is not a valid price.
+export const parsePrice = (v) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 0 && n <= MAX_PRICE ? n : null;
+};
 
 // ── Courses ──────────────────────────────────
 router.post('/courses', requireAuth, requireRole('creator'), (req, res) => {
   const title = clean(req.body?.title, 120);
   if (!title) return res.status(400).json({ error: 'Course title is required.' });
   const visibility = VISIBILITY.includes(req.body?.visibility) ? req.body.visibility : 'public';
+  let price = 0;
+  if (req.body?.price !== undefined && req.body.price !== '') {
+    price = parsePrice(req.body.price);
+    if (price === null) return res.status(400).json({ error: `Price must be a whole number of rupees between 0 and ${MAX_PRICE}.` });
+  }
   const course = {
     id: uid('course'),
     title,
@@ -27,6 +39,8 @@ router.post('/courses', requireAuth, requireRole('creator'), (req, res) => {
     creatorId: req.user.id,
     status: 'draft',
     visibility,
+    price,
+    currency: 'INR',
     videoCount: 0,
     enrolledCount: 0,
     createdAt: new Date().toISOString(),
@@ -47,17 +61,23 @@ router.patch('/courses/:id', requireAuth, (req, res) => {
   if (typeof req.body?.title === 'string' && clean(req.body.title, 120)) course.title = clean(req.body.title, 120);
   if (typeof req.body?.description === 'string') course.description = clean(req.body.description, 2000);
   if (VISIBILITY.includes(req.body?.visibility)) course.visibility = req.body.visibility;
+  if (req.body?.price !== undefined) {
+    const price = parsePrice(req.body.price);
+    if (price === null) return res.status(400).json({ error: `Price must be a whole number of rupees between 0 and ${MAX_PRICE}.` });
+    course.price = price; // existing learners keep their access; only new enrolments pay this
+    course.currency = 'INR';
+  }
   if (['draft', 'active'].includes(req.body?.status)) course.status = req.body.status;
   save();
   res.json({ success: true, course });
 });
 
 // ── Enrollments ──────────────────────────────
-const addEnrollment = (studentId, courseId, source) => {
+export const addEnrollment = (studentId, courseId, source, paymentId = null) => {
   if (db.enrollments.some(e => e.studentId === studentId && e.courseId === courseId)) {
     return { error: 'Already enrolled in this course.' };
   }
-  db.enrollments.push({ id: uid('enr'), studentId, courseId, enrolledAt: new Date().toISOString(), status: 'active', source });
+  db.enrollments.push({ id: uid('enr'), studentId, courseId, enrolledAt: new Date().toISOString(), status: 'active', source, ...(paymentId ? { paymentId } : {}) });
   const course = findCourse(courseId);
   if (course) course.enrolledCount = (course.enrolledCount || 0) + 1;
   save();
@@ -69,6 +89,7 @@ router.post('/courses/:id/enroll', requireAuth, (req, res) => {
   const course = findCourse(req.params.id);
   if (!course || course.status !== 'active') return res.status(404).json({ error: 'This course is not available.' });
   if (course.creatorId === req.user.id) return res.status(400).json({ error: 'You own this course.' });
+  if ((course.price || 0) > 0) return res.status(402).json({ error: 'This is a paid course. Complete checkout to enrol.' });
   if (course.visibility === 'invite_only') {
     return res.status(403).json({ error: 'This course is invite-only. Ask the creator to enrol you.' });
   }

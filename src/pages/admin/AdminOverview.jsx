@@ -5,7 +5,7 @@
 import { Link } from 'react-router-dom';
 import { Users, Clapperboard, Video, ShieldAlert, UserCheck, BookOpen } from 'lucide-react';
 import { getPlatformStats, getAuditLog, getUserById } from '../../services/dataService';
-import { KpiCard, DemoBanner } from '../../components/SharedComponents';
+import { KpiCard } from '../../components/SharedComponents';
 import { PageHeader, Panel, formatDate } from '../../components/DashboardKit';
 
 export default function AdminOverview() {
@@ -15,8 +15,6 @@ export default function AdminOverview() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <PageHeader label="PLATFORM ADMIN" title="PLATFORM OVERVIEW" subtitle="Users, content and security across all creators." />
-      <DemoBanner />
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', marginBottom: '1.5rem' }}>
         <KpiCard label="LEARNERS" value={stats.learners} icon={Users} />
         <KpiCard label="CREATORS" value={stats.creators} icon={Clapperboard} />

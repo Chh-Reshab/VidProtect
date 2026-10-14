@@ -8,7 +8,7 @@
 // ============================================
 
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import {
   ChevronLeft, Play, Pause, RotateCcw, RotateCw, Lock, XCircle, Shield, SkipForward, Maximize,
 } from 'lucide-react';
@@ -34,7 +34,7 @@ const Denied = ({ reason }) => (
   </div>
 );
 
-const Player = ({ access, user }) => {
+const Player = ({ access, user, isStudioPreview }) => {
   const { video, course } = access;
   const hasMedia = !!video.hasMedia;
 
@@ -56,9 +56,15 @@ const Player = ({ access, user }) => {
   const durRef = useRef(duration);
   const tickRef = useRef(0);
   const retriedRef = useRef(false);
+  const watchedRef = useRef(0); // seconds actually played since the last save
+  const lastMediaTimeRef = useRef(0);
 
   const persist = () => {
-    if (posRef.current > 0) saveProgress(user.id, video.id, posRef.current, durRef.current);
+    if (posRef.current > 0) {
+      const watched = watchedRef.current;
+      watchedRef.current = 0;
+      saveProgress(user.id, video.id, posRef.current, durRef.current, watched);
+    }
   };
 
   const stop = (reason) => {
@@ -73,6 +79,7 @@ const Player = ({ access, user }) => {
     if (hasMedia || !playing) return undefined;
     const timer = setInterval(() => {
       posRef.current = Math.min(durRef.current, posRef.current + speed);
+      watchedRef.current += 1;
       setPosition(posRef.current);
       tickRef.current += 1;
       if (tickRef.current % 5 === 0) persist();
@@ -117,6 +124,7 @@ const Player = ({ access, user }) => {
       setDuration(el.duration);
     }
     if (posRef.current > 0 && posRef.current < el.duration) el.currentTime = posRef.current; // resume
+    lastMediaTimeRef.current = el.currentTime;
     el.playbackRate = speed;
     retriedRef.current = false;
     setMediaError(null);
@@ -125,6 +133,9 @@ const Player = ({ access, user }) => {
   const onTimeUpdate = () => {
     const el = mediaRef.current;
     if (!el) return;
+    const dt = el.currentTime - lastMediaTimeRef.current;
+    if (!el.paused && dt > 0 && dt < 2) watchedRef.current += dt; // a seek is a big jump, not watching
+    lastMediaTimeRef.current = el.currentTime;
     posRef.current = el.currentTime;
     setPosition(el.currentTime);
   };
@@ -184,8 +195,12 @@ const Player = ({ access, user }) => {
 
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
-      <Link to={`/learn/course/${course.id}`} className="btn btn-ghost" style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }}>
-        <ChevronLeft size={14} /> {course.title.toUpperCase()}
+      <Link
+        to={isStudioPreview ? `/studio/video/${video.id}` : `/learn/course/${course.id}`}
+        className="btn btn-ghost"
+        style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }}
+      >
+        <ChevronLeft size={14} /> {isStudioPreview ? 'BACK TO DETAILS' : course.title.toUpperCase()}
       </Link>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '1.5rem', alignItems: 'flex-start' }} className="watch-grid">
@@ -198,6 +213,7 @@ const Player = ({ access, user }) => {
                 ref={mediaRef}
                 src={streamUrl(video.id, token.sessionId)}
                 preload="metadata"
+                poster={video.thumbUrl || undefined}
                 playsInline
                 controlsList="nodownload noremoteplayback"
                 disablePictureInPicture
@@ -249,7 +265,7 @@ const Player = ({ access, user }) => {
               <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem' }} onClick={() => seek(position + 10)} aria-label="Forward 10 seconds" disabled={!!stopReason}><RotateCw size={13} /></button>
               <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{formatDuration(position)} / {formatDuration(duration)}</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginRight: '0.25rem' }}>{hasMedia ? 'SPEED' : 'DEMO SPEED'}</span>
+                <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginRight: '0.25rem' }}>{hasMedia ? 'SPEED' : 'SAMPLE SPEED'}</span>
                 {speeds.map(s => (
                   <button key={s} onClick={() => changeSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.6rem' }}>{s}×</button>
                 ))}
@@ -312,7 +328,7 @@ const Player = ({ access, user }) => {
 };
 
 // Request access once per page visit, then hand off to the player.
-function WatchGate({ videoId }) {
+function WatchGate({ videoId, isStudioPreview }) {
   const { currentUser } = useApp();
   const [access, setAccess] = useState(null);
   const requested = useRef(false);
@@ -327,11 +343,13 @@ function WatchGate({ videoId }) {
     return <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}><div className="spinner" /></div>;
   }
   if (!access.granted) return <Denied reason={access.reason} />;
-  return <Player access={access} user={currentUser} />;
+  return <Player access={access} user={currentUser} isStudioPreview={isStudioPreview} />;
 }
 
 // key resets the gate (and the playback session) when moving to another video
 export default function LearnerWatch() {
   const { videoId } = useParams();
-  return <WatchGate key={videoId} videoId={videoId} />;
+  const location = useLocation();
+  const isStudioPreview = location.pathname.startsWith('/studio/');
+  return <WatchGate key={videoId} videoId={videoId} isStudioPreview={isStudioPreview} />;
 }

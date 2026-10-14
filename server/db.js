@@ -14,10 +14,12 @@ import { buildSeed } from './seed.js';
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const DATA_DIR = process.env.VP_DATA_DIR || path.join(here, 'data');
 export const UPLOAD_DIR = process.env.VP_UPLOAD_DIR || path.join(here, 'uploads');
+export const INCOMING_DIR = path.join(UPLOAD_DIR, 'incoming'); // raw uploads, deleted once encrypted
 const FILE = path.join(DATA_DIR, 'db.json');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+fs.mkdirSync(INCOMING_DIR, { recursive: true });
 
 const load = () => {
   if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf8'));
@@ -27,6 +29,8 @@ const load = () => {
 };
 
 export const db = load();
+db.activity ||= {}; // userId -> { 'YYYY-MM-DD': seconds watched }
+db.payments ||= []; // added after the first release; older db.json files lack it
 
 export const save = () => {
   const tmp = `${FILE}.tmp`;

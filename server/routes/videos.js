@@ -16,12 +16,14 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
-import { db, save, UPLOAD_DIR } from '../db.js';
+import { db, save, UPLOAD_DIR, INCOMING_DIR } from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { findCourse, findUser, findVideo, checkVideoAccess, logDenied, recordLog } from '../access.js';
 import { publicVideo } from './data.js';
 import { canManageCourse, canManageVideo } from '../../src/auth/permissions.js';
-import { generateVideoKey, encryptFile, createRangeDecipher } from '../encryption.js';
+import { unwrapKey, createDecryptStream, encryptedSize } from '../encryption.js';
+import { removeThumb } from './thumbnails.js';
+import { processVideo, queuedState } from '../processing.js';
 
 const router = Router();
 
@@ -69,7 +71,7 @@ const clock = (seconds) => {
 const unlink = (p) => { if (p) fs.rm(p, { force: true }, () => {}); };
 
 const storage = multer.diskStorage({
-  destination: UPLOAD_DIR,
+  destination: INCOMING_DIR, // raw uploads wait here until they are encrypted
   // Random server-chosen name: the client's filename never touches the filesystem
   filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${EXT_BY_MIME[file.mimetype] || '.bin'}`),
 });
@@ -119,23 +121,12 @@ router.post(
         return res.status(415).json({ error: 'That file does not look like a real video.' });
       }
 
-      // AES-256-CTR: encrypt the file in place before committing to DB
-      const { key, iv } = generateVideoKey();
-      const encPath = req.file.path + '.enc';
-      try {
-        await encryptFile(req.file.path, encPath, key, iv);
-        fs.unlinkSync(req.file.path);        // remove plaintext
-        fs.renameSync(encPath, req.file.path); // encrypted file takes its place
-      } catch (encErr) {
-        unlink(req.file.path);
-        unlink(encPath);
-        return res.status(500).json({ error: 'Encryption failed. Please try again.' });
-      }
-
       // Duration comes from the browser (no ffprobe on the server yet); sanity-checked
       const seconds = Number(req.body?.duration);
       const hasDuration = Number.isFinite(seconds) && seconds > 0 && seconds < 5 * 86400;
 
+      // The upload is accepted now; verification and encryption run in the background
+      // (see processing.js). Until they finish the video is hidden from learners.
       const video = {
         id: `vid-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
         title,
@@ -147,36 +138,42 @@ router.post(
         durationSeconds: hasDuration ? Math.round(seconds) : undefined,
         fileSize: humanSize(req.file.size),
         uploadDate: new Date().toISOString(),
-        encryptionStatus: 'encrypted',
+        encryptionStatus: 'pending',
         protectionStatus: 'protected',
-        uploadStatus: 'complete',
+        uploadStatus: 'processing',
+        processing: queuedState(),
         sessions: 0,
         thumbnail: null,
-        file: {
-          name: req.file.filename,
-          size: req.file.size,
-          mime: sniffed,
-          encKey: key.toString('hex'),
-          encIv: iv.toString('hex'),
-        },
       };
       db.videos.unshift(video);
-      req.course.videoCount = (req.course.videoCount || 0) + 1;
       save();
-      return res.status(201).json({ success: true, video: publicVideo(video) });
+      res.status(201).json({ success: true, video: publicVideo(video) });
+
+      processVideo(video.id, req.file.path, sniffed).catch((e) => console.error('[processing] crashed:', e));
+      return undefined;
     });
   },
 );
+
+// Live progress for the owner's upload screen
+router.get('/videos/:id/processing', requireAuth, (req, res) => {
+  const video = findVideo(req.params.id);
+  const allowed = video && (req.user.role === 'admin' || canManageVideo(req.user, video));
+  if (!allowed) return res.status(404).json({ error: 'Video not found.' });
+  return res.json({ uploadStatus: video.uploadStatus, processing: video.processing || null });
+});
 
 // ── Delete (owner) ───────────────────────────
 router.delete('/videos/:id', requireAuth, requireRole('creator'), (req, res) => {
   const video = findVideo(req.params.id);
   if (!video || !canManageVideo(req.user, video)) return res.status(404).json({ error: 'Video not found.' });
+  if (video.uploadStatus === 'processing') return res.status(409).json({ error: 'This video is still processing. Try again in a moment.' });
   if (video.file) unlink(path.join(UPLOAD_DIR, video.file.name));
+  removeThumb(video);
   db.videos = db.videos.filter(v => v.id !== video.id);
   db.streamSessions = db.streamSessions.filter(s => s.videoId !== video.id);
   const course = findCourse(video.courseId);
-  if (course) course.videoCount = Math.max(0, (course.videoCount || 1) - 1);
+  if (course && video.uploadStatus !== 'failed') course.videoCount = Math.max(0, (course.videoCount || 1) - 1);
   save();
   res.json({ success: true });
 });
@@ -252,10 +249,17 @@ router.get('/videos/:id/stream', (req, res) => {
   if (!checkVideoAccess(user, video).ok) return deny(403);
 
   const filePath = path.join(UPLOAD_DIR, video.file.name);
-  let stat;
-  try { stat = fs.statSync(filePath); } catch { return deny(404); }
+  const total = video.file.size; // plaintext length
+  let dek;
+  try {
+    if (!video.file.enc) return deny(404); // not migrated: never serve unencrypted bytes
+    if (fs.statSync(filePath).size !== encryptedSize(total)) return deny(404);
+    dek = unwrapKey(video.file.enc.wrappedKey, video.id);
+  } catch (err) {
+    console.error(`[encryption] cannot open video ${video.id}: ${err.message}`);
+    return deny(500);
+  }
 
-  const total = stat.size;
   res.set({
     'Content-Type': video.file.mime,
     'Accept-Ranges': 'bytes',
@@ -264,24 +268,21 @@ router.get('/videos/:id/stream', (req, res) => {
     'X-Content-Type-Options': 'nosniff',
   });
 
-  const enc = video.file.encKey ? { key: video.file.encKey, iv: video.file.encIv } : null;
-
-  const pipeStream = (readStream, byteOffset = 0) => {
-    if (enc) {
-      const decipher = createRangeDecipher(enc.key, enc.iv, byteOffset);
-      readStream.on('error', () => res.destroy());
-      res.on('close', () => { readStream.destroy(); decipher.destroy(); });
-      return readStream.pipe(decipher).pipe(res);
-    }
-    readStream.on('error', () => res.destroy());
-    res.on('close', () => readStream.destroy());
-    return readStream.pipe(res);
+  // Every chunk is authenticated before a single plaintext byte leaves the server
+  const sendRange = (start, end) => {
+    const stream = createDecryptStream(filePath, dek, start, end, total);
+    stream.on('error', (err) => {
+      console.error(`[encryption] integrity/read failure on video ${video.id}: ${err.message}`);
+      res.destroy();
+    });
+    res.on('close', () => stream.destroy());
+    return stream.pipe(res);
   };
 
   const range = req.headers.range;
   if (!range) {
     res.set('Content-Length', String(total));
-    return pipeStream(fs.createReadStream(filePath), 0);
+    return sendRange(0, total - 1);
   }
 
   const m = /^bytes=(\d*)-(\d*)$/.exec(range);
@@ -306,10 +307,37 @@ router.get('/videos/:id/stream', (req, res) => {
     'Content-Range': `bytes ${start}-${end}/${total}`,
     'Content-Length': String(end - start + 1),
   });
-  return pipeStream(fs.createReadStream(filePath, { start, end }), start);
+  return sendRange(start, end);
 });
 
 // ── Progress (own record, only for videos you may watch) ──
+// Watch time per day feeds the learner's activity stats. The browser reports how many
+// seconds it played, but the server only accepts what real elapsed time allows.
+const lastSave = new Map(); // "user:video" -> ms of the previous accepted save
+const MAX_PER_SAVE = 120;
+
+const activityDay = (clientDay) => {
+  const utc = new Date().toISOString().slice(0, 10);
+  if (typeof clientDay !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(clientDay)) return utc;
+  const diffDays = Math.abs(Date.parse(`${clientDay}T00:00:00Z`) - Date.parse(`${utc}T00:00:00Z`)) / 86400000;
+  return diffDays <= 1 ? clientDay : utc; // the learner's own calendar day, but never far from the server's
+};
+
+const creditWatchTime = (userId, videoId, claimed, clientDay) => {
+  const now = Date.now();
+  const key = `${userId}:${videoId}`;
+  const prev = lastSave.get(key);
+  lastSave.set(key, now);
+  if (lastSave.size > 5000) lastSave.clear();
+  const seconds = Number(claimed);
+  if (!Number.isFinite(seconds) || seconds <= 0) return;
+  const room = prev && now - prev < 120000 ? ((now - prev) / 1000) * 2 + 2 : 10; // up to 2x playback speed
+  const add = Math.min(seconds, room, MAX_PER_SAVE);
+  const days = db.activity[userId] || (db.activity[userId] = {});
+  const day = activityDay(clientDay);
+  days[day] = Math.round((days[day] || 0) + add);
+};
+
 router.put('/progress/:videoId', requireAuth, (req, res) => {
   const video = findVideo(req.params.videoId);
   if (!video || !checkVideoAccess(req.user, video).ok) return res.status(404).json({ error: 'Video not found.' });
@@ -326,6 +354,7 @@ router.put('/progress/:videoId', requireAuth, (req, res) => {
     completed: completed || !!mine[video.id]?.completed,
     updatedAt: new Date().toISOString(),
   };
+  creditWatchTime(req.user.id, video.id, req.body?.watchedSeconds, req.body?.localDate);
   save();
   res.json({ success: true });
 });
