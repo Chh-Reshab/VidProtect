@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import {
-  ChevronLeft, Play, Pause, RotateCcw, RotateCw, Lock, XCircle, Shield, SkipForward, Maximize,
+  ChevronLeft, Play, Pause, RotateCcw, RotateCw, Lock, XCircle, Shield, SkipForward, Maximize, Minimize,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
@@ -36,6 +36,7 @@ const Denied = ({ reason }) => (
 
 const Player = ({ access, user, isStudioPreview }) => {
   const { video, course } = access;
+  const { showNotification } = useApp();
   const hasMedia = !!video.hasMedia;
 
   const [token, setToken] = useState(access.token);
@@ -49,7 +50,9 @@ const Player = ({ access, user, isStudioPreview }) => {
   const [stopReason, setStopReason] = useState(null);
   const [mediaError, setMediaError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const playerRef = useRef(null); // video + controls, so the controls stay available in fullscreen
   const surfaceRef = useRef(null);
   const mediaRef = useRef(null);
   const posRef = useRef(position);
@@ -180,12 +183,50 @@ const Player = ({ access, user, isStudioPreview }) => {
     if (hasMedia && mediaRef.current) mediaRef.current.playbackRate = s;
   };
 
-  const fullscreen = () => {
-    const el = surfaceRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) document.exitFullscreen();
-    else el.requestFullscreen?.();
+  const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+
+  // Fullscreen covers the video AND its controls. Safari (older and iPhone) uses prefixed
+  // calls, and iPhone only allows fullscreen on the <video> itself.
+  const fullscreen = async () => {
+    const box = playerRef.current;
+    if (!box) return;
+    try {
+      if (fullscreenElement()) {
+        await (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen?.());
+      } else if (box.requestFullscreen) {
+        await box.requestFullscreen();
+      } else if (box.webkitRequestFullscreen) {
+        box.webkitRequestFullscreen();
+      } else if (mediaRef.current?.webkitEnterFullscreen) {
+        mediaRef.current.webkitEnterFullscreen();
+      } else {
+        throw new Error('unsupported');
+      }
+    } catch {
+      showNotification('Fullscreen is not available here, or the browser blocked it.', 'error');
+    }
   };
+
+  const fullscreenRef = useRef(fullscreen);
+  fullscreenRef.current = fullscreen;
+
+  useEffect(() => {
+    const sync = () => setIsFullscreen(!!fullscreenElement());
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable="true"]') && e.target.type !== 'range') return;
+      if (e.key === 'f' || e.key === 'F') { e.preventDefault(); fullscreenRef.current(); }
+    };
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', sync);
+      document.removeEventListener('webkitfullscreenchange', sync);
+      window.removeEventListener('keydown', onKey);
+      if (fullscreenElement()) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+    };
+  }, []);
 
   const siblings = getCourseVideos(course.id);
   const next = siblings[siblings.findIndex(v => v.id === video.id) + 1];
@@ -205,8 +246,9 @@ const Player = ({ access, user, isStudioPreview }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: '1.5rem', alignItems: 'flex-start' }} className="watch-grid">
         <div>
+          <div ref={playerRef} className="vp-player">
           {/* Player surface */}
-          <div ref={surfaceRef} style={{ position: 'relative', aspectRatio: '16 / 9', background: '#0a0a0a', border: '1px solid #292929', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div ref={surfaceRef} className="vp-surface" onDoubleClick={fullscreen} style={{ position: 'relative', aspectRatio: '16 / 9', background: '#0a0a0a', border: '1px solid #292929', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {hasMedia ? (
               <video
                 key={reloadKey}
@@ -250,7 +292,7 @@ const Player = ({ access, user, isStudioPreview }) => {
           </div>
 
           {/* Controls */}
-          <div style={{ background: '#171717', border: '1px solid #292929', borderTop: 'none', padding: '0.75rem 1rem' }}>
+          <div className="vp-controls" style={{ background: '#171717', border: '1px solid #292929', borderTop: 'none', padding: '0.75rem 1rem' }}>
             <input
               type="range" min={0} max={Math.max(1, Math.floor(duration))} value={Math.min(Math.floor(position), Math.floor(duration))} disabled={!!stopReason}
               onChange={e => seek(Number(e.target.value))}
@@ -269,9 +311,12 @@ const Player = ({ access, user, isStudioPreview }) => {
                 {speeds.map(s => (
                   <button key={s} onClick={() => changeSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.6rem' }}>{s}×</button>
                 ))}
-                <button className="btn btn-ghost" style={{ padding: '0.3rem 0.5rem' }} onClick={fullscreen} aria-label="Fullscreen"><Maximize size={13} /></button>
+                <button className="btn btn-ghost" style={{ padding: '0.3rem 0.5rem' }} onClick={fullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
+                  {isFullscreen ? <Minimize size={13} /> : <Maximize size={13} />}
+                </button>
               </div>
             </div>
+          </div>
           </div>
 
           <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.01em', marginTop: '1.25rem' }}>{video.title}</h1>
@@ -321,6 +366,12 @@ const Player = ({ access, user, isStudioPreview }) => {
           75%  { top: 80%; left: 8%; }
           100% { top: 8%;  left: 6%; }
         }
+        .vp-player:fullscreen { background: #000; display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+        .vp-player:fullscreen .vp-surface { flex: 1 1 auto; min-height: 0; aspect-ratio: auto !important; border: none !important; }
+        .vp-player:fullscreen .vp-controls { border: none !important; }
+        .vp-player:-webkit-full-screen { background: #000; display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+        .vp-player:-webkit-full-screen .vp-surface { flex: 1 1 auto; min-height: 0; aspect-ratio: auto !important; border: none !important; }
+        .vp-player:-webkit-full-screen .vp-controls { border: none !important; }
         @media (max-width: 900px) { .watch-grid { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>

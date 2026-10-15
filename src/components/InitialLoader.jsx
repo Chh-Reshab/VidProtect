@@ -91,7 +91,9 @@ export const InitialLoader = ({ children }) => {
       <div style={{
         minHeight: '100vh',
         transition: 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease',
-        transform: loading && !fade ? 'scale(0.96) translateY(20px)' : 'scale(1) translateY(0)',
+        // 'none' (not an identity transform) once settled: any transform on this wrapper would
+        // make every position:fixed element inside the app scroll with the page
+        transform: loading && !fade ? 'scale(0.96) translateY(20px)' : 'none',
         opacity: loading && !fade ? 0 : 1,
       }}>
         {children}
