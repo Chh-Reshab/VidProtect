@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import './db.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity } from './migrate.js';
+import { applyAdminPassword } from './admin-bootstrap.js';
 import authRoutes from './routes/auth.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
@@ -23,7 +24,9 @@ import paymentRoutes from './routes/payments.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = Number(process.env.API_PORT || 4000); // not PORT: dev tooling sets PORT for the web server
+// Hosts like Render hand the port over in PORT. In development PORT belongs to Vite
+// (concurrently sets it), so it is only honoured in production.
+const PORT = Number(process.env.API_PORT || (process.env.NODE_ENV === 'production' && process.env.PORT) || 4000);
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // behind Vite's proxy / a load balancer: use the real client IP
@@ -56,8 +59,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong.' });
 });
 
+applyAdminPassword(); // refuses to start in production without ADMIN_PASSWORD
 backfillActivity();
 recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
 await migrateEncryption(); // bring older videos up to AES-256-GCM before serving anything
 
-app.listen(PORT, () => console.log(`VidProtect API listening on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`));

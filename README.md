@@ -86,3 +86,18 @@ Every uploaded video is encrypted at rest with **AES-256-GCM** (64 KiB authentic
 - **Older videos** (AES-CTR or unencrypted) are re-encrypted automatically at startup and verified by hash before the old file is deleted.
 - Payments run in **beta test mode** (test card `4242 4242 4242 4242`); no real money moves until a live payment provider is connected.
 - **Upload processing:** after an upload the server verifies, encrypts and integrity-checks the video while the creator watches live progress; the video stays hidden from learners until it is ready. Each stage is shown for at least `VP_MIN_STAGE_MS` (default 1200 ms) so small files still show their progress; set it to `0` to run at full speed.
+
+## Deploying to Render
+
+`render.yaml` describes the whole service (one web service serves the API and the built site).
+
+1. Push the repo to GitHub, then in Render: **New → Blueprint** and pick the repo.
+2. In the service's **Environment** tab set the two values the blueprint leaves empty:
+   - `ADMIN_PASSWORD`: at least 12 characters. The server will not start in production without it, because the seeded admin password is public. Sign in as `admin@vidprotect.demo` with it.
+   - `VP_MASTER_KEY`: 64 hex characters. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and keep a copy somewhere safe: videos cannot be decrypted without it.
+   (`JWT_SECRET` is generated for you.)
+3. Open the Render URL. Health check: `/api/health`.
+
+**Free plan limits:** the disk is temporary, so accounts, courses and uploaded videos reset on every restart or redeploy (the seeded sample data comes back), and the service sleeps after about 15 minutes idle and takes roughly a minute to wake. To keep data, use a paid plan with a disk and follow the commented `disk:` block in `render.yaml`.
+
+Locally nothing changes: `npm run dev` still uses ports 5173 (site) and 4000 (API). The `PORT` variable that Render provides is only used when `NODE_ENV=production`.

@@ -14,7 +14,7 @@ const DEMO_ACCOUNTS = [
   { label: 'Learner', email: 'sarah@student.demo' },
   { label: 'Creator', email: 'creator@vidprotect.demo' },
   { label: 'Admin', email: 'admin@vidprotect.demo' },
-];
+].filter(a => !(import.meta.env.PROD && a.label === 'Admin')); // the admin password is set by ADMIN_PASSWORD when deployed
 
 export default function LoginPage() {
   const { login, showNotification } = useApp();
