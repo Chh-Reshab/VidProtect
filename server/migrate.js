@@ -104,8 +104,13 @@ export const recoverInterruptedUploads = async () => {
 
   const referenced = new Set(db.videos.map(v => v.file?.name).filter(Boolean));
   let orphans = 0;
-  for (const name of await blobs.names('videos')) {
-    if (name.endsWith('.vpe') && !referenced.has(name)) { await blobs.remove('videos', name); orphans += 1; }
+  try {
+    for (const name of await blobs.names('videos')) {
+      if (name.endsWith('.vpe') && !referenced.has(name)) { await blobs.remove('videos', name); orphans += 1; }
+    }
+  } catch (err) {
+    // A storage problem (for example S3 permissions) should be loud, not stop the whole site from starting
+    console.error(`[storage] Could not check the video store (${err.name || 'error'}: ${err.message}). Uploads and playback will fail until this is fixed.`);
   }
   if (failed || orphans) console.warn(`[processing] Recovered after restart: ${failed} interrupted upload(s) marked failed, ${orphans} orphaned file(s) removed.`);
 };
