@@ -1,12 +1,12 @@
 # Render blueprint: one web service runs the API and serves the built site.
 # Deploy: push to GitHub, then Render dashboard -> New -> Blueprint -> pick the repo.
 # After the first deploy, open the service -> Environment and fill in the two values
-# marked "sync: false" (ADMIN_PASSWORD and VP_MASTER_KEY). See README "Deploying to Render".
+# marked "sync: false" (ADMIN_PASSWORD, VP_MASTER_KEY and MONGODB_URI). See README "Deploying to Render".
 services:
   - type: web
     name: vidprotect
     runtime: node
-    plan: free # free = data and uploads reset on every restart/redeploy; see the disk block below
+    plan: free # the disk is temporary, but all data AND videos live in MongoDB Atlas (free tier), so nothing is lost
     buildCommand: npm ci --include=dev && npm run build
     startCommand: node server/index.js
     healthCheckPath: /api/health
@@ -21,15 +21,17 @@ services:
         sync: false
       - key: VP_MASTER_KEY # 64 hex characters, see README; keep a copy somewhere safe
         sync: false
+      - key: MONGODB_URI # from MongoDB Atlas (free M0): mongodb+srv://USER:PASSWORD@cluster.mongodb.net/vidprotect
+        sync: false
+      - key: S3_BUCKET # Amazon S3 bucket that holds the encrypted videos and thumbnails
+        sync: false
+      - key: AWS_REGION # region of the bucket, e.g. ap-south-1
+        sync: false
+      - key: AWS_ACCESS_KEY_ID # of an IAM user that can only use this bucket
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
 
-    # To KEEP data and videos across restarts you need a paid plan (e.g. starter) with a disk.
-    # Then change `plan: free` to `plan: starter`, uncomment this block and the two env vars:
-    # disk:
-    #   name: vidprotect-data
-    #   mountPath: /var/data
-    #   sizeGB: 5
-    # (add to envVars)
-    #   - key: VP_DATA_DIR
-    #     value: /var/data/db
-    #   - key: VP_UPLOAD_DIR
-    #     value: /var/data/uploads
+    # Data is stored in MongoDB and encrypted videos in Amazon S3 (leave S3_BUCKET unset to keep videos
+    # in MongoDB GridFS instead), so no Render disk is needed.
+    # Without MONGODB_URI the app falls back to files on the (temporary) disk and warns in the logs.

@@ -32,7 +32,7 @@ Not yet done: encryption at rest, transcoding to HLS, cloud object storage, emai
 ## 🛠️ Technology Stack
 
 - **Frontend**: React 19, JavaScript
-- **Backend**: Node.js + Express 5 (JWT, bcrypt, multer, helmet), JSON-file database
+- **Backend**: Node.js + Express 5 (JWT, bcrypt, multer, helmet). Data: a JSON file in development, **MongoDB** (Atlas free tier) when `MONGODB_URI` is set; encrypted videos in the uploads folder or MongoDB GridFS
 - **Styling**: Vanilla CSS (Global Design System with CSS variables)
 - **Icons**: Lucide React
 - **Build Tool**: Vite
@@ -87,17 +87,52 @@ Every uploaded video is encrypted at rest with **AES-256-GCM** (64 KiB authentic
 - Payments run in **beta test mode** (test card `4242 4242 4242 4242`); no real money moves until a live payment provider is connected.
 - **Upload processing:** after an upload the server verifies, encrypts and integrity-checks the video while the creator watches live progress; the video stays hidden from learners until it is ready. Each stage is shown for at least `VP_MIN_STAGE_MS` (default 1200 ms) so small files still show their progress; set it to `0` to run at full speed.
 
-## Deploying to Render
+## Deploying to Render (free, with MongoDB Atlas free tier)
 
-`render.yaml` describes the whole service (one web service serves the API and the built site).
+Render's free plan has a temporary disk, so the app keeps **everything in MongoDB Atlas** instead: the data lives in collections and the encrypted videos and thumbnails in GridFS. When `MONGODB_URI` is set the app uses MongoDB; when it is not (local development) it uses `server/data/db.json` and `server/uploads/` exactly as before.
 
-1. Push the repo to GitHub, then in Render: **New → Blueprint** and pick the repo.
-2. In the service's **Environment** tab set the two values the blueprint leaves empty:
-   - `ADMIN_PASSWORD`: at least 12 characters. The server will not start in production without it, because the seeded admin password is public. Sign in as `admin@vidprotect.demo` with it.
-   - `VP_MASTER_KEY`: 64 hex characters. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and keep a copy somewhere safe: videos cannot be decrypted without it.
-   (`JWT_SECRET` is generated for you.)
-3. Open the Render URL. Health check: `/api/health`.
+### 1. Create the free database (MongoDB Atlas)
+1. Sign up at mongodb.com/atlas and create a **free (M0) cluster**; pick a region close to your Render region.
+2. **Database Access → Add New Database User**: choose a username and password (avoid `@ : / ?` in the password, or URL-encode them).
+3. **Network Access → Add IP Address → Allow access from anywhere** (`0.0.0.0/0`): Render's free plan has no fixed IP.
+4. **Connect → Drivers**: copy the connection string and add the database name, e.g.
+   `mongodb+srv://USER:PASSWORD@cluster0.abcde.mongodb.net/vidprotect?retryWrites=true&w=majority`
 
-**Free plan limits:** the disk is temporary, so accounts, courses and uploaded videos reset on every restart or redeploy (the seeded sample data comes back), and the service sleeps after about 15 minutes idle and takes roughly a minute to wake. To keep data, use a paid plan with a disk and follow the commented `disk:` block in `render.yaml`.
+### 2. Deploy on Render
+1. Push the repo to GitHub, then in Render: **New → Blueprint** (uses `render.yaml`) or **New → Web Service** with build `npm ci --include=dev && npm run build` and start `node server/index.js`.
+2. In the service's **Environment** tab set:
+   - `NODE_ENV` = `production`, `NODE_VERSION` = `22`
+   - `JWT_SECRET`: any long random value (Render can generate it)
+   - `ADMIN_PASSWORD`: at least 12 characters. The server will not start in production without it, because the seeded admin password is public. Sign in as `admin@vidprotect.demo`.
+   - `VP_MASTER_KEY`: 64 hex characters (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). Keep a copy: videos cannot be decrypted without it.
+   - `MONGODB_URI`: the connection string from step 1.
+3. Open the Render URL. Health check: `/api/health`. The first start creates the collections and the seed data.
+
+### What to expect
+- Accounts, courses, progress, purchases **and uploaded videos survive restarts and redeploys.**
+- The Atlas free tier has **512 MB of storage, shared by data and videos**, so keep demo videos short. Atlas may pause a free cluster after a long period of inactivity; resume it from the Atlas dashboard.
+- Render's free service sleeps after about 15 minutes idle and takes roughly a minute to wake.
+- The app assumes **one server instance** (Render's free plan is one). Changes are written to MongoDB in small batches a fraction of a second after they happen, and flushed when the host stops the app.
+- Test uploads first with small videos; large uploads depend on Render's request and memory limits.
+
+### Moving existing local data into MongoDB
+Your local accounts, courses and videos can be copied once (local files are left untouched):
+
+```bash
+MONGODB_URI="mongodb+srv://USER:PASSWORD@cluster0.abcde.mongodb.net/vidprotect" npm run migrate:mongo
+```
+
+Use the **same `VP_MASTER_KEY`** you had locally (it is in `server/data/master.key` if you never set one), or the copied videos cannot be decrypted. The script refuses to run if the database already has data.
 
 Locally nothing changes: `npm run dev` still uses ports 5173 (site) and 4000 (API). The `PORT` variable that Render provides is only used when `NODE_ENV=production`.
+
+### Storing the encrypted videos in Amazon S3 (optional)
+
+By default the encrypted videos live in MongoDB. To keep them in S3 instead:
+
+1. In S3, create a private bucket (keep "Block all public access" on).
+2. In IAM, create a user with an inline policy allowing `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on `arn:aws:s3:::YOUR-BUCKET/*` and `s3:ListBucket` on `arn:aws:s3:::YOUR-BUCKET`, then create an access key for it.
+3. On Render, add `S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. The logs then show `videos: s3`.
+
+Videos are encrypted before they reach S3, so the bucket only ever holds ciphertext. MongoDB still stores accounts, courses and progress. Thumbnails go to S3 too.
+

@@ -8,15 +8,16 @@
 //      re-checks the session AND the viewer's current access.
 //   3. POST /stream-sessions/:sid/renew keeps it alive; a suspension,
 //      unenrolment or takedown ends playback at the next check.
-// Files live in UPLOAD_DIR under random names and are never served statically.
+// Encrypted files live in the blob store (local folder or MongoDB GridFS) under random names
+// and are never served statically.
 // ============================================
 
 import fs from 'node:fs';
-import path from 'node:path';
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
-import { db, save, UPLOAD_DIR, INCOMING_DIR } from '../db.js';
+import { db, save, INCOMING_DIR } from '../db.js';
+import * as blobs from '../blobs.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { findCourse, findUser, findVideo, checkVideoAccess, logDenied, recordLog } from '../access.js';
 import { publicVideo } from './data.js';
@@ -168,7 +169,7 @@ router.delete('/videos/:id', requireAuth, requireRole('creator'), (req, res) => 
   const video = findVideo(req.params.id);
   if (!video || !canManageVideo(req.user, video)) return res.status(404).json({ error: 'Video not found.' });
   if (video.uploadStatus === 'processing') return res.status(409).json({ error: 'This video is still processing. Try again in a moment.' });
-  if (video.file) unlink(path.join(UPLOAD_DIR, video.file.name));
+  if (video.file) blobs.remove('videos', video.file.name).catch(() => {});
   removeThumb(video);
   db.videos = db.videos.filter(v => v.id !== video.id);
   db.streamSessions = db.streamSessions.filter(s => s.videoId !== video.id);
@@ -236,7 +237,7 @@ router.post('/stream-sessions/:sid/renew', requireAuth, (req, res) => {
 });
 
 // ── Byte-range streaming ─────────────────────
-router.get('/videos/:id/stream', (req, res) => {
+router.get('/videos/:id/stream', async (req, res) => {
   const deny = (code) => res.status(code).end();
 
   const sid = typeof req.query.s === 'string' ? req.query.s : '';
@@ -248,12 +249,12 @@ router.get('/videos/:id/stream', (req, res) => {
   if (!video || !video.file) return deny(404);
   if (!checkVideoAccess(user, video).ok) return deny(403);
 
-  const filePath = path.join(UPLOAD_DIR, video.file.name);
+  const source = blobs.source('videos', video.file.name);
   const total = video.file.size; // plaintext length
   let dek;
   try {
     if (!video.file.enc) return deny(404); // not migrated: never serve unencrypted bytes
-    if (fs.statSync(filePath).size !== encryptedSize(total)) return deny(404);
+    if ((await blobs.size('videos', video.file.name)) !== encryptedSize(total)) return deny(404);
     dek = unwrapKey(video.file.enc.wrappedKey, video.id);
   } catch (err) {
     console.error(`[encryption] cannot open video ${video.id}: ${err.message}`);
@@ -270,7 +271,7 @@ router.get('/videos/:id/stream', (req, res) => {
 
   // Every chunk is authenticated before a single plaintext byte leaves the server
   const sendRange = (start, end) => {
-    const stream = createDecryptStream(filePath, dek, start, end, total);
+    const stream = createDecryptStream(source, dek, start, end, total);
     stream.on('error', (err) => {
       console.error(`[encryption] integrity/read failure on video ${video.id}: ${err.message}`);
       res.destroy();

@@ -174,9 +174,11 @@ export const encryptFile = async (srcPath, destPath, dek, onProgress) => {
 
 // Readable of plaintext bytes [start, end] (inclusive). Only the chunks that
 // range touches are read and authenticated; a bad chunk errors the stream.
-export const createDecryptStream = (filePath, dek, start, end, expectedPlainLen) => {
+// `source` is a file path, or { open() } returning an object with the same
+// read(buf, off, len, pos) / close() as a file handle (see blobs.js).
+export const createDecryptStream = (source, dek, start, end, expectedPlainLen) => {
   async function* generate() {
-    const fh = await fs.promises.open(filePath, 'r');
+    const fh = typeof source === 'string' ? await fs.promises.open(source, 'r') : await source.open();
     try {
       const header = await readExactly(fh, HEADER_LEN, 0);
       const { chunkSize, plainLen, noncePrefix } = parseHeader(header);

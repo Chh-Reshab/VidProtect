@@ -1,8 +1,9 @@
 // ============================================
-// DB — tiny JSON-file store (no native deps).
-// One object in memory, written atomically on every change.
-// Swap for Postgres/SQLite later; the route code only
-// touches the collections on `db`.
+// DB — the app's data.
+// All routes read and write the in-memory `db` object; save() makes the change durable:
+//   - without MONGODB_URI: one JSON file (server/data/db.json), written atomically
+//   - with MONGODB_URI   : MongoDB collections (see mongo.js), written in small batches
+// Call `await initDb()` once at start-up before using `db`.
 // ============================================
 
 import fs from 'node:fs';
@@ -10,34 +11,95 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { buildSeed } from './seed.js';
+import * as mongo from './mongo.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const DATA_DIR = process.env.VP_DATA_DIR || path.join(here, 'data');
 export const UPLOAD_DIR = process.env.VP_UPLOAD_DIR || path.join(here, 'uploads');
-export const INCOMING_DIR = path.join(UPLOAD_DIR, 'incoming'); // raw uploads, deleted once encrypted
+export const INCOMING_DIR = path.join(UPLOAD_DIR, 'incoming'); // staging for raw uploads and files on their way into storage
 const FILE = path.join(DATA_DIR, 'db.json');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(INCOMING_DIR, { recursive: true });
 
-const load = () => {
-  if (fs.existsSync(FILE)) return JSON.parse(fs.readFileSync(FILE, 'utf8'));
+export const useMongo = () => Boolean(process.env.MONGODB_URI);
+
+// The one live state object; initDb() fills it in place so every importer sees the data
+export const db = {};
+
+const freshState = () => {
   const fresh = buildSeed();
   fresh.meta = { jwtSecret: crypto.randomBytes(48).toString('hex'), createdAt: new Date().toISOString() };
   return fresh;
 };
 
-export const db = load();
-db.activity ||= {}; // userId -> { 'YYYY-MM-DD': seconds watched }
-db.payments ||= []; // added after the first release; older db.json files lack it
+let initialised = false;
+export const initDb = async () => {
+  if (initialised) return;
+  let state;
+  if (useMongo()) {
+    await mongo.connect(process.env.MONGODB_URI, process.env.MONGODB_DB);
+    state = await mongo.loadState();
+    if (!state) {
+      state = freshState();
+      Object.assign(db, state);
+      await mongo.persistState(db); // first run: store the seed data
+    }
+  } else if (fs.existsSync(FILE)) {
+    state = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+  } else {
+    state = freshState();
+  }
+  Object.assign(db, state);
+  db.meta ||= {};
+  db.activity ||= {};   // userId -> { 'YYYY-MM-DD': seconds watched }
+  db.payments ||= [];   // added after the first release; older stores lack it
+  initialised = true;
+  if (!useMongo()) save();
+};
 
-export const save = () => {
+// ── persistence ──────────────────────────────
+let timer = null;
+let running = Promise.resolve();
+let dirty = false;
+
+const writeJson = () => {
   const tmp = `${FILE}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(db));
   fs.renameSync(tmp, FILE); // atomic: a crash never leaves a half-written file
 };
 
-save();
+const runPersist = () => {
+  running = running.then(async () => {
+    if (!dirty) return;
+    dirty = false;
+    try {
+      await mongo.persistState(db);
+    } catch (err) {
+      dirty = true; // try again on the next save or flush
+      console.error(`[db] Could not write to MongoDB: ${err.message}`);
+    }
+  });
+  return running;
+};
+
+export const save = () => {
+  if (!useMongo()) { writeJson(); return; }
+  dirty = true;
+  if (timer) return;
+  timer = setTimeout(() => { timer = null; runPersist(); }, 250); // batch bursts of changes
+};
+
+// Wait until everything saved so far is durable (used on shutdown and by scripts)
+export const flush = async () => {
+  if (!useMongo()) return;
+  clearTimeout(timer);
+  timer = null;
+  await runPersist();
+  if (dirty) await runPersist(); // one retry if the first attempt failed
+};
+
+export const closeDb = async () => { await flush(); await mongo.close(); };
 
 export const uid = (prefix) => `${prefix}-${crypto.randomBytes(4).toString('hex')}`;

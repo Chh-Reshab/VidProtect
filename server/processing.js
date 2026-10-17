@@ -15,7 +15,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { db, save, UPLOAD_DIR } from './db.js';
+import { db, save, INCOMING_DIR } from './db.js';
+import * as blobs from './blobs.js';
 import {
   ALG, CHUNK_SIZE, newDataKey, wrapKey, keyId, encryptFile, createDecryptStream,
 } from './encryption.js';
@@ -81,7 +82,7 @@ export const processVideo = async (videoId, tempPath, mime) => {
   if (!video) { fs.rmSync(tempPath, { force: true }); return; }
 
   const storedName = `${crypto.randomUUID()}.vpe`;
-  const storedPath = path.join(UPLOAD_DIR, storedName);
+  const storedPath = path.join(INCOMING_DIR, storedName); // staged here; moved into the blob store at the end
   try {
     const expected = await runStage(video, 0, (set) => sha256OfFile(tempPath, set));
 
@@ -101,8 +102,11 @@ export const processVideo = async (videoId, tempPath, mime) => {
 
     const wrappedKey = await runStage(video, 3, async (set) => {
       if (!findVideo(videoId)) throw new Error('video was removed during processing');
-      set(0.5);
-      return wrapKey(dek, videoId);
+      set(0.3);
+      const wrapped = wrapKey(dek, videoId);
+      await blobs.put('videos', storedName, storedPath); // the encrypted file moves into permanent storage
+      set(0.9);
+      return wrapped;
     });
 
     // Publish only after the last stage has been shown, so "ready" really means ready
@@ -122,6 +126,7 @@ export const processVideo = async (videoId, tempPath, mime) => {
   } catch (err) {
     console.error(`[processing] video ${videoId} failed: ${err.message}`);
     fs.rmSync(storedPath, { force: true });
+    blobs.remove('videos', storedName).catch(() => {});
     if (findVideo(videoId)) {
       video.uploadStatus = 'failed';
       video.processing = { stage: 'failed', label: 'Failed', step: 0, steps: STAGES.length, percent: 0, error: 'Processing failed. Please upload the video again.' };

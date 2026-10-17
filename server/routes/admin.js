@@ -3,10 +3,9 @@
 // Every route requires an active admin; every action is audited.
 // ============================================
 
-import fs from 'node:fs';
-import path from 'node:path';
 import { Router } from 'express';
-import { db, save, UPLOAD_DIR } from '../db.js';
+import { db, save } from '../db.js';
+import * as blobs from '../blobs.js';
 import { requireAuth, requireRole, revokeAllSessions, toPublic } from '../auth.js';
 import { audit, findCourse, findUser } from '../access.js';
 import { removeThumb } from './thumbnails.js';
@@ -60,7 +59,7 @@ router.post('/courses/:id/moderate', (req, res) => {
 router.delete('/videos/:id', (req, res) => {
   const video = db.videos.find(v => v.id === req.params.id);
   if (!video) return res.status(404).json({ error: 'Video not found.' });
-  if (video.file) fs.rm(path.join(UPLOAD_DIR, video.file.name), { force: true }, () => {});
+  if (video.file) blobs.remove('videos', video.file.name).catch(() => {});
   removeThumb(video);
   db.videos = db.videos.filter(v => v.id !== video.id);
   const course = findCourse(video.courseId);

@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import './db.js';
+import { initDb, closeDb, useMongo } from './db.js';
+import { backend } from './blobs.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity } from './migrate.js';
 import { applyAdminPassword } from './admin-bootstrap.js';
 import authRoutes from './routes/auth.js';
@@ -59,9 +60,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong.' });
 });
 
+await initDb(); // loads the data (JSON file or MongoDB) before anything uses it
+if (process.env.NODE_ENV === 'production' && !useMongo()) {
+  console.warn('[db] MONGODB_URI is not set: data and uploaded videos are kept on this machine\'s disk and will be lost if the host resets it.');
+}
 applyAdminPassword(); // refuses to start in production without ADMIN_PASSWORD
 backfillActivity();
-recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
+await recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
 await migrateEncryption(); // bring older videos up to AES-256-GCM before serving anything
 
-app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'})`));
+const server = app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'}, ${useMongo() ? 'MongoDB' : 'JSON file'}, videos: ${backend()})`));
+
+// Hosts stop the app with SIGTERM on every deploy: finish writing to the database first
+let closing = false;
+const shutdown = async () => {
+  if (closing) return;
+  closing = true;
+  server.close();
+  try { await closeDb(); } catch (err) { console.error('[db] shutdown flush failed:', err.message); }
+  process.exit(0);
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

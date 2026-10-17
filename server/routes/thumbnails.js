@@ -11,15 +11,13 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
-import { save, UPLOAD_DIR } from '../db.js';
+import { save, INCOMING_DIR } from '../db.js';
+import * as blobs from '../blobs.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { findCourse, findVideo } from '../access.js';
 import { canManageCourse, canManageVideo } from '../../src/auth/permissions.js';
 
 const router = Router();
-
-const THUMB_DIR = path.join(UPLOAD_DIR, 'thumbs');
-fs.mkdirSync(THUMB_DIR, { recursive: true });
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const EXT_BY_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
@@ -38,16 +36,17 @@ const sniffImage = (filePath) => {
 };
 
 // Remove the image a record points to (no-op when it has none)
+// Returns a promise that resolves once the stored image is gone (callers may ignore it)
 export const removeThumb = (record) => {
-  if (!record?.thumbUrl) return;
+  if (!record?.thumbUrl) return Promise.resolve();
   const name = path.basename(record.thumbUrl);
-  if (NAME_RE.test(name)) fs.rm(path.join(THUMB_DIR, name), { force: true }, () => {});
   record.thumbUrl = null;
+  return NAME_RE.test(name) ? blobs.remove('thumbs', name).catch(() => {}) : Promise.resolve();
 };
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: THUMB_DIR,
+    destination: INCOMING_DIR, // staged here, then moved into the blob store
     filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${EXT_BY_MIME[file.mimetype] || '.bin'}`),
   }),
   limits: { fileSize: MAX_BYTES, files: 1, fields: 2 },
@@ -65,7 +64,7 @@ const setThumbnail = (find) => [
     return next();
   },
   (req, res) => {
-    upload(req, res, (err) => {
+    upload(req, res, async (err) => {
       const discard = () => req.file && fs.rm(req.file.path, { force: true }, () => {});
       if (err) {
         discard();
@@ -78,9 +77,17 @@ const setThumbnail = (find) => [
       if (!ext) { discard(); return res.status(415).json({ error: 'That file is not a valid image.' }); }
       // Name carries the real type, not what the client claimed
       const finalName = `${path.parse(req.file.filename).name}${ext}`;
-      fs.renameSync(req.file.path, path.join(THUMB_DIR, finalName));
+      const staged = path.join(INCOMING_DIR, finalName);
+      fs.renameSync(req.file.path, staged);
+      try {
+        await blobs.put('thumbs', finalName, staged);
+      } catch (putErr) {
+        console.error('[thumbnails] could not store image:', putErr.message);
+        fs.rmSync(staged, { force: true });
+        return res.status(500).json({ error: 'Could not save the image. Please try again.' });
+      }
 
-      removeThumb(req.record);
+      await removeThumb(req.record);
       req.record.thumbUrl = `/api/thumbnails/${finalName}`;
       save();
       return res.json({ success: true, thumbUrl: req.record.thumbUrl });
@@ -91,10 +98,10 @@ const setThumbnail = (find) => [
 const clearThumbnail = (find) => [
   requireAuth,
   requireRole('creator'),
-  (req, res) => {
+  async (req, res) => {
     const record = find(req);
     if (!record) return res.status(404).json({ error: 'Not found.' });
-    removeThumb(record);
+    await removeThumb(record);
     save();
     return res.json({ success: true });
   },
@@ -114,18 +121,22 @@ router.delete('/courses/:id/thumbnail', ...clearThumbnail(ownCourse));
 router.post('/videos/:id/thumbnail', ...setThumbnail(ownVideo));
 router.delete('/videos/:id/thumbnail', ...clearThumbnail(ownVideo));
 
-router.get('/thumbnails/:name', (req, res) => {
+router.get('/thumbnails/:name', async (req, res) => {
   const name = req.params.name;
   if (!NAME_RE.test(name)) return res.status(404).end();
-  const file = path.join(THUMB_DIR, name);
-  if (!fs.existsSync(file)) return res.status(404).end();
+  if ((await blobs.size('thumbs', name)) === null) return res.status(404).end();
   res.set({
     'Content-Type': MIME_BY_EXT[path.extname(name)],
     'Cache-Control': 'public, max-age=86400, immutable',
     'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'",
   });
-  return fs.createReadStream(file).pipe(res);
+  const stream = blobs.readStream('thumbs', name);
+  stream.on('error', () => {
+    // the image vanished between the check and the read: say so instead of dropping the connection
+    if (!res.headersSent) { res.removeHeader('Content-Type'); res.status(404).end(); } else res.destroy();
+  });
+  return stream.pipe(res);
 });
 
 export default router;

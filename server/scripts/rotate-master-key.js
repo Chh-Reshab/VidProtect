@@ -11,7 +11,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { db, save, DATA_DIR } from '../db.js';
+import { db, save, DATA_DIR, initDb, closeDb } from '../db.js';
 import { getMasterKey, unwrapKey, wrapKey, keyId } from '../encryption.js';
 
 const next = (process.argv[2] || '').trim();
@@ -20,6 +20,7 @@ if (!/^[0-9a-fA-F]{64}$/.test(next)) {
   process.exit(1);
 }
 
+await initDb(); // loads the JSON file or MongoDB, whichever is configured
 const oldKey = getMasterKey();
 const newKey = Buffer.from(next, 'hex');
 if (oldKey.equals(newKey)) {
@@ -40,6 +41,7 @@ for (const [enc, wrapped] of rewrapped) {
   enc.kid = keyId(newKey);
 }
 save();
+await closeDb(); // makes sure a MongoDB write is finished before the script exits
 
 const keyFile = path.join(DATA_DIR, 'master.key');
 if (!process.env.VP_MASTER_KEY && fs.existsSync(keyFile)) {

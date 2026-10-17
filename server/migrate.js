@@ -10,7 +10,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
-import { db, save, UPLOAD_DIR, DATA_DIR, INCOMING_DIR } from './db.js';
+import { db, save, UPLOAD_DIR, DATA_DIR, INCOMING_DIR, useMongo } from './db.js';
+import * as blobs from './blobs.js';
+import { backend } from './blobs.js';
 import {
   ALG, CHUNK_SIZE, newDataKey, wrapKey, keyId, encryptFile, createDecryptStream, getMasterKey,
 } from './encryption.js';
@@ -67,6 +69,7 @@ const migrateOne = async (video) => {
 
 export const migrateEncryption = async () => {
   getMasterKey(); // fail fast if the master key is missing or malformed
+  if (useMongo() || backend() !== 'local') return; // MongoDB / S3 deployments never held the older unencrypted / CTR files
   const pending = db.videos.filter(v => v.file && !v.file.enc);
   const backup = path.join(DATA_DIR, 'db.json.pre-gcm');
   if (pending.length && !fs.existsSync(backup) && fs.existsSync(path.join(DATA_DIR, 'db.json'))) {
@@ -86,7 +89,7 @@ export const migrateEncryption = async () => {
 
 // If the server stopped mid-processing: fail those uploads, delete leftover raw
 // files and any half-written encrypted files nothing refers to.
-export const recoverInterruptedUploads = () => {
+export const recoverInterruptedUploads = async () => {
   let failed = 0;
   for (const video of db.videos) {
     if (video.uploadStatus !== 'processing') continue;
@@ -101,8 +104,8 @@ export const recoverInterruptedUploads = () => {
 
   const referenced = new Set(db.videos.map(v => v.file?.name).filter(Boolean));
   let orphans = 0;
-  for (const name of fs.readdirSync(UPLOAD_DIR)) {
-    if (name.endsWith('.vpe') && !referenced.has(name)) { fs.rmSync(path.join(UPLOAD_DIR, name), { force: true }); orphans += 1; }
+  for (const name of await blobs.names('videos')) {
+    if (name.endsWith('.vpe') && !referenced.has(name)) { await blobs.remove('videos', name); orphans += 1; }
   }
   if (failed || orphans) console.warn(`[processing] Recovered after restart: ${failed} interrupted upload(s) marked failed, ${orphans} orphaned file(s) removed.`);
 };
