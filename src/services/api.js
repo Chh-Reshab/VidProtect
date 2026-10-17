@@ -85,4 +85,4 @@ export const uploadForm = (path, formData, onProgress) => {
 };
 
 // Helpers for service functions
-export const toResult = (r) => (r.ok ? { success: true, ...r.data } : { success: false, error: r.data?.error || 'Request failed.' });
+export const toResult = (r) => (r.ok ? { success: true, ...r.data } : { success: false, error: r.data?.error || 'Request failed.', fields: r.data?.fields });

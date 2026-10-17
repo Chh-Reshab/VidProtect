@@ -2,13 +2,16 @@
 // LOGIN & REGISTRATION — VidProtect AI
 // ============================================
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authLogin, authRegister } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
+import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN } from '../../shared/validation.js';
+
+const fieldError = (msg) => msg && <div role="alert" style={{ color: '#FF2028', fontSize: '0.7rem', marginTop: '0.3rem' }}>{msg}</div>;
 
 const DEMO_ACCOUNTS = [
   { label: 'Learner', email: 'sarah@student.demo' },
@@ -35,11 +38,26 @@ export default function LoginPage() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
+  const [touched, setTouched] = useState({}); // which register fields the person has visited
+  const [serverFields, setServerFields] = useState({});
+  const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
+  const check = useMemo(
+    () => validateRegistration({ name: regName, email: regEmail, password: regPassword, confirm: regConfirm }),
+    [regName, regEmail, regPassword, regConfirm],
+  );
+  const shown = (field) => (touched[field] ? check.errors[field] : undefined) || serverFields[field];
+  const rules = [
+    { ok: regPassword.length >= PASSWORD_MIN, text: `At least ${PASSWORD_MIN} characters` },
+    { ok: /\p{L}/u.test(regPassword), text: 'A letter' },
+    { ok: /\d/.test(regPassword), text: 'A number' },
+  ];
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    if (!loginEmail || !loginPassword) { setError('Email and password are required.'); return; }
+    const emailCheck = validateEmail(loginEmail);
+    if (!loginEmail.trim() || !loginPassword) { setError('Email and password are required.'); return; }
+    if (emailCheck.error) { setError(emailCheck.error); return; }
     setLoading(true);
     const result = await authLogin(loginEmail, loginPassword);
     setLoading(false);
@@ -55,18 +73,23 @@ export default function LoginPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    if (!regName || !regEmail || !regPassword) { setError('All fields are required.'); return; }
-    if (regPassword !== regConfirm) { setError('Passwords do not match.'); return; }
-    if (regPassword.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    setServerFields({});
+    if (Object.keys(check.errors).length) {
+      setTouched({ name: true, email: true, password: true, confirm: true });
+      setError('Please fix the highlighted fields.');
+      return;
+    }
     setLoading(true);
-    const result = await authRegister(regName, regEmail, regPassword);
+    const result = await authRegister(check.values.name, check.values.email, check.values.password);
     setLoading(false);
     if (result.success) {
       setSuccess(result.message);
       setMode('login');
-      setLoginEmail(regEmail);
+      setLoginEmail(check.values.email);
+      setRegPassword(''); setRegConfirm(''); setTouched({});
     } else {
       setError(result.error);
+      setServerFields(result.fields || {});
     }
   };
 
@@ -168,7 +191,7 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <form onSubmit={handleLogin} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="login-email">Email Address</label>
                     <input
@@ -237,27 +260,36 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <form onSubmit={handleRegister} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-name">Full Name</label>
-                    <input id="reg-name" type="text" className="form-input" placeholder="Reshab Basnet" value={regName} onChange={e => setRegName(e.target.value)} />
+                    <input id="reg-name" type="text" className="form-input" placeholder="Reshab Basnet" value={regName} maxLength={NAME_MAX} autoComplete="name" aria-invalid={!!shown('name')} onBlur={() => touch('name')} onChange={e => { setRegName(e.target.value); setServerFields({}); }} />
+                    {fieldError(shown('name'))}
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-email">Email Address</label>
-                    <input id="reg-email" type="email" className="form-input" placeholder="you@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+                    <input id="reg-email" type="email" className="form-input" placeholder="you@example.com" value={regEmail} maxLength={EMAIL_MAX + 20} autoComplete="email" aria-invalid={!!shown('email')} onBlur={() => touch('email')} onChange={e => { setRegEmail(e.target.value); setServerFields({}); }} />
+                    {fieldError(shown('email'))}
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-password">Password</label>
                     <div style={{ position: 'relative' }}>
-                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters" value={regPassword} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
+                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters" value={regPassword} autoComplete="new-password" aria-invalid={!!shown('password')} onBlur={() => touch('password')} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
                       <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#565656', cursor: 'pointer' }}>
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                      {rules.map(r => (
+                        <span key={r.text} className="mono" style={{ fontSize: '0.6rem', color: r.ok ? '#22c55e' : '#565656' }}>{r.ok ? '✓' : '○'} {r.text}</span>
+                      ))}
+                    </div>
+                    {fieldError(shown('password'))}
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-confirm">Confirm Password</label>
-                    <input id="reg-confirm" type="password" className="form-input" placeholder="Repeat password" value={regConfirm} onChange={e => setRegConfirm(e.target.value)} />
+                    <input id="reg-confirm" type="password" className="form-input" placeholder="Repeat password" value={regConfirm} autoComplete="new-password" aria-invalid={!!shown('confirm')} onBlur={() => touch('confirm')} onChange={e => setRegConfirm(e.target.value)} />
+                    {fieldError(shown('confirm'))}
                   </div>
 
                   <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '0.5rem' }} disabled={loading}>

@@ -6,6 +6,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { db, save, uid } from '../db.js';
+import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
 import {
   toPublic, signAccess, createSession, setRefreshCookie, clearRefreshCookie,
   rotateRefresh, revokeSession, revokeAllSessions, requireAuth,
@@ -29,15 +30,11 @@ const authLimiter = rateLimit({
 const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12);
 
 router.post('/register', authLimiter, async (req, res) => {
-  const name = clean(req.body?.name, 80);
-  const email = clean(req.body?.email, 200).toLowerCase();
-  const password = typeof req.body?.password === 'string' ? req.body.password : '';
-
-  if (!name || !email || !password) return res.status(400).json({ error: 'All fields required.' });
-  if (!EMAIL.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' });
-  if (password.length < 8 || password.length > 200) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  const { values, errors } = validateRegistration({ name: req.body?.name, email: req.body?.email, password: req.body?.password });
+  const { name, email, password } = values;
+  if (Object.keys(errors).length) return res.status(400).json({ error: Object.values(errors)[0], fields: errors });
   if (db.users.some(u => u.email.toLowerCase() === email)) {
-    return res.status(409).json({ error: 'An account with this email already exists.' });
+    return res.status(409).json({ error: 'An account with this email already exists.', fields: { email: 'An account with this email already exists.' } });
   }
 
   // Everyone starts as a learner; creator access needs admin approval
@@ -55,8 +52,9 @@ router.post('/register', authLimiter, async (req, res) => {
 });
 
 router.post('/login', authLimiter, async (req, res) => {
-  const email = clean(req.body?.email, 200).toLowerCase();
-  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  const email = clean(req.body?.email, 254).toLowerCase();
+  const password = typeof req.body?.password === 'string' ? req.body.password.slice(0, 1000) : '';
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
   const user = db.users.find(u => u.email.toLowerCase() === email);
 
   const ok = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
@@ -92,7 +90,9 @@ router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
   if (!(await bcrypt.compare(current, req.user.passwordHash))) {
     return res.status(400).json({ error: 'Current password is incorrect.' });
   }
-  if (next.length < 8 || next.length > 200) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+  const check = validatePassword(next, { name: req.user.name, email: req.user.email });
+  if (check.error) return res.status(400).json({ error: check.error });
+  if (next === current) return res.status(400).json({ error: 'The new password must be different from the current one.' });
   req.user.passwordHash = await bcrypt.hash(next, 12);
   save();
   revokeAllSessions(req.user.id, req.sid); // sign out every other device
@@ -104,7 +104,7 @@ router.post('/creator-apply', requireAuth, (req, res) => {
   const user = req.user;
   if (user.role !== 'learner') return res.status(400).json({ error: 'Only learners can apply.' });
   if (user.creatorStatus === 'pending') return res.status(400).json({ error: 'Your application is already pending.' });
-  const displayName = clean(req.body?.displayName, 80);
+  const displayName = clean(req.body?.displayName, 60);
   const bio = clean(req.body?.bio, 1000);
   if (!displayName || !bio) return res.status(400).json({ error: 'Display name and bio are required.' });
   user.creatorStatus = 'pending';

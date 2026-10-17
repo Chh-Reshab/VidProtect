@@ -10,6 +10,7 @@ import { requireAuth, requireRole } from '../auth.js';
 import { findCourse, findUser } from '../access.js';
 import { settingsFor } from './data.js';
 import { canManageCourse } from '../../src/auth/permissions.js';
+import { validateName, validateEmail } from '../../shared/validation.js';
 
 const router = Router();
 const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -138,8 +139,16 @@ router.patch('/alerts/:id', requireAuth, requireRole('creator', 'admin'), (req, 
 router.put('/settings', requireAuth, (req, res) => {
   const b = req.body || {};
   const next = {};
-  if (typeof b.displayName === 'string') next.displayName = clean(b.displayName, 80);
-  if (typeof b.email === 'string') next.email = clean(b.email, 200);
+  if (typeof b.displayName === 'string') {
+    const n = validateName(b.displayName);
+    if (n.error) return res.status(400).json({ error: n.error });
+    next.displayName = n.value;
+  }
+  if (typeof b.email === 'string') {
+    const e = validateEmail(b.email);
+    if (e.error) return res.status(400).json({ error: e.error });
+    next.email = e.value;
+  }
   if (Number.isFinite(Number(b.defaultTokenExpiry))) next.defaultTokenExpiry = Math.min(120, Math.max(5, Number(b.defaultTokenExpiry)));
   if (typeof b.sessionDisplayPreference === 'string') next.sessionDisplayPreference = clean(b.sessionDisplayPreference, 40);
   if (typeof b.courseAccessPreference === 'string') next.courseAccessPreference = clean(b.courseAccessPreference, 40);

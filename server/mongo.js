@@ -33,7 +33,34 @@ export const connect = async (uri, dbName) => {
   } catch (err) {
     throw new Error(`Could not connect to MongoDB (${err.message}). Check MONGODB_URI and, on Atlas, that Network Access allows this server.`);
   }
+  await enforceUserRules();
   return mdb;
+};
+
+// Database-level guard for accounts: a user document must have a valid name, a lowercase
+// email and a password hash, and no two accounts may share an email. Best effort: a managed
+// cluster user without permission to change this only gets a warning.
+const enforceUserRules = async () => {
+  try {
+    const existing = await mdb.listCollections({ name: 'users' }).toArray();
+    const validator = {
+      $jsonSchema: {
+        bsonType: 'object',
+        required: ['name', 'email', 'passwordHash', 'role'],
+        properties: {
+          name: { bsonType: 'string', minLength: 2, maxLength: 60 },
+          email: { bsonType: 'string', maxLength: 254, pattern: String.raw`^[^\s@]+@[^\s@]+\.[^\s@]+$` },
+          passwordHash: { bsonType: 'string', minLength: 20 },
+          role: { enum: ['learner', 'creator', 'admin'] },
+        },
+      },
+    };
+    if (existing.length) await mdb.command({ collMod: 'users', validator, validationLevel: 'moderate', validationAction: 'error' });
+    else await mdb.createCollection('users', { validator, validationLevel: 'moderate', validationAction: 'error' });
+    await mdb.collection('users').createIndex({ email: 1 }, { unique: true, name: 'unique_email' });
+  } catch (err) {
+    console.warn(`[db] Could not apply the account rules to MongoDB (${err.message}). The server still checks every sign-up.`);
+  }
 };
 
 export const database = () => mdb;
