@@ -126,6 +126,22 @@ Use the **same `VP_MASTER_KEY`** you had locally (it is in `server/data/master.k
 
 Locally nothing changes: `npm run dev` still uses ports 5173 (site) and 4000 (API). The `PORT` variable that Render provides is only used when `NODE_ENV=production`.
 
+### Email verification (optional, free)
+
+When a mail provider is configured, new accounts must confirm their email before they can sign in. Mail goes over HTTPS, so it works on Render's free plan, which blocks SMTP.
+
+**Gmail (recommended, no domain needed):** emails are sent from your own Gmail address, signed by Google, so they are not marked as spam. About 500 a day.
+
+1. Go to console.cloud.google.com, create a project, then open **APIs & Services → Library**, search "Gmail API" and **Enable** it.
+2. **APIs & Services → OAuth consent screen**: choose **External**, fill in the app name and your email, and add your Gmail address under **Test users**. Then **Publish app** (set it to "In production"), or the refresh token expires after 7 days. You will see an "unverified app" warning for yourself; that is fine for personal use.
+3. **Credentials → Create credentials → OAuth client ID → Desktop app**. Copy the client ID and client secret.
+4. On your computer run `GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... npm run gmail:token`, open the printed link, approve, and copy the refresh token it prints.
+5. On Render add `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` and `MAIL_FROM` (your Gmail address). Optionally `MAIL_FROM_NAME` and `APP_URL`.
+
+**Brevo (alternative):** set `BREVO_API_KEY` and `MAIL_FROM` (an address verified in Brevo). Using a Gmail address there may land in spam; a domain you own works best. Gmail takes priority when both are set.
+
+Without any of these variables nothing is sent and sign-up needs no verification (the logs warn about this in production). To try the flow locally without email, set `REQUIRE_EMAIL_VERIFICATION=true`: the verification link is printed in the server log.
+
 ### Storing the encrypted videos in Amazon S3 (optional)
 
 By default the encrypted videos live in MongoDB. To keep them in S3 instead:

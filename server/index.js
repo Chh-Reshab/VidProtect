@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { initDb, closeDb, useMongo } from './db.js';
 import { backend } from './blobs.js';
+import { mailConfigured } from './mail.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity } from './migrate.js';
 import { applyAdminPassword } from './admin-bootstrap.js';
 import authRoutes from './routes/auth.js';
@@ -63,6 +64,9 @@ app.use((err, req, res, next) => {
 await initDb(); // loads the data (JSON file or MongoDB) before anything uses it
 if (process.env.NODE_ENV === 'production' && !useMongo()) {
   console.warn('[db] MONGODB_URI is not set: data and uploaded videos are kept on this machine\'s disk and will be lost if the host resets it.');
+}
+if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
+  console.warn('[mail] No mail provider is configured (Gmail or Brevo variables): new accounts are NOT email-verified.');
 }
 applyAdminPassword(); // refuses to start in production without ADMIN_PASSWORD
 backfillActivity();

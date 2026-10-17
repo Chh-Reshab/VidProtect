@@ -45,7 +45,7 @@ export const restoreSession = async () => {
 
 export const authLogin = async (email, password) => {
   const r = await request('POST', '/auth/login', { email, password });
-  if (!r.ok) return { success: false, error: r.data?.error || 'Sign in failed.' };
+  if (!r.ok) return { success: false, error: r.data?.error || 'Sign in failed.', code: r.data?.code };
   setAccessToken(r.data.accessToken);
   await loadData();
   return { success: true, user: cache.me || r.data.user };
@@ -55,6 +55,9 @@ export const authRegister = async (name, email, password) => {
   const r = await request('POST', '/auth/register', { name, email, password });
   return toResult(r);
 };
+
+export const authVerifyEmail = async (token) => toResult(await request('POST', '/auth/verify-email', { token }));
+export const authResendVerification = async (email) => toResult(await request('POST', '/auth/resend-verification', { email }));
 
 export const authLogout = async () => {
   await request('POST', '/auth/logout');

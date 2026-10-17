@@ -12,6 +12,7 @@
     "server": "node server/index.js",
     "start": "npm run build && node server/index.js",
     "migrate:mongo": "node server/scripts/migrate-to-mongo.js",
+    "gmail:token": "node server/scripts/gmail-token.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

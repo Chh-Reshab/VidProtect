@@ -14,6 +14,8 @@ import { RequireRole } from './auth/guards';
 import { homeFor } from './auth/permissions';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import PrivacyPage from './pages/PrivacyPage';
 import OverviewPage from './pages/OverviewPage';
 import LibraryPage from './pages/LibraryPage';
 import UploadPage from './pages/UploadPage';
@@ -53,6 +55,8 @@ const AppRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage />} />
 
       {/* Learners (creators may also learn) */}

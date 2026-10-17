@@ -23,6 +23,14 @@ services:
         sync: false
       - key: MONGODB_URI # from MongoDB Atlas (free M0): mongodb+srv://USER:PASSWORD@cluster.mongodb.net/vidprotect
         sync: false
+      - key: GMAIL_CLIENT_ID # email verification through your Gmail (free); see README. Leave all mail variables unset to skip verification
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false
+      - key: MAIL_FROM # your Gmail address (or a sender verified in Brevo if you use BREVO_API_KEY instead)
+        sync: false
       - key: S3_BUCKET # Amazon S3 bucket that holds the encrypted videos and thumbnails
         sync: false
       - key: AWS_REGION # region of the bucket, e.g. ap-south-1

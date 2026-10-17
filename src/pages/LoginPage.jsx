@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { authLogin, authRegister } from '../services/dataService';
+import { authLogin, authRegister, authResendVerification } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
 import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN, SPECIAL_CHAR } from '../../shared/validation.js';
@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [regConfirm, setRegConfirm] = useState('');
   const [touched, setTouched] = useState({}); // which register fields the person has visited
   const [serverFields, setServerFields] = useState({});
+  const [needsVerify, setNeedsVerify] = useState(false); // login was refused because the email is not verified yet
   const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
   const check = useMemo(
     () => validateRegistration({ name: regName, email: regEmail, password: regPassword, confirm: regConfirm }),
@@ -62,6 +63,7 @@ export default function LoginPage() {
     setLoading(true);
     const result = await authLogin(loginEmail, loginPassword);
     setLoading(false);
+    setNeedsVerify(result.code === 'EMAIL_NOT_VERIFIED');
     if (result.success) {
       login(result.user);
       showNotification(`Welcome back, ${result.user.name}!`);
@@ -69,6 +71,13 @@ export default function LoginPage() {
     } else {
       setError(result.error);
     }
+  };
+
+  const resendVerification = async () => {
+    setLoading(true);
+    const result = await authResendVerification(loginEmail);
+    setLoading(false);
+    if (result.success) { setError(''); setSuccess(result.message); setNeedsVerify(false); } else { setError(result.error); }
   };
 
   const handleRegister = async (e) => {
@@ -85,6 +94,7 @@ export default function LoginPage() {
     setLoading(false);
     if (result.success) {
       setSuccess(result.message);
+      setNeedsVerify(!!result.needsVerification);
       setMode('login');
       setLoginEmail(check.values.email);
       setRegPassword(''); setRegConfirm(''); setTouched({});
@@ -190,6 +200,12 @@ export default function LoginPage() {
                   <div style={{ padding: '0.75rem', background: 'rgba(255,32,40,0.1)', border: '1px solid #FF2028', marginBottom: '1rem' }}>
                     <span style={{ fontSize: '0.8rem', color: '#FF2028' }}>⊗ {error}</span>
                   </div>
+                )}
+
+                {needsVerify && (
+                  <button type="button" className="btn btn-ghost" onClick={resendVerification} disabled={loading || !loginEmail} style={{ width: '100%', justifyContent: 'center', marginBottom: '1rem', fontSize: '0.7rem' }}>
+                    RESEND VERIFICATION EMAIL
+                  </button>
                 )}
 
                 <form onSubmit={handleLogin} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
