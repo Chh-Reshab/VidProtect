@@ -8,6 +8,7 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { db, save, uid } from './db.js';
+import { isCreatorLocked } from '../src/auth/permissions.js';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -23,7 +24,11 @@ const COOKIE = 'vp_refresh';
 export const toPublic = (u) => {
   if (!u) return null;
   // eslint-disable-next-line no-unused-vars
-  const { passwordHash, ...rest } = u;
+  const { passwordHash, emailVerification, ...rest } = u;
+  if (rest.creatorApplication?.cv) {
+    const { name: _stored, ...cv } = rest.creatorApplication.cv; // the stored file name is internal
+    rest.creatorApplication = { ...rest.creatorApplication, cv };
+  }
   return rest;
 };
 
@@ -104,7 +109,9 @@ export const rotateRefresh = (req) => {
 };
 
 // ── Middleware ────────────────────────────────
-export const requireAuth = (req, res, next) => {
+// `allowLocked`: creators whose application is not approved yet may only reach the routes that
+// pass true (their own application, their profile data, password change)
+const authenticate = (allowLocked) => (req, res, next) => {
   const header = req.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Sign in required.' });
@@ -115,6 +122,9 @@ export const requireAuth = (req, res, next) => {
     // Role and status come from the DB on every request, never from the token,
     // so a suspension or role change takes effect immediately.
     if (!user || !session || user.status !== 'active') return res.status(401).json({ error: 'Sign in required.' });
+    if (!allowLocked && isCreatorLocked(user)) {
+      return res.status(403).json({ error: 'Your creator account is waiting for approval.', code: 'CREATOR_NOT_APPROVED' });
+    }
     req.user = user;
     req.sid = claims.sid;
     return next();
@@ -122,6 +132,9 @@ export const requireAuth = (req, res, next) => {
     return res.status(401).json({ error: 'Sign in required.' });
   }
 };
+
+export const requireAuth = authenticate(false);
+export const requireAuthAllowLocked = authenticate(true);
 
 export const requireRole = (...roles) => (req, res, next) =>
   roles.includes(req.user?.role) ? next() : res.status(403).json({ error: 'You do not have access to this.' });

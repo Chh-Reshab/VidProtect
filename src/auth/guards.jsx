@@ -6,11 +6,12 @@
 
 import { Navigate, Outlet } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { can, homeFor } from './permissions';
+import { can, homeFor, isCreatorLocked } from './permissions';
 
 export const RequireRole = ({ roles }) => {
   const { currentUser, isAuthenticated } = useApp();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to={roles.length === 1 && roles[0] === 'creator' ? '/creator/login' : '/login'} replace />;
+  if (isCreatorLocked(currentUser)) return <Navigate to="/creator/apply" replace />; // not approved yet: only the application is open
   if (!roles.includes(currentUser.role)) return <Navigate to={homeFor(currentUser)} replace />;
   return <Outlet />;
 };

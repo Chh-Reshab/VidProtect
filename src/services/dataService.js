@@ -7,7 +7,7 @@
 // re-checks every rule; nothing here is trusted.
 // ============================================
 
-import { request, uploadForm, setAccessToken, refreshAccess, toResult } from './api';
+import { request, uploadForm, setAccessToken, refreshAccess, toResult, downloadBlob, saveBlob } from './api';
 import { courseProgress, localDay } from './learningStats';
 
 const emptyCache = () => ({
@@ -43,8 +43,8 @@ export const restoreSession = async () => {
   return cache.me;
 };
 
-export const authLogin = async (email, password) => {
-  const r = await request('POST', '/auth/login', { email, password });
+export const authLogin = async (email, password, portal) => {
+  const r = await request('POST', '/auth/login', { email, password, portal });
   if (!r.ok) return { success: false, error: r.data?.error || 'Sign in failed.', code: r.data?.code };
   setAccessToken(r.data.accessToken);
   await loadData();
@@ -55,6 +55,9 @@ export const authRegister = async (name, email, password) => {
   const r = await request('POST', '/auth/register', { name, email, password });
   return toResult(r);
 };
+
+export const authCreatorRegister = async (name, email, password) =>
+  toResult(await request('POST', '/auth/creator/register', { name, email, password }));
 
 export const authVerifyEmail = async (token) => toResult(await request('POST', '/auth/verify-email', { token }));
 export const authResendVerification = async (email) => toResult(await request('POST', '/auth/resend-verification', { email }));
@@ -68,15 +71,31 @@ export const authLogout = async () => {
 export const changePassword = async (userId, currentPassword, newPassword) =>
   toResult(await request('POST', '/auth/change-password', { currentPassword, newPassword }));
 
-export const requestCreatorAccess = (userId, { displayName, bio }) =>
-  write(request('POST', '/auth/creator-apply', { displayName, bio }));
+// ─── CREATOR APPLICATION ─────────────────────
+// `fields` are the form values; `file` an optional CV. Sent as multipart so the CV can ride along.
+export const submitCreatorApplication = async (fields, file, onProgress) => {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) if (value !== undefined && value !== null) form.append(key, String(value));
+  if (file) form.append('cv', file);
+  const r = await uploadForm('/creator/application', form, onProgress);
+  return r.ok ? { success: true, ...r.data } : { success: false, error: r.data?.error || 'Could not submit the application.', fields: r.data?.fields };
+};
+
+const saveDownload = async (path) => {
+  const r = await downloadBlob(path);
+  if (!r.ok) return { success: false, error: r.error };
+  saveBlob(r);
+  return { success: true };
+};
+export const downloadCreatorCv = () => saveDownload('/creator/application/cv');
+export const downloadApplicantCv = (userId) => saveDownload(`/admin/creators/${userId}/cv`);
 
 // ─── USERS ───────────────────────────────────
 export const getUsers = () => cache.users;
 export const getUserById = (id) => cache.users.find(u => u.id === id) || null;
 
-export const reviewCreatorApplication = (adminId, userId, approve) =>
-  write(request('POST', `/admin/creators/${userId}/review`, { approve }));
+export const reviewCreatorApplication = (adminId, userId, approve, note = '') =>
+  write(request('POST', `/admin/creators/${userId}/review`, { approve, note }));
 
 export const setUserStatus = (adminId, userId, status) =>
   write(request('PATCH', `/admin/users/${userId}`, { status }));

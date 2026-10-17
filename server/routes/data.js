@@ -6,7 +6,8 @@
 
 import { Router } from 'express';
 import { db } from '../db.js';
-import { requireAuth, toPublic } from '../auth.js';
+import { requireAuthAllowLocked, toPublic } from '../auth.js';
+import { isCreatorLocked } from '../../src/auth/permissions.js';
 import { DEMO_SETTINGS } from '../seedData.js';
 
 const router = Router();
@@ -32,8 +33,12 @@ export const settingsFor = (user) => ({
   ...(db.settings[user.id] || {}),
 });
 
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuthAllowLocked, (req, res) => {
   const me = req.user;
+  if (isCreatorLocked(me)) {
+    // Not approved yet: nothing but their own profile and application
+    return res.json({ me: toPublic(me), payments: [], users: [], courses: [], videos: [], enrollments: [], logs: [], alerts: [], progress: {}, activity: {}, settings: settingsFor(me), audit: [] });
+  }
   const isAdmin = me.role === 'admin';
   const isCreator = me.role === 'creator';
 

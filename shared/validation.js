@@ -70,3 +70,85 @@ export const validateRegistration = ({ name, email, password, confirm }) => {
   if (confirm !== undefined && !p.error && password !== confirm) errors.confirm = 'Passwords do not match.';
   return { values: { name: n.value, email: e.value, password: p.value }, errors };
 };
+
+// ============================================
+// Creator application rules (shared by the server and the application form)
+// ============================================
+
+export const APP_HISTORY_MIN = 100;
+export const APP_HISTORY_MAX = 2000;
+export const APP_TOPICS_MAX = 200;
+export const PLATFORMS = ['YouTube', 'Udemy', 'Coursera', 'Skillshare', 'Teachable', 'Other'];
+export const CV_MAX_BYTES = 5 * 1024 * 1024;
+export const CV_EXTENSIONS = ['.pdf', '.doc', '.docx'];
+
+const cleanText = (input, max) => (typeof input === 'string' ? input.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, max + 1) : '');
+
+// Only http(s) links with a real host and no embedded credentials
+export const validateUrl = (input, { host } = {}) => {
+  const value = typeof input === 'string' ? input.trim() : '';
+  if (!value) return { value, error: 'Enter a link.' };
+  if (value.length > 300) return { value, error: 'That link is too long.' };
+  let url;
+  try { url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`); } catch { return { value, error: 'Enter a valid link, like https://example.com/you.' }; }
+  if (!['http:', 'https:'].includes(url.protocol) || !url.hostname.includes('.') || url.username || url.password) {
+    return { value, error: 'Enter a valid link, like https://example.com/you.' };
+  }
+  if (host && !(url.hostname === host || url.hostname.endsWith(`.${host}`))) return { value, error: `Enter a link on ${host}.` };
+  return { value: url.href, error: null };
+};
+
+const LINKEDIN_PATH = /^\/(in|pub|company|school)\/[^/]+/i;
+
+// `hasCv` says whether a CV file is (or already was) attached
+export const validateCreatorApplication = (input, { hasCv = false } = {}) => {
+  const errors = {};
+  const name = validateName(input.displayName);
+  if (name.error) errors.displayName = name.error;
+
+  const teachingHistory = cleanText(input.teachingHistory, APP_HISTORY_MAX);
+  if (teachingHistory.length < APP_HISTORY_MIN) errors.teachingHistory = `Describe your teaching history in at least ${APP_HISTORY_MIN} characters.`;
+  else if (teachingHistory.length > APP_HISTORY_MAX) errors.teachingHistory = `Keep your teaching history under ${APP_HISTORY_MAX} characters.`;
+
+  const topics = cleanText(input.topics, APP_TOPICS_MAX).replace(/\n/g, ' ');
+  if (topics.length < 2) errors.topics = 'Say what you want to teach.';
+  else if (topics.length > APP_TOPICS_MAX) errors.topics = `Keep the topics under ${APP_TOPICS_MAX} characters.`;
+
+  const years = Number(input.yearsExperience);
+  if (String(input.yearsExperience ?? '').trim() === '' || !Number.isInteger(years) || years < 0 || years > 60) errors.yearsExperience = 'Enter your years of teaching experience (0 to 60).';
+
+  let linkedinUrl = '';
+  if (typeof input.linkedinUrl === 'string' && input.linkedinUrl.trim()) {
+    const u = validateUrl(input.linkedinUrl, { host: 'linkedin.com' });
+    if (u.error) errors.linkedinUrl = u.error;
+    else if (!LINKEDIN_PATH.test(new URL(u.value).pathname)) errors.linkedinUrl = 'Use your profile link, like https://www.linkedin.com/in/your-name.';
+    else linkedinUrl = u.value;
+  }
+  if (!hasCv && !linkedinUrl && !errors.linkedinUrl) errors.credentials = 'Upload your CV or add your LinkedIn profile.';
+
+  const teachesElsewhere = input.teachesElsewhere === true || input.teachesElsewhere === 'true';
+  let otherPlatform = null;
+  if (teachesElsewhere) {
+    const platform = typeof input.platform === 'string' ? input.platform.trim() : '';
+    const platformName = cleanText(input.platformName, 40).replace(/\n/g, ' ');
+    const pe = {};
+    if (!PLATFORMS.includes(platform)) pe.platform = 'Choose the platform where you teach.';
+    if (platform === 'Other' && platformName.length < 2) pe.platformName = 'Enter the name of the platform.';
+    const link = validateUrl(input.platformUrl);
+    if (link.error) pe.platformUrl = 'Enter the link to your channel or profile there.';
+    let audience = null;
+    if (String(input.audienceSize ?? '').trim() !== '') {
+      audience = Number(input.audienceSize);
+      if (!Number.isInteger(audience) || audience < 0 || audience > 1e9) pe.audienceSize = 'Enter a whole number, or leave it empty.';
+    }
+    if (Object.keys(pe).length) Object.assign(errors, pe);
+    else otherPlatform = { platform, platformName: platform === 'Other' ? platformName : '', platformUrl: link.value, audienceSize: audience };
+  }
+
+  if (!(input.confirm === true || input.confirm === 'true')) errors.confirm = 'Please confirm that your information is accurate.';
+
+  return {
+    errors,
+    values: { displayName: name.value, teachingHistory, topics, yearsExperience: years, linkedinUrl, teachesElsewhere, otherPlatform },
+  };
+};

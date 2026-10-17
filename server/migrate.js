@@ -144,3 +144,24 @@ export const backfillActivity = () => {
   save();
   if (days) console.log(`[activity] Built watch history from ${days} earlier progress record(s).`);
 };
+
+// One-time: creators now apply with their own account and stay locked until approved. A learner who
+// had applied under the old flow becomes a (locked) creator with the application they already sent.
+export const migrateCreatorApplications = () => {
+  let moved = 0;
+  for (const user of db.users) {
+    if (user.role === 'learner' && user.creatorStatus === 'pending') {
+      user.role = 'creator';
+      const profile = user.creatorProfile || {};
+      user.creatorApplication = user.creatorApplication || {
+        displayName: profile.displayName || user.name,
+        teachingHistory: profile.bio || '',
+        topics: '', yearsExperience: null, linkedinUrl: '', teachesElsewhere: false, otherPlatform: null, cv: null,
+        submittedAt: user.joinDate ? `${user.joinDate}T00:00:00.000Z` : new Date().toISOString(),
+        submissions: 1, reviewNote: '', reviewedAt: null, legacy: true,
+      };
+      moved += 1;
+    }
+  }
+  if (moved) { save(); console.log(`[creators] ${moved} earlier creator application(s) moved to the new review flow.`); }
+};

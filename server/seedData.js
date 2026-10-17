@@ -48,7 +48,7 @@ export const DEMO_USERS = {
   ],
   // A learner who has applied to become a creator (shows up in the admin approval queue).
   applicants: [
-    { id: 'stu-008', name: 'Daniel Reyes', email: 'daniel@student.demo', role: 'learner', status: 'active', demo: true, enrolledCourses: ['course-001'], creatorStatus: 'pending', creatorProfile: { displayName: 'Daniel Reyes', bio: 'Full-stack developer who wants to publish a React testing course.' } },
+    { id: 'stu-008', name: 'Daniel Reyes', email: 'daniel@student.demo', role: 'creator', status: 'active', demo: true, enrolledCourses: ['course-001'], creatorStatus: 'pending', creatorApplication: { displayName: 'Daniel Reyes', teachingHistory: 'Full-stack developer with six years of professional React and Node experience. I have run in-house workshops on testing for my team and mentored junior engineers, and I want to publish a structured React testing course for working developers.', topics: 'React testing, Jest, Testing Library', yearsExperience: 3, linkedinUrl: 'https://www.linkedin.com/in/daniel-reyes-demo', teachesElsewhere: true, otherPlatform: { platform: 'YouTube', platformName: '', platformUrl: 'https://www.youtube.com/@danielreyes-demo', audienceSize: 4200 }, cv: null, submittedAt: '2026-10-01T09:00:00.000Z', submissions: 1, reviewNote: '', reviewedAt: null } },
   ],
 };
 

@@ -25,7 +25,8 @@ const s3 = () => (client ||= new S3Client({ region: process.env.AWS_REGION || 'u
 const keyOf = (bucket, name) => `${bucket}/${name}`;
 const notFound = (err) => err?.name === 'NotFound' || err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404;
 
-const localPath = (bucket, name) => (bucket === 'thumbs' ? path.join(UPLOAD_DIR, 'thumbs', name) : path.join(UPLOAD_DIR, name));
+const localDir = (bucket) => (bucket === 'videos' ? UPLOAD_DIR : path.join(UPLOAD_DIR, bucket)); // videos sit in the uploads root; every other bucket gets its own folder
+const localPath = (bucket, name) => path.join(localDir(bucket), name);
 const WINDOW = 1024 * 1024; // GridFS / S3: fetch this much at a time so playback is not one round trip per 64 KiB block
 
 // Put a staged local file into the store, then delete the staged copy
@@ -87,7 +88,7 @@ export const names = async (bucket) => {
     const files = await filesCollection(bucket).find({}, { projection: { filename: 1 } }).toArray();
     return files.map(f => f.filename);
   }
-  const dir = bucket === 'thumbs' ? path.join(UPLOAD_DIR, 'thumbs') : UPLOAD_DIR;
+  const dir = localDir(bucket);
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true }).filter(e => e.isFile()).map(e => e.name);
 };

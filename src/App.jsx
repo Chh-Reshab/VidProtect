@@ -16,6 +16,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import PrivacyPage from './pages/PrivacyPage';
+import CreatorApplyPage from './pages/CreatorApplyPage';
 import OverviewPage from './pages/OverviewPage';
 import LibraryPage from './pages/LibraryPage';
 import UploadPage from './pages/UploadPage';
@@ -57,6 +58,8 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/creator/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage portal="creator" />} />
+      <Route path="/creator/apply" element={<CreatorApplyPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage />} />
 
       {/* Learners (creators may also learn) */}

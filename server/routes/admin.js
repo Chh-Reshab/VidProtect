@@ -9,6 +9,7 @@ import * as blobs from '../blobs.js';
 import { requireAuth, requireRole, revokeAllSessions, toPublic } from '../auth.js';
 import { audit, findCourse, findUser } from '../access.js';
 import { removeThumb } from './thumbnails.js';
+import { sendCv } from './creatorApplication.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
@@ -17,11 +18,21 @@ router.post('/creators/:id/review', (req, res) => {
   const user = findUser(req.params.id);
   if (!user || user.creatorStatus !== 'pending') return res.status(404).json({ error: 'No pending application.' });
   const approve = !!req.body?.approve;
-  if (approve) { user.role = 'creator'; user.creatorStatus = 'approved'; }
-  else user.creatorStatus = 'rejected';
+  const note = typeof req.body?.note === 'string' ? req.body.note.replace(/\s+/g, ' ').trim().slice(0, 500) : '';
+  if (!approve && note.length < 10) return res.status(400).json({ error: 'Tell the applicant why (at least 10 characters) so they can fix it and apply again.' });
+  user.role = 'creator';
+  user.creatorStatus = approve ? 'approved' : 'rejected';
+  user.creatorApplication = { ...(user.creatorApplication || {}), reviewNote: note, reviewedAt: new Date().toISOString(), reviewedBy: req.user.id };
   save();
   audit(req.user.id, approve ? 'creator.approve' : 'creator.reject', 'user', user.id);
   res.json({ success: true });
+});
+
+// An applicant's CV, for the admin reviewing the application
+router.get('/creators/:id/cv', (req, res) => {
+  const user = findUser(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Not found.' });
+  return sendCv(res, user.creatorApplication);
 });
 
 router.patch('/users/:id', (req, res) => {

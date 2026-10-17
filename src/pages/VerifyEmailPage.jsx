@@ -17,7 +17,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!token || started.current) return;
     started.current = true;
-    authVerifyEmail(token).then(r => setState(r.success ? { status: 'ok', message: r.message } : { status: 'error', message: r.error }));
+    authVerifyEmail(token).then(r => setState(r.success ? { status: 'ok', message: r.message, portal: r.portal } : { status: 'error', message: r.error }));
   }, [token]);
 
   const ok = state.status === 'ok';
@@ -34,7 +34,14 @@ export default function VerifyEmailPage() {
                 {ok ? 'EMAIL VERIFIED' : 'COULD NOT VERIFY'}
               </h1>
               <p style={{ color: '#A0A0A0', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{state.message}</p>
-              <Link to="/login" className="btn btn-primary" style={{ justifyContent: 'center' }}>GO TO SIGN IN</Link>
+              {ok ? (
+                <Link to={state.portal === 'creator' ? '/creator/login' : '/login'} className="btn btn-primary" style={{ justifyContent: 'center' }}>GO TO SIGN IN</Link>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Link to="/login" className="btn btn-primary" style={{ justifyContent: 'center' }}>LEARNER SIGN IN</Link>
+                  <Link to="/creator/login" className="btn btn-ghost" style={{ justifyContent: 'center' }}>CREATOR SIGN IN</Link>
+                </div>
+              )}
             </>
           )}
         </div>

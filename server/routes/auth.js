@@ -11,7 +11,7 @@ import { verificationRequired, sendVerificationEmail, appUrl } from '../mail.js'
 import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
 import {
   toPublic, signAccess, createSession, setRefreshCookie, clearRefreshCookie,
-  rotateRefresh, revokeSession, revokeAllSessions, requireAuth,
+  rotateRefresh, revokeSession, revokeAllSessions, requireAuth, requireAuthAllowLocked,
 } from '../auth.js';
 
 const router = Router();
@@ -44,7 +44,7 @@ const sendVerification = async (user, req) => {
   await sendVerificationEmail({ to: user.email, name: user.name, link: `${appUrl(req)}/verify-email?token=${token}` });
 };
 
-router.post('/register', authLimiter, async (req, res) => {
+const register = (role) => async (req, res) => {
   const { values, errors } = validateRegistration({ name: req.body?.name, email: req.body?.email, password: req.body?.password });
   const { name, email, password } = values;
   if (Object.keys(errors).length) return res.status(400).json({ error: Object.values(errors)[0], fields: errors });
@@ -56,11 +56,15 @@ router.post('/register', authLimiter, async (req, res) => {
 
   // Never verified: nobody owns this address yet, so signing up again just replaces the pending account
   // (this also stops someone from blocking an email address by registering it without confirming)
-  const user = existing || { id: uid('usr'), email, role: 'learner', status: 'active', joinDate: new Date().toISOString().slice(0, 10) };
+  const user = existing || { id: uid('usr'), email, role, status: 'active', joinDate: new Date().toISOString().slice(0, 10) };
   user.name = name;
+  user.role = role;
+  // Creators start locked: they must submit an application and wait for an admin before the studio opens
+  if (role === 'creator') user.creatorStatus = 'unsubmitted';
+  else { delete user.creatorStatus; delete user.creatorApplication; }
   user.passwordHash = await bcrypt.hash(password, 12);
   if (needsVerification) user.emailVerified = false;
-  if (!existing) db.users.push(user); // everyone starts as a learner; creator access needs admin approval
+  if (!existing) db.users.push(user);
   save();
 
   if (!needsVerification) return res.status(201).json({ success: true, needsVerification: false, message: 'Account created. You can now sign in.' });
@@ -71,7 +75,11 @@ router.post('/register', authLimiter, async (req, res) => {
     console.error(`[mail] Could not send the verification email to ${email}: ${err.message}`);
     res.status(201).json({ success: true, needsVerification: true, message: 'Account created, but the verification email could not be sent. Use "Resend verification email" on the sign-in page in a moment.' });
   }
-});
+};
+
+router.post('/register', authLimiter, register('learner'));
+// Creators have their own sign-up. They can learn too, but the studio stays locked until an admin approves them
+router.post('/creator/register', authLimiter, register('creator'));
 
 router.post('/verify-email', authLimiter, (req, res) => {
   const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
@@ -84,7 +92,7 @@ router.post('/verify-email', authLimiter, (req, res) => {
   user.emailVerified = true;
   delete user.emailVerification;
   save();
-  res.json({ success: true, message: 'Email verified. You can now sign in.' });
+  res.json({ success: true, message: user.role === 'creator' ? 'Email verified. Sign in on the creator login to complete your application.' : 'Email verified. You can now sign in.', portal: user.role === 'creator' ? 'creator' : 'learner' });
 });
 
 // Same answer whether or not the address exists, so this can't be used to discover accounts
@@ -109,6 +117,13 @@ router.post('/login', authLimiter, async (req, res) => {
 
   const ok = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
   if (!user || !ok) return res.status(401).json({ error: 'Invalid email or password.' });
+  const portal = req.body?.portal;
+  if (portal === 'creator' && user.role !== 'creator') {
+    return res.status(403).json({ error: 'This is the creator sign-in. Learners and admins sign in on the main login page.', code: 'WRONG_PORTAL' });
+  }
+  if (portal === 'learner' && user.role === 'creator') {
+    return res.status(403).json({ error: 'This is a creator account. Sign in on the creator login page.', code: 'WRONG_PORTAL' });
+  }
   if (user.emailVerified === false) {
     return res.status(403).json({ error: 'Verify your email address first. Check your inbox for the link.', code: 'EMAIL_NOT_VERIFIED' });
   }
@@ -137,7 +152,7 @@ router.post('/logout', (req, res) => {
   res.json({ success: true });
 });
 
-router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
+router.post('/change-password', requireAuthAllowLocked, authLimiter, async (req, res) => {
   const current = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
   const next = typeof req.body?.newPassword === 'string' ? req.body.newPassword : '';
   if (!(await bcrypt.compare(current, req.user.passwordHash))) {
@@ -150,20 +165,6 @@ router.post('/change-password', requireAuth, authLimiter, async (req, res) => {
   save();
   revokeAllSessions(req.user.id, req.sid); // sign out every other device
   res.json({ success: true });
-});
-
-// A learner applies to become a creator; an admin reviews it
-router.post('/creator-apply', requireAuth, (req, res) => {
-  const user = req.user;
-  if (user.role !== 'learner') return res.status(400).json({ error: 'Only learners can apply.' });
-  if (user.creatorStatus === 'pending') return res.status(400).json({ error: 'Your application is already pending.' });
-  const displayName = clean(req.body?.displayName, 60);
-  const bio = clean(req.body?.bio, 1000);
-  if (!displayName || !bio) return res.status(400).json({ error: 'Display name and bio are required.' });
-  user.creatorStatus = 'pending';
-  user.creatorProfile = { displayName, bio };
-  save();
-  res.json({ success: true, user: toPublic(user) });
 });
 
 export default router;

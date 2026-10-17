@@ -14,9 +14,10 @@ import cookieParser from 'cookie-parser';
 import { initDb, closeDb, useMongo } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured } from './mail.js';
-import { migrateEncryption, recoverInterruptedUploads, backfillActivity } from './migrate.js';
+import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
 import { applyAdminPassword } from './admin-bootstrap.js';
 import authRoutes from './routes/auth.js';
+import creatorApplicationRoutes from './routes/creatorApplication.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
 import videoRoutes from './routes/videos.js';
@@ -39,6 +40,7 @@ app.use(express.json({ limit: '100kb' }));
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/creator', creatorApplicationRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', thumbnailRoutes);
@@ -71,6 +73,7 @@ if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
 applyAdminPassword(); // refuses to start in production without ADMIN_PASSWORD
 backfillActivity();
 await recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
+migrateCreatorApplications();
 await migrateEncryption(); // bring older videos up to AES-256-GCM before serving anything
 
 const server = app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'}, ${useMongo() ? 'MongoDB' : 'JSON file'}, videos: ${backend()})`));

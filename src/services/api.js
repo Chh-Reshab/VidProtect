@@ -60,6 +60,27 @@ export const request = async (method, path, body, { retry = true } = {}) => {
   return { ok: res.ok, status: res.status, data: await parse(res) };
 };
 
+// Downloads a file that needs the Authorization header (so a plain link cannot work)
+export const downloadBlob = async (path) => {
+  const attempt = async (allowRefresh) => {
+    let res;
+    try { res = await fetch(`/api${path}`, { headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, credentials: 'same-origin' }); } catch { return { ok: false, error: networkError.data.error }; }
+    if (res.status === 401 && allowRefresh && (await refreshAccess())) return attempt(false);
+    if (!res.ok) return { ok: false, error: (await parse(res)).error || 'Download failed.' };
+    const disposition = res.headers.get('content-disposition') || '';
+    const name = /filename="([^"]+)"/.exec(disposition)?.[1] || 'download';
+    return { ok: true, blob: await res.blob(), name };
+  };
+  return attempt(true);
+};
+
+export const saveBlob = ({ blob, name }) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 // multipart upload with real byte progress (fetch can't report upload progress)
 export const uploadForm = (path, formData, onProgress) => {
   const attempt = (allowRefresh) => new Promise((resolve) => {

@@ -181,6 +181,7 @@ const Navbar = ({ active }) => {
         </nav>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }} className="desktop-cta">
+          <Link to="/creator/login" className="btn btn-ghost" style={{ fontSize: '0.7rem' }}>CREATOR LOGIN</Link>
           <Link to="/login" className="btn btn-ghost" style={{ fontSize: '0.7rem' }}>LOGIN</Link>
           <Link to="/login" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>GET PROTECTED</Link>
         </div>
@@ -198,6 +199,7 @@ const Navbar = ({ active }) => {
             </button>
           ))}
           <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <Link to="/creator/login" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => setMenuOpen(false)}>CREATOR LOGIN</Link>
             <Link to="/login" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => setMenuOpen(false)}>LOGIN</Link>
             <Link to="/login" className="btn btn-primary" style={{ fontSize: '0.7rem' }} onClick={() => setMenuOpen(false)}>GET PROTECTED</Link>
           </div>
@@ -577,7 +579,7 @@ export default function LandingPage() {
             </div>
             <div>
               <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '1rem' }}>PLATFORM</div>
-              {[['Login', '/login'], ['Create an account', '/login']].map(([label, to]) => (
+              {[['Login', '/login'], ['Create an account', '/login'], ['Creator login', '/creator/login']].map(([label, to]) => (
                 <div key={label} style={{ marginBottom: '0.5rem' }}><Link to={to} className="lp-foot-link">{label}</Link></div>
               ))}
             </div>

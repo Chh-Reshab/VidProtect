@@ -6,20 +6,27 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { authLogin, authRegister, authResendVerification } from '../services/dataService';
+import { authLogin, authRegister, authCreatorRegister, authResendVerification } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
 import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN, SPECIAL_CHAR } from '../../shared/validation.js';
 
 const fieldError = (msg) => msg && <div role="alert" style={{ color: '#FF2028', fontSize: '0.7rem', marginTop: '0.3rem' }}>{msg}</div>;
 
-const DEMO_ACCOUNTS = [
-  { label: 'Learner', email: 'sarah@student.demo' },
-  { label: 'Creator', email: 'creator@vidprotect.demo' },
-  { label: 'Admin', email: 'admin@vidprotect.demo' },
-].filter(a => !(import.meta.env.PROD && a.label === 'Admin')); // the admin password is set by ADMIN_PASSWORD when deployed
+const demoAccounts = (portal) => (portal === 'creator'
+  ? [
+    { label: 'Approved creator', email: 'creator@vidprotect.demo' },
+    { label: 'Pending applicant', email: 'daniel@student.demo' },
+  ]
+  : [
+    { label: 'Learner', email: 'sarah@student.demo' },
+    { label: 'Admin', email: 'admin@vidprotect.demo' },
+  ].filter(a => !(import.meta.env.PROD && a.label === 'Admin'))); // the admin password is set by ADMIN_PASSWORD when deployed
 
-export default function LoginPage() {
+// One sign-in page, two doors: learners (and admins) at /login, creators at /creator/login
+export default function LoginPage({ portal = 'learner' }) {
+  const isCreator = portal === 'creator';
+  const DEMO_ACCOUNTS = demoAccounts(portal);
   const { login, showNotification } = useApp();
   const navigate = useNavigate();
 
@@ -61,7 +68,7 @@ export default function LoginPage() {
     if (!loginEmail.trim() || !loginPassword) { setError('Email and password are required.'); return; }
     if (emailCheck.error) { setError(emailCheck.error); return; }
     setLoading(true);
-    const result = await authLogin(loginEmail, loginPassword);
+    const result = await authLogin(loginEmail, loginPassword, portal);
     setLoading(false);
     setNeedsVerify(result.code === 'EMAIL_NOT_VERIFIED');
     if (result.success) {
@@ -90,7 +97,7 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    const result = await authRegister(check.values.name, check.values.email, check.values.password);
+    const result = await (isCreator ? authCreatorRegister : authRegister)(check.values.name, check.values.email, check.values.password);
     setLoading(false);
     if (result.success) {
       setSuccess(result.message);
@@ -170,10 +177,10 @@ export default function LoginPage() {
               <>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-                    SECURE ACCESS
+                    {isCreator ? 'CREATOR ACCESS' : 'SECURE ACCESS'}
                   </h1>
                   <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>
-                    Sign in to your VidProtect AI account.
+                    {isCreator ? 'Sign in to your VidProtect AI creator account.' : 'Sign in to your VidProtect AI account.'}
                   </p>
                 </div>
 
@@ -264,10 +271,12 @@ export default function LoginPage() {
               <>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
-                    CREATE ACCOUNT
+                    {isCreator ? 'CREATOR SIGN UP' : 'CREATE ACCOUNT'}
                   </h1>
                   <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>
-                    Join as a learner. You can apply to become a creator later.
+                    {isCreator
+                      ? 'Create a creator account, then fill in your teaching background. An admin reviews it before your studio opens. Creators can learn on the platform too.'
+                      : 'Join as a learner and start watching protected courses.'}
                   </p>
                 </div>
 
@@ -316,14 +325,17 @@ export default function LoginPage() {
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>NEW ACCOUNTS START AS LEARNERS</span>
+                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>{isCreator ? 'THE STUDIO OPENS AFTER ADMIN APPROVAL' : 'LEARNER ACCOUNTS CANNOT BECOME CREATORS'}</span>
                 </div>
               </>
             )}
           </div>
         </div>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {isCreator
+            ? <Link to="/login" style={{ color: '#A0A0A0', fontSize: '0.8rem', textDecoration: 'none' }}>Here to learn? Learner login →</Link>
+            : <Link to="/creator/login" style={{ color: '#A0A0A0', fontSize: '0.8rem', textDecoration: 'none' }}>Want to teach? Creator login →</Link>}
           <Link to="/" style={{ color: '#565656', fontSize: '0.8rem', textDecoration: 'none' }}>
             ← Back to VidProtect AI
           </Link>
