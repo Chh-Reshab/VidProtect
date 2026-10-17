@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext';
 import { authLogin, authRegister } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
-import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN } from '../../shared/validation.js';
+import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN, SPECIAL_CHAR } from '../../shared/validation.js';
 
 const fieldError = (msg) => msg && <div role="alert" style={{ color: '#FF2028', fontSize: '0.7rem', marginTop: '0.3rem' }}>{msg}</div>;
 
@@ -50,6 +50,7 @@ export default function LoginPage() {
     { ok: regPassword.length >= PASSWORD_MIN, text: `At least ${PASSWORD_MIN} characters` },
     { ok: /\p{L}/u.test(regPassword), text: 'A letter' },
     { ok: /\d/.test(regPassword), text: 'A number' },
+    { ok: SPECIAL_CHAR.test(regPassword), text: 'A special character (! @ # $ ...)' },
   ];
 
   const handleLogin = async (e) => {
@@ -274,7 +275,7 @@ export default function LoginPage() {
                   <div className="form-group">
                     <label className="form-label" htmlFor="reg-password">Password</label>
                     <div style={{ position: 'relative' }}>
-                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters" value={regPassword} autoComplete="new-password" aria-invalid={!!shown('password')} onBlur={() => touch('password')} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
+                      <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters, with a symbol" value={regPassword} autoComplete="new-password" aria-invalid={!!shown('password')} onBlur={() => touch('password')} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
                       <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#565656', cursor: 'pointer' }}>
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>

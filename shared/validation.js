@@ -10,6 +10,8 @@ export const EMAIL_MAX = 254;
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything past 72 bytes, so refuse longer ones instead of silently truncating
 
+// Anything that is not a letter, a digit or whitespace counts as a special character
+export const SPECIAL_CHAR = /[^\p{L}\p{N}\s]/u;
 const NAME_CHARS = /^[\p{L}\p{M}][\p{L}\p{M}\s.'’-]*$/u;
 const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
 const COMMON_PASSWORDS = new Set([
@@ -45,6 +47,7 @@ export const validatePassword = (input, related = {}) => {
   if (new TextEncoder().encode(value).length > PASSWORD_MAX_BYTES) return { value, error: `Password is too long (at most ${PASSWORD_MAX_BYTES} bytes).` };
   if (!value.trim()) return { value, error: 'Password cannot be only spaces.' };
   if (!/\p{L}/u.test(value) || !/\d/.test(value)) return { value, error: 'Password must include at least one letter and one number.' };
+  if (!SPECIAL_CHAR.test(value)) return { value, error: 'Password must include at least one special character, like ! @ # $ % & * ?' };
   const lower = value.toLowerCase();
   if (COMMON_PASSWORDS.has(lower)) return { value, error: 'That password is too common. Choose something harder to guess.' };
   const email = typeof related.email === 'string' ? related.email.trim().toLowerCase() : '';
