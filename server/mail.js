@@ -55,7 +55,7 @@ const b64 = (text) => Buffer.from(text, 'utf8').toString('base64');
 const wrap76 = (text) => text.replace(/(.{76})/g, '$1\r\n');
 
 // Builds the raw RFC 2822 message Gmail expects: UTF-8 subject/name, plain text + HTML alternatives
-export const buildRawMessage = ({ from, fromName, to, toName, subject, text, html }) => {
+const buildRawMessage = ({ from, fromName, to, toName, subject, text, html }) => {
   const boundary = `vp_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
   const lines = [
     `From: =?UTF-8?B?${b64(oneLine(fromName))}?= <${oneLine(from)}>`,

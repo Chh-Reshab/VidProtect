@@ -23,7 +23,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(INCOMING_DIR, { recursive: true });
 
-export const useMongo = () => Boolean(process.env.MONGODB_URI);
+export const mongoEnabled = () => Boolean(process.env.MONGODB_URI);
 
 // The one live state object; initDb() fills it in place so every importer sees the data
 export const db = {};
@@ -38,7 +38,7 @@ let initialised = false;
 export const initDb = async () => {
   if (initialised) return;
   let state;
-  if (useMongo()) {
+  if (mongoEnabled()) {
     await mongo.connect(process.env.MONGODB_URI, process.env.MONGODB_DB);
     state = await mongo.loadState();
     if (!state) {
@@ -56,7 +56,7 @@ export const initDb = async () => {
   db.activity ||= {};   // userId -> { 'YYYY-MM-DD': seconds watched }
   db.payments ||= [];   // added after the first release; older stores lack it
   initialised = true;
-  if (!useMongo()) save();
+  if (!mongoEnabled()) writeJson(); // first run: create the file right away
 };
 
 // ── persistence ──────────────────────────────
@@ -85,17 +85,25 @@ const runPersist = () => {
 };
 
 export const save = () => {
-  if (!useMongo()) { writeJson(); return; }
   dirty = true;
   if (timer) return;
-  timer = setTimeout(() => { timer = null; runPersist(); }, 250); // batch bursts of changes
+  // Batch bursts of changes: one write (JSON file or MongoDB) per quiet moment instead of one per request
+  timer = setTimeout(() => { timer = null; if (mongoEnabled()) runPersist(); else flushJson(); }, mongoEnabled() ? 250 : 100);
 };
 
+const flushJson = () => {
+  if (!dirty) return;
+  dirty = false;
+  writeJson();
+};
+// A normal exit never loses the last few changes (the JSON file is written synchronously here)
+process.on('exit', () => { if (!mongoEnabled()) flushJson(); });
+
 // Wait until everything saved so far is durable (used on shutdown and by scripts)
-export const flush = async () => {
-  if (!useMongo()) return;
+const flush = async () => {
   clearTimeout(timer);
   timer = null;
+  if (!mongoEnabled()) { flushJson(); return; }
   await runPersist();
   if (dirty) await runPersist(); // one retry if the first attempt failed
 };

@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
-import { db, save, UPLOAD_DIR, DATA_DIR, INCOMING_DIR, useMongo } from './db.js';
+import { db, save, UPLOAD_DIR, DATA_DIR, INCOMING_DIR, mongoEnabled } from './db.js';
 import * as blobs from './blobs.js';
 import { backend } from './blobs.js';
 import {
@@ -69,7 +69,7 @@ const migrateOne = async (video) => {
 
 export const migrateEncryption = async () => {
   getMasterKey(); // fail fast if the master key is missing or malformed
-  if (useMongo() || backend() !== 'local') return; // MongoDB / S3 deployments never held the older unencrypted / CTR files
+  if (mongoEnabled() || backend() !== 'local') return; // MongoDB / S3 deployments never held the older unencrypted / CTR files
   const pending = db.videos.filter(v => v.file && !v.file.enc);
   const backup = path.join(DATA_DIR, 'db.json.pre-gcm');
   if (pending.length && !fs.existsSync(backup) && fs.existsSync(path.join(DATA_DIR, 'db.json'))) {

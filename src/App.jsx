@@ -5,38 +5,48 @@
 //   /admin/*   platform admins
 // ============================================
 
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
-import { StudioLayout, LearnerLayout, AdminLayout } from './components/AppLayout';
 import { InitialLoader } from './components/InitialLoader';
 import ErrorBoundary from './components/ErrorBoundary';
 import { RequireRole } from './auth/guards';
 import { homeFor } from './auth/permissions';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import PrivacyPage from './pages/PrivacyPage';
-import CreatorApplyPage from './pages/CreatorApplyPage';
-import OverviewPage from './pages/OverviewPage';
-import LibraryPage from './pages/LibraryPage';
-import UploadPage from './pages/UploadPage';
-import VideoDetailPage from './pages/VideoDetailPage';
-import CoursesPage from './pages/CoursesPage';
-import AccessLogsPage from './pages/AccessLogsPage';
-import SecurityAlertsPage from './pages/SecurityAlertsPage';
-import SettingsPage from './pages/SettingsPage';
-import LearnerHome from './pages/learner/LearnerHome';
-import LearnerCourses from './pages/learner/LearnerCourses';
-import LearnerCourse from './pages/learner/LearnerCourse';
-import LearnerWatch from './pages/learner/LearnerWatch';
-import LearnerCheckout from './pages/learner/LearnerCheckout';
-import LearnerHistory from './pages/learner/LearnerHistory';
-import LearnerAccount from './pages/learner/LearnerAccount';
-import AdminOverview from './pages/admin/AdminOverview';
-import AdminCreators from './pages/admin/AdminCreators';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminContent from './pages/admin/AdminContent';
-import AdminAudit from './pages/admin/AdminAudit';
+
+// Every page is its own chunk, downloaded only when someone opens it (the landing page's 3D
+// deck, for example, never reaches a signed-in creator)
+const page = (load) => lazy(load);
+const layout = (name) => lazy(() => import('./components/AppLayout').then(m => ({ default: m[name] })));
+const LandingPage = page(() => import('./pages/LandingPage'));
+const LoginPage = page(() => import('./pages/LoginPage'));
+const VerifyEmailPage = page(() => import('./pages/VerifyEmailPage'));
+const PrivacyPage = page(() => import('./pages/PrivacyPage'));
+const CreatorApplyPage = page(() => import('./pages/CreatorApplyPage'));
+const StudioLayout = layout('StudioLayout');
+const LearnerLayout = layout('LearnerLayout');
+const AdminLayout = layout('AdminLayout');
+const OverviewPage = page(() => import('./pages/OverviewPage'));
+const LibraryPage = page(() => import('./pages/LibraryPage'));
+const UploadPage = page(() => import('./pages/UploadPage'));
+const VideoDetailPage = page(() => import('./pages/VideoDetailPage'));
+const CoursesPage = page(() => import('./pages/CoursesPage'));
+const AccessLogsPage = page(() => import('./pages/AccessLogsPage'));
+const SecurityAlertsPage = page(() => import('./pages/SecurityAlertsPage'));
+const SettingsPage = page(() => import('./pages/SettingsPage'));
+const LearnerHome = page(() => import('./pages/learner/LearnerHome'));
+const LearnerCourses = page(() => import('./pages/learner/LearnerCourses'));
+const LearnerCourse = page(() => import('./pages/learner/LearnerCourse'));
+const LearnerWatch = page(() => import('./pages/learner/LearnerWatch'));
+const LearnerCheckout = page(() => import('./pages/learner/LearnerCheckout'));
+const LearnerHistory = page(() => import('./pages/learner/LearnerHistory'));
+const LearnerAccount = page(() => import('./pages/learner/LearnerAccount'));
+const AdminOverview = page(() => import('./pages/admin/AdminOverview'));
+const AdminCreators = page(() => import('./pages/admin/AdminCreators'));
+const AdminUsers = page(() => import('./pages/admin/AdminUsers'));
+const AdminContent = page(() => import('./pages/admin/AdminContent'));
+const AdminAudit = page(() => import('./pages/admin/AdminAudit'));
+
+const Spinner = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>;
 
 // Old /app/* links land on the right dashboard for the signed-in role
 const LegacyRedirect = () => {
@@ -48,11 +58,10 @@ const AppRoutes = () => {
   const { currentUser, isAuthenticated, ready } = useApp();
 
   // Wait until we know whether the refresh cookie restores a session
-  if (!ready) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>;
-  }
+  if (!ready) return <Spinner />;
 
   return (
+    <Suspense fallback={<Spinner />}>
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
@@ -109,6 +118,7 @@ const AppRoutes = () => {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 };
 

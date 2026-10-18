@@ -8,6 +8,7 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { db, save, uid } from './db.js';
+import { sha256 } from './util.js';
 import { isCreatorLocked } from '../src/auth/permissions.js';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -32,7 +33,6 @@ export const toPublic = (u) => {
   return rest;
 };
 
-const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
 export const signAccess = (user, sid) =>
   jwt.sign({ role: user.role, sid }, secret(), { subject: user.id, expiresIn: ACCESS_TTL_SECONDS, algorithm: 'HS256' });

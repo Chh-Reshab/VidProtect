@@ -182,8 +182,6 @@ export const getAllStudents = () =>
 export const enrollStudent = (actorId, studentId, courseId) =>
   write(request('POST', `/courses/${courseId}/enrollments`, { userId: studentId }));
 
-export const selfEnroll = (userId, courseId) => write(request('POST', `/courses/${courseId}/enroll`));
-
 // ─── PAYMENTS (beta test mode) ───────────────
 export const getPayments = () => cache.payments;
 
@@ -197,9 +195,6 @@ export const checkoutCourse = async (courseId, payload) => {
 
 export const removeEnrollment = (actorId, enrollmentId) =>
   write(request('DELETE', `/enrollments/${enrollmentId}`));
-
-export const checkEnrollment = (studentId, courseId) =>
-  cache.enrollments.find(e => e.studentId === studentId && e.courseId === courseId && e.status === 'active') || null;
 
 // ─── LEARNER ─────────────────────────────────
 export const getCatalog = () => cache.courses.filter(c => c.status === 'active');
@@ -227,9 +222,6 @@ export const saveProgress = (userId, videoId, positionSeconds, durationSeconds, 
 };
 
 export const getActivity = () => cache.activity || {};
-
-// Percent complete for one course, weighted by video length
-export const getCourseProgress = (courseId) => courseProgress(getCourseVideos(courseId), getProgressMap());
 
 export const getEnrolledCourses = (userId) => {
   const progress = getProgressMap();

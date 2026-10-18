@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { initDb, closeDb, useMongo } from './db.js';
+import compression from 'compression';
+import { initDb, closeDb, mongoEnabled } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured } from './mail.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
@@ -34,6 +35,7 @@ const PORT = Number(process.env.API_PORT || (process.env.NODE_ENV === 'productio
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // behind Vite's proxy / a load balancer: use the real client IP
 app.use(helmet({ contentSecurityPolicy: false })); // SPA uses inline styles + Google Fonts
+app.use(compression()); // JSON and the site's JS/CSS shrink a lot; video and other already-compressed types are skipped automatically
 app.use(cookieParser());
 app.use(express.json({ limit: '100kb' }));
 
@@ -53,8 +55,12 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 // Production: serve the built SPA
 const dist = path.join(here, '..', 'dist');
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist));
-  app.get('/{*splat}', (req, res) => res.sendFile(path.join(dist, 'index.html')));
+  app.use(express.static(dist, {
+    index: false,
+    // Built files have a content hash in their name, so browsers may keep them for good; index.html must stay fresh
+    setHeaders: (res, file) => res.setHeader('Cache-Control', file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache'),
+  }));
+  app.get('/{*splat}', (req, res) => res.setHeader('Cache-Control', 'no-cache').sendFile(path.join(dist, 'index.html')));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -64,7 +70,7 @@ app.use((err, req, res, next) => {
 });
 
 await initDb(); // loads the data (JSON file or MongoDB) before anything uses it
-if (process.env.NODE_ENV === 'production' && !useMongo()) {
+if (process.env.NODE_ENV === 'production' && !mongoEnabled()) {
   console.warn('[db] MONGODB_URI is not set: data and uploaded videos are kept on this machine\'s disk and will be lost if the host resets it.');
 }
 if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
@@ -78,7 +84,7 @@ await recoverInterruptedUploads(); // fail uploads that were mid-processing when
 migrateCreatorApplications();
 await migrateEncryption(); // bring older videos up to AES-256-GCM before serving anything
 
-const server = app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'}, ${useMongo() ? 'MongoDB' : 'JSON file'}, videos: ${backend()})`));
+const server = app.listen(PORT, () => console.log(`VidProtect API listening on port ${PORT} (${process.env.NODE_ENV || 'development'}, ${mongoEnabled() ? 'MongoDB' : 'JSON file'}, videos: ${backend()})`));
 
 // Hosts stop the app with SIGTERM on every deploy: finish writing to the database first
 let closing = false;

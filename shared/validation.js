@@ -4,11 +4,11 @@
 // `error` is a message or null.
 // ============================================
 
-export const NAME_MIN = 2;
+const NAME_MIN = 2;
 export const NAME_MAX = 60;
 export const EMAIL_MAX = 254;
 export const PASSWORD_MIN = 8;
-export const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything past 72 bytes, so refuse longer ones instead of silently truncating
+const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything past 72 bytes, so refuse longer ones instead of silently truncating
 
 // Anything that is not a letter, a digit or whitespace counts as a special character
 export const SPECIAL_CHAR = /[^\p{L}\p{N}\s]/u;
@@ -85,7 +85,7 @@ export const CV_EXTENSIONS = ['.pdf', '.doc', '.docx'];
 const cleanText = (input, max) => (typeof input === 'string' ? input.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, max + 1) : '');
 
 // Only http(s) links with a real host and no embedded credentials
-export const validateUrl = (input, { host } = {}) => {
+const validateUrl = (input, { host } = {}) => {
   const value = typeof input === 'string' ? input.trim() : '';
   if (!value) return { value, error: 'Enter a link.' };
   if (value.length > 300) return { value, error: 'That link is too long.' };

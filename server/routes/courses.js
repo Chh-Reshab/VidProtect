@@ -8,17 +8,17 @@ import { Router } from 'express';
 import { db, save, uid } from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { findCourse, findUser } from '../access.js';
+import { clean } from '../util.js';
 import { settingsFor } from './data.js';
 import { canManageCourse } from '../../src/auth/permissions.js';
 import { validateName, validateEmail } from '../../shared/validation.js';
 
 const router = Router();
-const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const VISIBILITY = ['public', 'invite_only'];
 const MAX_PRICE = 100000; // whole rupees
 
 // Price in whole rupees; 0 means free. Returns null when the value is not a valid price.
-export const parsePrice = (v) => {
+const parsePrice = (v) => {
   const n = Number(v);
   return Number.isInteger(n) && n >= 0 && n <= MAX_PRICE ? n : null;
 };

@@ -12,8 +12,9 @@
 // Encrypted videos and thumbnails live in GridFS buckets "videos" and "thumbs".
 // ============================================
 
-import { MongoClient, GridFSBucket } from 'mongodb';
-
+// The driver is loaded on connect(), so a JSON-file install never pays for it
+let MongoClient;
+let GridFSBucket;
 let client = null;
 let mdb = null;
 
@@ -25,6 +26,7 @@ const ARRAYS = {
 const MAPS = ['progress', 'settings', 'activity'];
 
 export const connect = async (uri, dbName) => {
+  ({ MongoClient, GridFSBucket } = await import('mongodb'));
   client = new MongoClient(uri, { serverSelectionTimeoutMS: 15000, maxPoolSize: 10 });
   try {
     await client.connect();
@@ -63,7 +65,6 @@ const enforceUserRules = async () => {
   }
 };
 
-export const database = () => mdb;
 export const close = async () => { if (client) await client.close(); };
 
 // ── GridFS ───────────────────────────────────

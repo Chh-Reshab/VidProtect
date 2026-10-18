@@ -11,7 +11,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
-import { db, save, INCOMING_DIR } from '../db.js';
+import { save, INCOMING_DIR } from '../db.js';
 import * as blobs from '../blobs.js';
 import { requireAuthAllowLocked, requireRole, toPublic } from '../auth.js';
 import { validateCreatorApplication, CV_MAX_BYTES, CV_EXTENSIONS } from '../../shared/validation.js';
@@ -62,7 +62,7 @@ const removeCv = (application) => {
 };
 
 // What the applicant (and admins) may see about a CV: never the stored file name
-export const publicApplication = (application) => {
+const publicApplication = (application) => {
   if (!application) return null;
   const { cv, ...rest } = application;
   return { ...rest, cv: cv ? { originalName: cv.originalName, size: cv.size, uploadedAt: cv.uploadedAt } : null };

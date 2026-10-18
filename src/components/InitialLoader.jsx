@@ -1,43 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Logo } from './SharedComponents';
+import { useApp } from '../context/AppContext';
 
+// Branded splash shown only until the app knows whether a session exists (a real signal, not a timer)
 export const InitialLoader = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [fade, setFade] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const { ready } = useApp();
+  const [gone, setGone] = useState(false);
 
   useEffect(() => {
-    // Simulate loading progress
-    const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return p + Math.random() * 15;
-      });
-    }, 150);
-
-    // After 2.2 seconds, start fade out
-    const timeout1 = setTimeout(() => {
-      setFade(true);
-    }, 2200);
-
-    // After 2.8 seconds, unmount loader
-    const timeout2 = setTimeout(() => {
-      setLoading(false);
-    }, 2800);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
-    };
-  }, []);
+    if (!ready) return undefined;
+    const t = setTimeout(() => setGone(true), 650); // after the slide-away animation
+    return () => clearTimeout(t);
+  }, [ready]);
 
   return (
     <>
-      {loading && (
+      {!gone && (
         <div style={{
           position: 'fixed',
           inset: 0,
@@ -48,8 +26,8 @@ export const InitialLoader = ({ children }) => {
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'transform 0.6s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.6s ease',
-          transform: fade ? 'translateY(-100%)' : 'translateY(0)',
-          opacity: fade ? 0 : 1,
+          transform: ready ? 'translateY(-100%)' : 'translateY(0)',
+          opacity: ready ? 0 : 1,
         }}>
           {/* Cyberpunk grid background */}
           <div style={{
@@ -69,16 +47,16 @@ export const InitialLoader = ({ children }) => {
               <div style={{
                 position: 'absolute',
                 top: 0, left: 0, bottom: 0,
-                width: `${Math.min(progress, 100)}%`,
+                width: ready ? '100%' : '75%',
                 background: '#FF2028',
-                transition: 'width 0.2s ease-out',
+                transition: 'width 1.2s ease-out',
                 boxShadow: '0 0 10px #FF2028',
               }} />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem' }}>
               <span style={{ color: '#565656', letterSpacing: '0.1em' }}>INITIALIZING SYSTEM</span>
-              <span style={{ color: '#FF2028', fontWeight: 600 }}>{Math.min(Math.round(progress), 100)}%</span>
+              <span style={{ color: '#FF2028', fontWeight: 600 }}>{ready ? '100%' : '...'}</span>
             </div>
           </div>
         </div>
@@ -93,8 +71,8 @@ export const InitialLoader = ({ children }) => {
         transition: 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease',
         // 'none' (not an identity transform) once settled: any transform on this wrapper would
         // make every position:fixed element inside the app scroll with the page
-        transform: loading && !fade ? 'scale(0.96) translateY(20px)' : 'none',
-        opacity: loading && !fade ? 0 : 1,
+        transform: ready ? 'none' : 'scale(0.96) translateY(20px)',
+        opacity: ready ? 1 : 0,
       }}>
         {children}
       </div>

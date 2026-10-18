@@ -23,7 +23,7 @@ import {
 
 const MIN_STAGE_MS = Number(process.env.VP_MIN_STAGE_MS ?? 1200);
 
-export const STAGES = [
+const STAGES = [
   { key: 'verifying', label: 'Verifying file', weight: 15 },
   { key: 'encrypting', label: 'Encrypting (AES-256-GCM)', weight: 50 },
   { key: 'integrity', label: 'Checking integrity', weight: 25 },

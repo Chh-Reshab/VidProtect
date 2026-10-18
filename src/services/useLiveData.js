@@ -8,6 +8,11 @@
 import { useEffect, useState } from 'react';
 import { loadData } from './dataService';
 
+// Several components (and the focus + visibility events, which fire together) can ask at once:
+// they all share one request instead of each sending their own
+let inflight = null;
+const refreshShared = () => (inflight ||= loadData().finally(() => { inflight = null; }));
+
 export const useLiveData = (intervalMs = 20000) => {
   const [, setTick] = useState(0);
 
@@ -15,7 +20,7 @@ export const useLiveData = (intervalMs = 20000) => {
     let alive = true;
     const refresh = async () => {
       if (document.hidden) return;
-      if ((await loadData()) && alive) setTick(t => t + 1);
+      if ((await refreshShared()) && alive) setTick(t => t + 1);
     };
     refresh();
     const timer = setInterval(refresh, intervalMs);

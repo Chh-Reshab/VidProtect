@@ -6,13 +6,13 @@
 // A day counts as "online" once the learner has watched at least 30 seconds.
 // ============================================
 
-export const ACTIVE_DAY_SECONDS = 30;
+const ACTIVE_DAY_SECONDS = 30;
 
 const pad = (n) => String(n).padStart(2, '0');
 export const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 // Calendar maths on 'YYYY-MM-DD' strings, done in UTC so daylight saving cannot shift a day
-export const addDays = (ymd, n) => {
+const addDays = (ymd, n) => {
   const [y, m, d] = ymd.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 };
@@ -21,15 +21,15 @@ const weekday = (ymd) => {
   return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0 = Sunday
 };
 
-export const parseClock = (text) => {
+const parseClock = (text) => {
   const parts = String(text || '').split(':').map(Number);
   return parts.length && parts.every(Number.isFinite) ? parts.reduce((t, n) => t * 60 + n, 0) : 0;
 };
 
-export const videoSeconds = (video) => video.durationSeconds || parseClock(video.duration) || 0;
+const videoSeconds = (video) => video.durationSeconds || parseClock(video.duration) || 0;
 
 // 0..1 of one video watched
-export const videoFraction = (video, p) => {
+const videoFraction = (video, p) => {
   if (!p) return 0;
   if (p.completed) return 1;
   const total = videoSeconds(video);
@@ -103,7 +103,7 @@ export const activityStats = (activity = {}, today = localDay()) => {
   return { activeDays: active.length, yearActiveDays, maxStreak, currentStreak, totalSeconds, yearSeconds, today: set.has(today) };
 };
 
-export const levelFor = (seconds) => {
+const levelFor = (seconds) => {
   if (seconds < ACTIVE_DAY_SECONDS) return 0;
   if (seconds < 600) return 1;
   if (seconds < 1800) return 2;

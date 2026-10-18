@@ -39,7 +39,6 @@ const MAX_CHUNK = 1024 * 1024;
 // ── Master key ───────────────────────────────
 const KEY_FILE = path.join(DATA_DIR, 'master.key');
 let masterKey = null;
-let masterKeyHow = '';
 
 const parseKey = (hex) => {
   const v = String(hex || '').trim();
@@ -52,23 +51,18 @@ export const getMasterKey = () => {
   if (fromEnv) {
     masterKey = parseKey(fromEnv);
     if (!masterKey) throw new Error('VP_MASTER_KEY must be 64 hex characters (32 bytes).');
-    masterKeyHow = 'environment';
     return masterKey;
   }
   if (fs.existsSync(KEY_FILE)) {
     masterKey = parseKey(fs.readFileSync(KEY_FILE, 'utf8'));
     if (!masterKey) throw new Error(`${KEY_FILE} is not a valid 64-hex-character key.`);
-    masterKeyHow = 'key file';
     return masterKey;
   }
   masterKey = crypto.randomBytes(32);
   fs.writeFileSync(KEY_FILE, `${masterKey.toString('hex')}\n`, { mode: 0o600 });
-  masterKeyHow = 'new key file';
   console.warn(`[encryption] Created a master key at ${KEY_FILE}. Back it up somewhere safe: videos cannot be decrypted without it.`);
   return masterKey;
 };
-
-export const masterKeySource = () => { getMasterKey(); return masterKeyHow; };
 
 // A short, non-secret fingerprint so we know which master key wrapped a data key
 export const keyId = (key = getMasterKey()) => crypto.createHash('sha256').update(key).digest('hex').slice(0, 8);
@@ -93,8 +87,6 @@ export const unwrapKey = (wrapped, videoId, key = getMasterKey()) => {
   d.setAuthTag(Buffer.from(tag, 'hex'));
   return Buffer.concat([d.update(Buffer.from(ct, 'hex')), d.final()]);
 };
-
-export const wrappedKeyId = (wrapped) => String(wrapped).split('.')[1];
 
 export const newDataKey = () => crypto.randomBytes(32);
 
@@ -203,16 +195,4 @@ export const createDecryptStream = (source, dek, start, end, expectedPlainLen) =
     }
   }
   return Readable.from(generate(), { objectMode: false });
-};
-
-// Decrypt a whole file to destPath (used to verify and for key-rotation tooling)
-export const decryptFileTo = async (srcPath, destPath, dek, expectedPlainLen) => {
-  const out = fs.createWriteStream(destPath, { mode: 0o600 });
-  const stream = createDecryptStream(srcPath, dek, 0, Number.MAX_SAFE_INTEGER, expectedPlainLen);
-  await new Promise((resolve, reject) => {
-    stream.on('error', reject);
-    out.on('error', reject);
-    out.on('finish', resolve);
-    stream.pipe(out);
-  });
 };

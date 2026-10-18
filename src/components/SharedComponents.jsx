@@ -36,23 +36,6 @@ export const Logo = ({ size = 'md' }) => {
   );
 };
 
-// ─── STATUS BADGE ─────────────────────────────
-export const StatusBadge = ({ label, variant = 'grey', dot = true }) => {
-  const classes = {
-    green: 'badge badge-green',
-    red: 'badge badge-red',
-    yellow: 'badge badge-yellow',
-    grey: 'badge badge-grey',
-    white: 'badge badge-white',
-  };
-  return (
-    <span className={classes[variant] || 'badge badge-grey'}>
-      {dot && <span className={`status-dot ${variant === 'green' ? 'active' : variant === 'red' ? 'danger' : variant === 'yellow' ? 'warning' : 'inactive'}`} />}
-      {label}
-    </span>
-  );
-};
-
 // ─── KPI CARD ─────────────────────────────────
 export const KpiCard = ({ label, value, sublabel, icon: Icon, accent = false }) => (
   <div style={{
@@ -133,11 +116,6 @@ export const NotificationToast = () => {
     </div>
   );
 };
-
-// ─── LOADING OVERLAY ──────────────────────────
-export const LoadingSpinner = ({ size = 20 }) => (
-  <div style={{ width: size, height: size, border: '2px solid #292929', borderTop: '2px solid #FF2028', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-);
 
 // ─── EMPTY STATE ──────────────────────────────
 export const EmptyState = ({ icon: Icon, title, description, action }) => (

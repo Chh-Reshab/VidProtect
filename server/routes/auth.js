@@ -7,17 +7,16 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { db, save, uid } from '../db.js';
+import { clean, sha256 } from '../util.js';
 import { verificationRequired, sendVerificationEmail, appUrl } from '../mail.js';
 import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
 import {
   toPublic, signAccess, createSession, setRefreshCookie, clearRefreshCookie,
-  rotateRefresh, revokeSession, revokeAllSessions, requireAuth, requireAuthAllowLocked,
+  rotateRefresh, revokeSession, revokeAllSessions, requireAuthAllowLocked,
 } from '../auth.js';
 
 const router = Router();
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 // Slow down password guessing per IP
 const authLimiter = rateLimit({
@@ -29,12 +28,11 @@ const authLimiter = rateLimit({
 });
 
 // Compared against when the email is unknown, so timing doesn't reveal which emails exist
-const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12);
+const DUMMY_HASH = '$2b$12$aSGUgjKTXJ48wDH412OFVe3ypaYr5gg86s5glPEHoiYh3LBwJ2.la'; // a valid cost-12 hash of a random string
 
 // ── Email verification ───────────────────────
 const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
-const sha256 = (text) => crypto.createHash('sha256').update(text).digest('hex');
 
 // Creates a fresh single-use link for the user (only a hash of the token is stored) and emails it
 const sendVerification = async (user, req) => {

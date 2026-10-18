@@ -1,42 +1,12 @@
 // ============================================
-// PERMISSIONS — role → permission map + policies
-// Shared by the SPA (to hide controls) and the Express server
-// (which enforces them: role checks + ownership on every request).
+// PERMISSIONS — who may do what, shared by the SPA (routing, hiding controls) and the Express
+// server (which enforces it on every request: role checks + ownership + creator approval).
 // ============================================
-
-export const ROLES = { LEARNER: 'learner', CREATOR: 'creator', ADMIN: 'admin' };
-
-const LEARNER_PERMS = ['course:read', 'enrollment:self', 'video:stream', 'progress:own'];
-
-const CREATOR_PERMS = [
-  ...LEARNER_PERMS,
-  'studio:access',
-  'course:create', 'course:update:own',
-  'video:upload:own', 'video:delete:own',
-  'enrollment:manage:own',
-  'logs:read:own', 'alerts:read:own', 'alerts:update:own',
-];
-
-const ADMIN_PERMS = [
-  'course:read', 'video:stream',
-  'admin:access', 'user:manage', 'creator:approve',
-  'content:moderate', 'audit:read', 'enrollment:manage:any',
-];
-
-export const ROLE_PERMISSIONS = {
-  learner: LEARNER_PERMS,
-  creator: CREATOR_PERMS,
-  admin: ADMIN_PERMS,
-};
 
 // Creator accounts are locked until an admin approves their application. Accounts created
 // before applications existed have no creatorStatus and count as approved.
 export const isCreatorLocked = (user) =>
   !!user && user.role === 'creator' && !!user.creatorStatus && user.creatorStatus !== 'approved';
-
-// A locked creator holds no permissions at all: only the application page is open to them
-export const can = (user, permission) =>
-  !!user && user.status !== 'suspended' && !isCreatorLocked(user) && (ROLE_PERMISSIONS[user.role] || []).includes(permission);
 
 // Where each role lands after login
 export const homeFor = (user) => {

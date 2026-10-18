@@ -71,7 +71,7 @@ const ANOMALY_RULES = [
   },
 ];
 
-export const analyzePatterns = (user, video) => {
+const analyzePatterns = (user, video) => {
   const hourAgo = Date.now() - 3600000;
   const logs = db.logs.filter(l => l.userId === user.id && new Date(l.timestamp).getTime() > hourAgo);
 

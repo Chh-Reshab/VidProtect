@@ -10,7 +10,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, CheckCircle, CreditCard, Landmark, Smartphone, Lock, Gift } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { checkoutCourse, getCourseById, getEnrollments, getUserById } from '../../services/dataService';
-import { CourseCover, Panel, formatDate, formatPrice } from '../../components/DashboardKit';
+import { CourseCover, Panel, formatDate } from '../../components/DashboardKit';
 
 const BANKS = ['HDFC Bank', 'State Bank of India', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank'];
 const METHODS = [
