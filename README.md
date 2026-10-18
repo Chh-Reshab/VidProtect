@@ -15,11 +15,11 @@ This repository contains the frontend web application, built with React and Vite
 
 | Role | Area | What they can do |
 |---|---|---|
-| **Learner** | `/learn` | Browse and enrol in published courses, watch through a secure player (token + watermark), track progress, see watch history, apply to become a creator |
-| **Creator** | `/studio` | Create/publish courses, upload videos, manage enrollments, view logs and alerts **for their own content only** |
-| **Admin** | `/admin` | Approve creators, suspend users, change roles, take down courses/videos, audit log |
+| **Learner** | `/learn` | Browse and enrol in published courses, watch through a secure player (token + watermark), track progress, see watch history. Learners stay learners |
+| **Creator** | `/creator/login`, then `/studio` once approved | Own sign-up. Fills in an application (teaching history, CV and/or LinkedIn, other platforms) and stays locked until an admin approves it. Then create/publish courses, upload videos, manage enrollments, view logs and alerts **for their own content only** |
+| **Admin** | `/login`, then `/admin` | Review creator applications,  suspend users, change roles, take down courses/videos, audit log |
 
-Demo accounts (password `demo1234`): `sarah@student.demo` (learner), `creator@vidprotect.demo` and `maya@creator.demo` (creators), `admin@vidprotect.demo` (admin). New sign-ups are learners. `daniel@student.demo` has a pending creator application for the admin to review.
+There are **no built-in accounts or passwords**. The admin account is created at start-up from `ADMIN_EMAIL` and `ADMIN_PASSWORD` (both required in production). On a development machine without them, the first start creates the admin `admin@vidprotect.local` with the password `VidProtect@Admin1` (see `server/bootstrap.js`). That default is never used in production. Everyone else signs up: learners at `/login`, creators at `/creator/login`. Databases created by older versions have their built-in beta accounts (`*.demo`) and sample courses removed automatically on the next start.
 
 Everything is enforced by the **Express API** in `server/`: JWT access tokens (15 min, in memory) plus an httpOnly rotating refresh cookie, role checks and ownership checks on every request, and an enrollment check on every video byte-range request. See [docs/PLAN-roles-auth-dashboards.md](docs/PLAN-roles-auth-dashboards.md) for the full design.
 
@@ -66,10 +66,8 @@ JWT_SECRET=<long random string> NODE_ENV=production npm run server   # serves th
 ```
 Environment variables: `JWT_SECRET` (required in production), `API_PORT` (default 4000), `VP_DATA_DIR`, `VP_UPLOAD_DIR`, `AUTH_RATE_LIMIT` (login attempts per 15 min per IP, default 30).
 
-## 🔐 Demo Accounts
-To explore the application locally, you can use the pre-configured demo credentials:
-- **Email:** `creator@vidprotect.demo`
-- **Password:** `demo1234`
+## 🔐 Accounts
+There are no demo accounts. Locally, sign in at `/login` as `admin@vidprotect.local` with `VidProtect@Admin1`. In production set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (at least 12 characters).
 
 ## 🤝 Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Chh-Reshab/VidProtect/issues).
@@ -103,10 +101,11 @@ Render's free plan has a temporary disk, so the app keeps **everything in MongoD
 2. In the service's **Environment** tab set:
    - `NODE_ENV` = `production`, `NODE_VERSION` = `22`
    - `JWT_SECRET`: any long random value (Render can generate it)
-   - `ADMIN_PASSWORD`: at least 12 characters. The server will not start in production without it, because the seeded admin password is public. Sign in as `admin@vidprotect.demo`.
+   - `ADMIN_EMAIL`: the email address of the admin account (the server creates it on first start).
+   - `ADMIN_PASSWORD`: at least 12 characters, the admin's password. The server will not start in production without these two. Sign in at `/login`.
    - `VP_MASTER_KEY`: 64 hex characters (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). Keep a copy: videos cannot be decrypted without it.
    - `MONGODB_URI`: the connection string from step 1.
-3. Open the Render URL. Health check: `/api/health`. The first start creates the collections and the seed data.
+3. Open the Render URL. Health check: `/api/health`. The first start creates the collections and the admin account.
 
 ### What to expect
 - Accounts, courses, progress, purchases **and uploaded videos survive restarts and redeploys.**

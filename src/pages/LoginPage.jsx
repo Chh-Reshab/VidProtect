@@ -13,20 +13,9 @@ import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN,
 
 const fieldError = (msg) => msg && <div role="alert" style={{ color: '#FF2028', fontSize: '0.7rem', marginTop: '0.3rem' }}>{msg}</div>;
 
-const demoAccounts = (portal) => (portal === 'creator'
-  ? [
-    { label: 'Approved creator', email: 'creator@vidprotect.demo' },
-    { label: 'Pending applicant', email: 'daniel@student.demo' },
-  ]
-  : [
-    { label: 'Learner', email: 'sarah@student.demo' },
-    { label: 'Admin', email: 'admin@vidprotect.demo' },
-  ].filter(a => !(import.meta.env.PROD && a.label === 'Admin'))); // the admin password is set by ADMIN_PASSWORD when deployed
-
 // One sign-in page, two doors: learners (and admins) at /login, creators at /creator/login
 export default function LoginPage({ portal = 'learner' }) {
   const isCreator = portal === 'creator';
-  const DEMO_ACCOUNTS = demoAccounts(portal);
   const { login, showNotification } = useApp();
   const navigate = useNavigate();
 
@@ -111,12 +100,6 @@ export default function LoginPage({ portal = 'learner' }) {
     }
   };
 
-  const fillDemo = (email) => {
-    setLoginEmail(email);
-    setLoginPassword('demo1234');
-    setError('');
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -182,18 +165,6 @@ export default function LoginPage({ portal = 'learner' }) {
                   <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>
                     {isCreator ? 'Sign in to your VidProtect AI creator account.' : 'Sign in to your VidProtect AI account.'}
                   </p>
-                </div>
-
-                {/* Demo banner */}
-                <div style={{ background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #FF2028', padding: '0.75rem 1rem', marginBottom: '1.5rem' }}>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.3rem' }}>BETA TEST ACCOUNTS · PASSWORD demo1234</div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                    {DEMO_ACCOUNTS.map(a => (
-                      <button key={a.email} type="button" onClick={() => fillDemo(a.email)} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>
-                        {a.label.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {success && (
@@ -262,10 +233,6 @@ export default function LoginPage({ portal = 'learner' }) {
                   </button>
                 </form>
 
-                <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>BETA TEST ACCOUNTS ARE SEEDED ON THE SERVER</span>
-                </div>
               </>
             ) : (
               <>

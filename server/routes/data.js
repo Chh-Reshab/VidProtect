@@ -8,7 +8,7 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAuthAllowLocked, toPublic } from '../auth.js';
 import { isCreatorLocked } from '../../src/auth/permissions.js';
-import { DEMO_SETTINGS } from '../seedData.js';
+import { DEFAULT_SETTINGS } from '../defaults.js';
 
 const router = Router();
 
@@ -27,7 +27,7 @@ export const publicVideo = (v) => {
 const slimUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, status: u.status, joinDate: u.joinDate });
 
 export const settingsFor = (user) => ({
-  ...DEMO_SETTINGS,
+  ...DEFAULT_SETTINGS,
   displayName: user.name,
   email: user.email,
   ...(db.settings[user.id] || {}),

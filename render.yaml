@@ -1,7 +1,7 @@
 # Render blueprint: one web service runs the API and serves the built site.
 # Deploy: push to GitHub, then Render dashboard -> New -> Blueprint -> pick the repo.
 # After the first deploy, open the service -> Environment and fill in the two values
-# marked "sync: false" (ADMIN_PASSWORD, VP_MASTER_KEY and MONGODB_URI). See README "Deploying to Render".
+# marked "sync: false" (ADMIN_EMAIL, ADMIN_PASSWORD, VP_MASTER_KEY and MONGODB_URI). See README "Deploying to Render".
 services:
   - type: web
     name: vidprotect
@@ -17,6 +17,8 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
+      - key: ADMIN_EMAIL # email address of the admin account, created on first start
+        sync: false
       - key: ADMIN_PASSWORD # at least 12 characters; becomes the admin login password
         sync: false
       - key: VP_MASTER_KEY # 64 hex characters, see README; keep a copy somewhere safe

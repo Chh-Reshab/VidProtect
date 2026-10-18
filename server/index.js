@@ -15,7 +15,7 @@ import { initDb, closeDb, useMongo } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured } from './mail.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
-import { applyAdminPassword } from './admin-bootstrap.js';
+import { ensureAdmin, removeDemoData } from './bootstrap.js';
 import authRoutes from './routes/auth.js';
 import creatorApplicationRoutes from './routes/creatorApplication.js';
 import dataRoutes from './routes/data.js';
@@ -70,7 +70,9 @@ if (process.env.NODE_ENV === 'production' && !useMongo()) {
 if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
   console.warn('[mail] No mail provider is configured (Gmail or Brevo variables): new accounts are NOT email-verified.');
 }
-applyAdminPassword(); // refuses to start in production without ADMIN_PASSWORD
+ensureAdmin(); // creates / updates the admin from ADMIN_EMAIL + ADMIN_PASSWORD (required in production)
+await removeDemoData(); // clears the old built-in beta accounts from databases created before they were removed
+// refuses to start in production without ADMIN_PASSWORD
 backfillActivity();
 await recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
 migrateCreatorApplications();
