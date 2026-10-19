@@ -231,6 +231,12 @@ export const verifyRazorpayPayment = async (courseId, response) => {
   return r.ok ? { success: true, payment: r.data.payment } : { success: false, error: r.data?.error || 'Could not verify the payment.', pending: r.status === 202 };
 };
 
+// The player reports a possible screenshot attempt; the server decides what it means ({ counted, strikes, message, blocked })
+export const reportCapture = async (videoId, signal) => {
+  const r = await request('POST', `/videos/${videoId}/capture-signal`, { signal });
+  return r.ok ? r.data : null;
+};
+
 export const removeEnrollment = (actorId, enrollmentId) =>
   write(request('DELETE', `/enrollments/${enrollmentId}`));
 

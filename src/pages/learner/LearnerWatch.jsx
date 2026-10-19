@@ -17,6 +17,7 @@ import {
   startStream, renewStream, streamUrl, saveProgress, getProgressMap, getCourseVideos,
 } from '../../services/dataService';
 import { TokenCountdown } from '../../components/SharedComponents';
+import { useCaptureGuard } from '../../services/useCaptureGuard';
 import { formatDuration } from '../../components/DashboardKit';
 
 const MEDIA_SPEEDS = [1, 1.25, 1.5, 2];
@@ -51,6 +52,7 @@ const Player = ({ access, user, isStudioPreview }) => {
   const [mediaError, setMediaError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [capture, setCapture] = useState(null); // the warning shown after a possible screenshot attempt
 
   const playerRef = useRef(null); // video + controls, so the controls stay available in fullscreen
   const surfaceRef = useRef(null);
@@ -76,6 +78,18 @@ const Player = ({ access, user, isStudioPreview }) => {
     setPlaying(false);
     setStopReason(reason);
   };
+
+  // Screenshot shortcuts are reported to the server (creators previewing their own video are never flagged)
+  useCaptureGuard({
+    videoId: video.id,
+    enabled: !isStudioPreview,
+    onFlagged: (result) => {
+      mediaRef.current?.pause();
+      setPlaying(false);
+      if (result.blocked) stop(result.message);
+      else setCapture(result);
+    },
+  });
 
   // Simulated clock for sample videos with no file
   useEffect(() => {
@@ -282,6 +296,15 @@ const Player = ({ access, user, isStudioPreview }) => {
             {/* Dynamic watermark: identifies the viewer if the stream is recorded */}
             <div className="vp-watermark mono">{user.email} · {token.sessionId.slice(0, 12)}</div>
 
+            {capture && !stopReason && (
+              <div role="alertdialog" aria-label="Screen capture warning" style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.95)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', textAlign: 'center', zIndex: 5 }}>
+                <Shield size={36} color="#eab308" />
+                <div className="mono" style={{ fontSize: '0.75rem', color: '#eab308' }}>POSSIBLE SCREEN CAPTURE DETECTED · ATTEMPT {capture.strikes}</div>
+                <div style={{ color: '#F8F8F8', fontSize: '0.9rem', maxWidth: 460, lineHeight: 1.6 }}>{capture.message}</div>
+                <button type="button" className="btn btn-primary" style={{ fontSize: '0.75rem' }} onClick={() => setCapture(null)}>I UNDERSTAND</button>
+              </div>
+            )}
+
             {(stopReason || mediaError) && (
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
                 <XCircle size={36} color="#FF2028" />
@@ -339,6 +362,7 @@ const Player = ({ access, user, isStudioPreview }) => {
               '5-minute playback session, auto-renewed',
               'Viewer watermark on screen',
               'Access logged for the creator',
+              'Screenshot attempts are flagged and can lead to a warning or suspension',
             ].map(t => (
               <div key={t} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: '#A0A0A0', padding: '0.25rem 0' }}>
                 <Lock size={11} color="#22c55e" /> {t}

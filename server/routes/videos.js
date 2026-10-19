@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import { db, save, INCOMING_DIR } from '../db.js';
 import * as blobs from '../blobs.js';
 import { requireAuth, requireRole } from '../auth.js';
@@ -25,6 +26,8 @@ import { canManageCourse, canManageVideo } from '../../src/auth/permissions.js';
 import { unwrapKey, createDecryptStream, encryptedSize } from '../encryption.js';
 import { removeThumb } from './thumbnails.js';
 import { processVideo, queuedState } from '../processing.js';
+import { recordCapture, SIGNALS } from '../capture.js';
+import { appUrl } from '../mail.js';
 
 const router = Router();
 
@@ -218,6 +221,25 @@ router.post('/videos/:id/stream-session', requireAuth, (req, res) => {
     video: publicVideo(video),
     course: access.course,
   });
+});
+
+// The player reports a possible screenshot / recording attempt (see capture.js for what happens next)
+const captureLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: Number(process.env.CAPTURE_RATE_LIMIT || 40),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many reports. Try again in a few minutes.' },
+});
+
+router.post('/videos/:id/capture-signal', requireAuth, captureLimiter, (req, res) => {
+  const video = findVideo(req.params.id);
+  if (!video) return res.status(404).json({ error: 'Video not found.' });
+  if (!Object.hasOwn(SIGNALS, req.body?.signal)) return res.status(400).json({ error: 'Unknown signal.' });
+  const access = checkVideoAccess(req.user, video);
+  if (!access.ok) return res.status(access.hidden ? 404 : 403).json({ error: access.reason });
+  if (access.privileged) return res.json({ counted: false }); // creators previewing their own videos and admins are never flagged
+  res.json(recordCapture(req.user, video, req.body.signal, `${appUrl(req)}/studio/alerts`));
 });
 
 router.post('/stream-sessions/:sid/renew', requireAuth, (req, res) => {

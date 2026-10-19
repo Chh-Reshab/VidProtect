@@ -4,9 +4,9 @@
 
 import { useState } from 'react';
 import { ShieldAlert, CheckCircle, Eye } from 'lucide-react';
-import { getSecurityAlerts, updateAlertStatus } from '../services/dataService';
+import { getSecurityAlerts, updateAlertStatus, getVideoById, getEnrollments, removeEnrollment } from '../services/dataService';
 import { useApp } from '../context/AppContext';
-import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter } from '../components/SharedComponents';
+import { SectionLabel, SeverityBadge, EmptyState, Modal, SearchInput, SelectFilter, ConfirmDialog } from '../components/SharedComponents';
 
 export default function SecurityAlertsPage() {
   const { currentUser, showNotification } = useApp();
@@ -41,6 +41,24 @@ export default function SecurityAlertsPage() {
     return matchSearch && matchSeverity && matchStatus;
   });
 
+  const [removeTarget, setRemoveTarget] = useState(null); // a capture alert whose learner may be removed from the course
+
+  // The learner's enrolment in the course of the alert's video (so the creator can remove them)
+  const enrolmentFor = (alert) => {
+    const video = getVideoById(alert.videoId);
+    return video ? getEnrollments().find(e => e.studentId === alert.userId && e.courseId === video.courseId) : null;
+  };
+  const removeLearner = async () => {
+    const alert = removeTarget;
+    setRemoveTarget(null);
+    const enrolment = enrolmentFor(alert);
+    if (!enrolment) { showNotification('That learner is no longer in the course.', 'error'); return; }
+    const result = await removeEnrollment(currentUser.id, enrolment.id);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    await handleUpdateStatus(alert.id, 'resolved');
+    showNotification(`${alert.userName} was removed from the course.`);
+  };
+
   const openCount = alerts.filter(a => a.reviewStatus === 'open').length;
   const highCount = alerts.filter(a => a.severity === 'high').length;
 
@@ -54,6 +72,7 @@ export default function SecurityAlertsPage() {
       repeated_denial: 'Repeated Access Denial',
       velocity_burst: 'Velocity Burst (Scraping Risk)',
       off_hours_access: 'Off-Hours Access Pattern',
+      capture_attempt: 'Possible Screen Capture',
     };
     return labels[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
@@ -206,6 +225,11 @@ export default function SecurityAlertsPage() {
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #292929' }}>
+              {selectedAlert.alertType === 'capture_attempt' && enrolmentFor(selectedAlert) && (
+                <button className="btn btn-ghost" style={{ fontSize: '0.7rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setRemoveTarget(selectedAlert)}>
+                  REMOVE LEARNER FROM COURSE
+                </button>
+              )}
               {selectedAlert.reviewStatus === 'open' && (
                 <button className="btn btn-secondary" style={{ fontSize: '0.7rem' }} onClick={() => handleUpdateStatus(selectedAlert.id, 'reviewed')}>
                   MARK REVIEWED
@@ -226,6 +250,16 @@ export default function SecurityAlertsPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={removeLearner}
+        title="REMOVE LEARNER"
+        message={`Remove ${removeTarget?.userName} from this course? They lose access to its videos. Detection is based on keyboard shortcuts and can be a false alarm, so check the activity log first.`}
+        confirmLabel="REMOVE"
+        danger
+      />
     </div>
   );
 }

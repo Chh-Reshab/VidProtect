@@ -39,6 +39,33 @@ const messages = {
     subject: 'Reset your VidProtect AI password',
     ...layout({ heading: 'Reset your password', paragraphs: [`Hi ${name},`, 'We received a request to reset the password of your VidProtect AI account.'], button: 'Choose a new password', link, footer: 'The link works for 1 hour and only once. If you did not ask for this, ignore this message: your password has not changed.' }),
   }),
+  'capture warning': ({ name, videoTitle, count, blocked }) => ({
+    subject: blocked ? 'Your VidProtect AI account was suspended' : 'Warning: screenshots and recordings are not allowed',
+    ...layout({
+      heading: blocked ? 'Account suspended' : 'A warning about screen capture',
+      paragraphs: [
+        `Hi ${name},`,
+        `While you were watching "${videoTitle}" we noticed what looks like an attempt to take a screenshot or a recording (attempt ${count}).`,
+        blocked
+          ? 'Because this kept happening, your account has been suspended. Contact support if you think this is a mistake.'
+          : 'Taking or sharing copies of creators\' videos is against the terms of use. If it happens again, the creator is told and your access can be restricted or your account suspended.',
+        'If this was a mistake, for example a key pressed by accident, you do not need to do anything.',
+      ],
+    }),
+  }),
+  'capture alert': ({ name, link, learnerName, videoTitle, count }) => ({
+    subject: `Possible screen capture on "${videoTitle}"`,
+    ...layout({
+      heading: 'Possible screen capture',
+      paragraphs: [
+        `Hi ${name},`,
+        `${learnerName} triggered a possible screenshot or recording attempt while watching "${videoTitle}". This is their attempt number ${count}.`,
+        'This is a warning sign, not proof: it is based on keyboard shortcuts and can be a false alarm. Review it before acting.',
+      ],
+      button: 'Review in your alerts',
+      link,
+    }),
+  }),
   'creator decision': ({ name, link, approved, note }) => (approved
     ? {
       subject: 'Your VidProtect AI creator application was approved',
@@ -138,4 +165,6 @@ export const emailAvailable = () => mailConfigured() || process.env.NODE_ENV !==
 
 export const sendVerificationEmail = (to) => deliver('verification', to);
 export const sendPasswordResetEmail = (to) => deliver('password reset', to);
+export const sendCaptureWarningEmail = (to) => deliver('capture warning', to); // { to, name, link, videoTitle, count, blocked }
+export const sendCaptureAlertEmail = (to) => deliver('capture alert', to); // { to, name, link, learnerName, videoTitle, count }
 export const sendCreatorDecisionEmail = (to) => deliver('creator decision', to); // { to, name, link, approved, note }

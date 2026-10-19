@@ -15,6 +15,7 @@ const EVENT_TYPES = [
   { value: 'repeated_attempt', label: 'Repeated Attempt' },
   { value: 'suspicious_session', label: 'Suspicious Session' },
   { value: 'creator_preview', label: 'Owner Preview' },
+  { value: 'capture_attempt', label: 'Capture Attempt' },
 ];
 
 const PAGE_SIZE = 10;
