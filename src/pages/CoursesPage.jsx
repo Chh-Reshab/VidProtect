@@ -142,7 +142,7 @@ export default function CoursesPage() {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedCourse ? '320px 1fr' : '1fr', gap: '1.5rem' }} className="courses-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: selectedCourse ? 'minmax(0, 340px) minmax(0, 1fr)' : '1fr', gap: '1.5rem' }} className="courses-grid">
         {/* Course List */}
         <div>
           {courses.length === 0 && (
@@ -171,7 +171,7 @@ export default function CoursesPage() {
                 </h3>
                 <ChevronRight size={14} color={selectedCourse?.id === course.id ? '#FF2028' : '#565656'} style={{ flexShrink: 0 }} />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem 1rem', marginTop: '0.75rem' }}>
                 <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Video size={10} /> {course.videoCount} videos
                 </span>
