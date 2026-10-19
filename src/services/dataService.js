@@ -52,8 +52,8 @@ export const authLogin = async (email, password, portal) => {
   return { success: true, user: cache.me || r.data.user };
 };
 
-export const authRegister = async (name, email, password) => {
-  const r = await request('POST', '/auth/register', { name, email, password });
+export const authRegister = async (name, email, password, acceptTerms) => {
+  const r = await request('POST', '/auth/register', { name, email, password, acceptTerms });
   return toResult(r);
 };
 
@@ -79,8 +79,8 @@ export const mfaDisable = async (password, code) => toResult(await request('POST
 export const mfaNewRecoveryCodes = async (password, code) => toResult(await request('POST', '/auth/mfa/recovery-codes', { password, code }));
 export const deleteMyAccount = async (password, code) => toResult(await request('DELETE', '/auth/account', { password, code }));
 
-export const authCreatorRegister = async (name, email, password) =>
-  toResult(await request('POST', '/auth/creator/register', { name, email, password }));
+export const authCreatorRegister = async (name, email, password, acceptTerms) =>
+  toResult(await request('POST', '/auth/creator/register', { name, email, password, acceptTerms }));
 
 export const authVerifyEmail = async (token) => toResult(await request('POST', '/auth/verify-email', { token }));
 export const authResendVerification = async (email) => toResult(await request('POST', '/auth/resend-verification', { email }));

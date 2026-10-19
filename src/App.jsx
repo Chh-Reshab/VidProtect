@@ -21,6 +21,8 @@ const LandingPage = page(() => import('./pages/LandingPage'));
 const LoginPage = page(() => import('./pages/LoginPage'));
 const VerifyEmailPage = page(() => import('./pages/VerifyEmailPage'));
 const PrivacyPage = page(() => import('./pages/PrivacyPage'));
+const TermsPage = page(() => import('./pages/TermsPage'));
+const RefundPage = page(() => import('./pages/RefundPage'));
 const ResetPasswordPage = page(() => import('./pages/ResetPasswordPage'));
 const AdminAccount = page(() => import('./pages/admin/AdminAccount'));
 const CreatorApplyPage = page(() => import('./pages/CreatorApplyPage'));
@@ -54,6 +56,7 @@ const AdminAudit = page(() => import('./pages/admin/AdminAudit'));
 const TITLES = [
   ['/creator/login', 'Creator sign in'], ['/creator/apply', 'Creator application'], ['/login', 'Sign in'],
   ['/verify-email', 'Verify your email'], ['/reset-password', 'Reset your password'], ['/privacy', 'Privacy policy'],
+  ['/terms', 'Terms of service'], ['/refund-policy', 'Refund policy'],
   ['/learn', 'Learn'], ['/studio', 'Creator studio'], ['/admin', 'Admin'],
 ];
 const DEFAULT_TITLE = 'VidProtect AI — Secure the Content. Protect the Creator.';
@@ -87,6 +90,8 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/refund-policy" element={<RefundPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/creator/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage portal="creator" />} />
       <Route path="/creator/apply" element={<CreatorApplyPage />} />

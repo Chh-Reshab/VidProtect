@@ -38,13 +38,14 @@ export default function LoginPage({ portal = 'learner' }) {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
+  const [regTerms, setRegTerms] = useState(false);
   const [touched, setTouched] = useState({}); // which register fields the person has visited
   const [serverFields, setServerFields] = useState({});
   const [needsVerify, setNeedsVerify] = useState(false); // login was refused because the email is not verified yet
   const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
   const check = useMemo(
-    () => validateRegistration({ name: regName, email: regEmail, password: regPassword, confirm: regConfirm }),
-    [regName, regEmail, regPassword, regConfirm],
+    () => validateRegistration({ name: regName, email: regEmail, password: regPassword, confirm: regConfirm, acceptTerms: regTerms }),
+    [regName, regEmail, regPassword, regConfirm, regTerms],
   );
   const shown = (field) => (touched[field] ? check.errors[field] : undefined) || serverFields[field];
   const rules = [
@@ -113,19 +114,19 @@ export default function LoginPage({ portal = 'learner' }) {
     setError('');
     setServerFields({});
     if (Object.keys(check.errors).length) {
-      setTouched({ name: true, email: true, password: true, confirm: true });
+      setTouched({ name: true, email: true, password: true, confirm: true, terms: true });
       setError('Please fix the highlighted fields.');
       return;
     }
     setLoading(true);
-    const result = await (isCreator ? authCreatorRegister : authRegister)(check.values.name, check.values.email, check.values.password);
+    const result = await (isCreator ? authCreatorRegister : authRegister)(check.values.name, check.values.email, check.values.password, regTerms);
     setLoading(false);
     if (result.success) {
       setSuccess(result.message);
       setNeedsVerify(!!result.needsVerification);
       setMode('login');
       setLoginEmail(check.values.email);
-      setRegPassword(''); setRegConfirm(''); setTouched({});
+      setRegPassword(''); setRegConfirm(''); setRegTerms(false); setTouched({});
     } else {
       setError(result.error);
       setServerFields(result.fields || {});
@@ -357,6 +358,15 @@ export default function LoginPage({ portal = 'learner' }) {
                     <label className="form-label" htmlFor="reg-confirm">Confirm Password</label>
                     <input id="reg-confirm" type="password" className="form-input" placeholder="Repeat password" value={regConfirm} autoComplete="new-password" aria-invalid={!!shown('confirm')} onBlur={() => touch('confirm')} onChange={e => setRegConfirm(e.target.value)} />
                     {fieldError(shown('confirm'))}
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8rem', color: '#A0A0A0', cursor: 'pointer', lineHeight: 1.5 }}>
+                      <input type="checkbox" checked={regTerms} onChange={e => { setRegTerms(e.target.checked); touch('terms'); }} style={{ marginTop: 3 }} />
+                      <span>
+                        I agree to the <Link to="/terms" target="_blank" style={{ color: '#FF2028' }}>Terms of Service</Link>, the <Link to="/privacy" target="_blank" style={{ color: '#FF2028' }}>Privacy Policy</Link> and the <Link to="/refund-policy" target="_blank" style={{ color: '#FF2028' }}>Refund Policy</Link>.
+                      </span>
+                    </label>
+                    {fieldError(shown('terms'))}
                   </div>
 
                   <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '0.5rem' }} disabled={loading}>

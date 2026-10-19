@@ -59,7 +59,7 @@ export const validatePassword = (input, related = {}) => {
 };
 
 // Validates a whole sign-up in one go: { values, errors } where errors is {} when everything is fine
-export const validateRegistration = ({ name, email, password, confirm }) => {
+export const validateRegistration = ({ name, email, password, confirm, acceptTerms }) => {
   const n = validateName(name);
   const e = validateEmail(email);
   const p = validatePassword(password, { name: n.value, email: e.value });
@@ -68,6 +68,7 @@ export const validateRegistration = ({ name, email, password, confirm }) => {
   if (e.error) errors.email = e.error;
   if (p.error) errors.password = p.error;
   if (confirm !== undefined && !p.error && password !== confirm) errors.confirm = 'Passwords do not match.';
+  if (!(acceptTerms === true || acceptTerms === 'true')) errors.terms = 'You must accept the Terms of Service and Privacy Policy to create an account.';
   return { values: { name: n.value, email: e.value, password: p.value }, errors };
 };
 

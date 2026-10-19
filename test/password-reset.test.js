@@ -72,7 +72,7 @@ suite('forgot and reset password', async ({ ok }) => {
   try {
     const api = client(v.base);
     const email = 'pending@example.com';
-    await api('POST', '/auth/register', { body: { name: 'Pending Person', email, password: 'First!pass1234' } });
+    await api('POST', '/auth/register', { body: { acceptTerms: true, name: 'Pending Person', email, password: 'First!pass1234' } });
     ok('the pending account cannot sign in', (await api('POST', '/auth/login', { body: { email, password: 'First!pass1234' } })).json.code === 'EMAIL_NOT_VERIFIED');
     await api('POST', '/auth/forgot-password', { body: { email } });
     await sleep(200);

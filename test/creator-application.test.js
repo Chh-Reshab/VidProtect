@@ -24,10 +24,10 @@ suite('creator sign-up, application, review and approval', async ({ ok }) => {
   const email = `creator${stamp}@example.com`, password = 'Teach!er2026';
 
   // ── separate creator sign-up ──
-  const reg = await post('/auth/creator/register', { name: 'Asha Rao', email, password });
+  const reg = await post('/auth/creator/register', { acceptTerms: true, name: 'Asha Rao', email, password });
   ok('creator sign-up works', reg.status === 201, reg);
-  ok('weak password refused on creator sign-up', (await post('/auth/creator/register', { name: 'Bad Pw', email: `b${stamp}@example.com`, password: 'abc' })).status === 400);
-  ok('duplicate creator email refused', (await post('/auth/creator/register', { name: 'Asha Rao', email, password })).status === 409);
+  ok('weak password refused on creator sign-up', (await post('/auth/creator/register', { acceptTerms: true, name: 'Bad Pw', email: `b${stamp}@example.com`, password: 'abc' })).status === 400);
+  ok('duplicate creator email refused', (await post('/auth/creator/register', { acceptTerms: true, name: 'Asha Rao', email, password })).status === 409);
 
   // ── portals ──
   const lc = await login(email, password, 'creator');

@@ -13,6 +13,7 @@ import { confirmIdentity } from './mfa.js';
 import { removeUsers } from '../accountData.js';
 import { audit } from '../access.js';
 import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
+import { LEGAL_UPDATED } from '../../shared/legal.js';
 import {
   toPublic, signAccess, signMfaToken, createSession, setRefreshCookie, clearRefreshCookie,
   rotateRefresh, revokeSession, revokeAllSessions, requireAuthAllowLocked,
@@ -46,7 +47,7 @@ const sendVerification = async (user, req) => {
 };
 
 const register = (role) => async (req, res) => {
-  const { values, errors } = validateRegistration({ name: req.body?.name, email: req.body?.email, password: req.body?.password });
+  const { values, errors } = validateRegistration({ name: req.body?.name, email: req.body?.email, password: req.body?.password, acceptTerms: req.body?.acceptTerms });
   const { name, email, password } = values;
   if (Object.keys(errors).length) return res.status(400).json({ error: Object.values(errors)[0], fields: errors });
   const needsVerification = verificationRequired();
@@ -60,6 +61,8 @@ const register = (role) => async (req, res) => {
   const user = existing || { id: uid('usr'), email, role, status: 'active', joinDate: new Date().toISOString().slice(0, 10) };
   user.name = name;
   user.role = role;
+  user.termsAcceptedAt = new Date().toISOString(); // agreed to the Terms and Privacy Policy as they stood on this date
+  user.termsVersion = LEGAL_UPDATED;
   // Creators start locked: they must submit an application and wait for an admin before the studio opens
   if (role === 'creator') user.creatorStatus = 'unsubmitted';
   else { delete user.creatorStatus; delete user.creatorApplication; }

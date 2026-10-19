@@ -20,7 +20,7 @@ suite('deleting an account', async ({ ok }) => {
     const data = (await api('GET', '/data', { token: admin })).json;
     ok('the user, their enrolments and their activity are gone', !data.users.some(u => u.email === 'sarah@student.test') && !data.enrollments.some(e => e.studentId === 'stu-001') && !data.logs.some(l => l.userId === 'stu-001'));
     ok('other people and the courses are untouched', data.users.some(u => u.email === 'marcus@student.test') && data.courses.some(c => c.id === 'course-001'));
-    ok('the email can be used to sign up again', (await api('POST', '/auth/register', { body: { name: 'Sarah Again', email: 'sarah@student.test', password: 'Fresh!pass2026' } })).status === 201);
+    ok('the email can be used to sign up again', (await api('POST', '/auth/register', { body: { acceptTerms: true, name: 'Sarah Again', email: 'sarah@student.test', password: 'Fresh!pass2026' } })).status === 201);
 
     // ── two-step verification must be confirmed too ──
     const marcus = await signIn(api, 'marcus@student.test');

@@ -15,7 +15,7 @@ import compression from 'compression';
 import { initDb, closeDb, mongoEnabled } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured, appUrl } from './mail.js';
-import { renderPrivacyHtml, prepareIndexHtml } from './publicPages.js';
+import { renderPrivacyHtml, renderTermsHtml, renderRefundHtml, prepareIndexHtml } from './publicPages.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
 import { ensureAdmin, removeDemoData } from './bootstrap.js';
 import authRoutes from './routes/auth.js';
@@ -69,7 +69,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 // For search engines: only the public pages are listed, the signed-in areas and the API are not
 app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /api/\nDisallow: /admin\nDisallow: /studio\nDisallow: /learn\nSitemap: ${appUrl(req)}/sitemap.xml\n`));
 app.get('/sitemap.xml', (req, res) => {
-  const urls = ['/', '/login', '/creator/login', '/privacy'].map(p => `  <url><loc>${appUrl(req)}${p}</loc></url>`).join('\n');
+  const urls = ['/', '/login', '/creator/login', '/terms', '/privacy', '/refund-policy'].map(p => `  <url><loc>${appUrl(req)}${p}</loc></url>`).join('\n');
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
 });
 
@@ -87,7 +87,10 @@ app.use('/api', videoRoutes);
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 
 // The privacy policy is plain HTML (readable without scripts, by search engines and Google's reviewers)
-app.get('/privacy', (req, res) => res.setHeader('Cache-Control', 'no-cache').type('html').send(renderPrivacyHtml()));
+const legalPage = (render) => (req, res) => res.setHeader('Cache-Control', 'no-cache').type('html').send(render());
+app.get('/privacy', legalPage(renderPrivacyHtml));
+app.get('/terms', legalPage(renderTermsHtml));
+app.get('/refund-policy', legalPage(renderRefundHtml));
 
 // Production: serve the built SPA
 const dist = path.join(here, '..', 'dist');

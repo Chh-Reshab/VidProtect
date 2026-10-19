@@ -5,7 +5,7 @@ suite('sign-up, login and settings validation', async ({ ok }) => {
   const base = srv.base;
   try {
   const reg = async (b) => { const r = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }); return { status: r.status, json: await r.json().catch(() => ({})) }; };
-  const good = { name: 'Asha Rao', email: `asha${Date.now()}@example.com`, password: 'goodpass42!' };
+  const good = { acceptTerms: true, name: 'Asha Rao', email: `asha${Date.now()}@example.com`, password: 'goodpass42!' };
   const bad = [
     ['empty name', { ...good, name: '' }, 'name'], ['one-letter name', { ...good, name: 'A' }, 'name'],
     ['digits in name', { ...good, name: 'Bot 12345' }, 'name'], ['link as name', { ...good, name: 'http://spam.com' }, 'name'],

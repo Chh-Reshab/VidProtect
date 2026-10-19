@@ -13,7 +13,7 @@ suite('email verification for learners and creators', async ({ ok }) => {
   // verification ON
   srv = await start({ REQUIRE_EMAIL_VERIFICATION: 'true' });
   const email = `verify${Date.now()}@example.com`, password = 'Str0ng!pass';
-  const reg = await post('/auth/register', { name: 'Vera Fy', email, password });
+  const reg = await post('/auth/register', { acceptTerms: true, name: 'Vera Fy', email, password });
   ok('register succeeds and asks to verify', reg.status === 201 && reg.json.needsVerification === true, reg);
   await sleep(200);
   const t1 = tokenFor(srv.log, email);
@@ -32,12 +32,12 @@ suite('email verification for learners and creators', async ({ ok }) => {
   ok('the same link cannot be used twice', (await post('/auth/verify-email', { token: t1 })).status === 400);
   const l2 = await post('/auth/login', { email, password });
   ok('login works after verifying', l2.status === 200 && !!l2.json.accessToken, l2);
-  ok('registering a verified email again is 409', (await post('/auth/register', { name: 'Vera Fy', email, password })).status === 409);
+  ok('registering a verified email again is 409', (await post('/auth/register', { acceptTerms: true, name: 'Vera Fy', email, password })).status === 409);
   ok('resend for a verified account is a quiet 200', (await post('/auth/resend-verification', { email })).status === 200);
 
   const email2 = `pending${Date.now()}@example.com`;
-  await post('/auth/register', { name: 'First Try', email: email2, password: 'First!pass12' });
-  const again = await post('/auth/register', { name: 'Second Try', email: email2, password: 'Second!pass12' });
+  await post('/auth/register', { acceptTerms: true, name: 'First Try', email: email2, password: 'First!pass12' });
+  const again = await post('/auth/register', { acceptTerms: true, name: 'Second Try', email: email2, password: 'Second!pass12' });
   ok('re-registering an unverified email is allowed', again.status === 201, again);
   await sleep(200);
   const t2 = tokenFor(srv.log, email2);
@@ -47,7 +47,7 @@ suite('email verification for learners and creators', async ({ ok }) => {
   ok('seeded demo accounts still sign in', (await post('/auth/login', { email: 'sarah@student.test', password: PW })).status === 200);
 
   const email3 = `restart${Date.now()}@example.com`;
-  await post('/auth/register', { name: 'Rest Art', email: email3, password: 'Rest!art1234' });
+  await post('/auth/register', { acceptTerms: true, name: 'Rest Art', email: email3, password: 'Rest!art1234' });
   await sleep(300); const t3 = tokenFor(srv.log, email3);
   await srv.stop();
   srv = await start({ REQUIRE_EMAIL_VERIFICATION: 'true' });
@@ -55,7 +55,7 @@ suite('email verification for learners and creators', async ({ ok }) => {
   ok('the emailed link still works after a restart', (await post('/auth/verify-email', { token: t3 })).status === 200);
 
   const email4 = `expire${Date.now()}@example.com`;
-  await post('/auth/register', { name: 'Exp Ired', email: email4, password: 'Exp!ired1234' }); await sleep(300);
+  await post('/auth/register', { acceptTerms: true, name: 'Exp Ired', email: email4, password: 'Exp!ired1234' }); await sleep(300);
   const t4 = tokenFor(srv.log, email4);
   await srv.stop();
   const dbFile = path.join(dir, 'data', 'db.json');
@@ -68,7 +68,7 @@ suite('email verification for learners and creators', async ({ ok }) => {
   // creators are verified too
   srv = await start({ REQUIRE_EMAIL_VERIFICATION: 'true' });
   const cemail = `creatorv${Date.now()}@example.com`, cpass = 'Teach!er2026';
-  const creg = await post('/auth/creator/register', { name: 'Cree Ator', email: cemail, password: cpass });
+  const creg = await post('/auth/creator/register', { acceptTerms: true, name: 'Cree Ator', email: cemail, password: cpass });
   ok('creator sign-up asks to verify the email', creg.status === 201 && creg.json.needsVerification === true, creg);
   await sleep(200); const ct = tokenFor(srv.log, cemail);
   ok('a verification link was produced for the creator', !!ct);
@@ -86,7 +86,7 @@ suite('email verification for learners and creators', async ({ ok }) => {
   // verification OFF (no mail configured)
   srv = await start({});
   const email5 = `noverify${Date.now()}@example.com`;
-  const r5 = await post('/auth/register', { name: 'No Verify', email: email5, password: 'Plain!pass123' });
+  const r5 = await post('/auth/register', { acceptTerms: true, name: 'No Verify', email: email5, password: 'Plain!pass123' });
   ok('without mail configured, sign-up needs no verification', r5.status === 201 && r5.json.needsVerification === false, r5);
   ok('...and the account signs in right away', (await post('/auth/login', { email: email5, password: 'Plain!pass123' })).status === 200);
   await srv.stop();

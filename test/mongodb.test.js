@@ -34,7 +34,7 @@ if (!BASE_URI) {
     const maya = (await login('maya@creator.test')).token;
     const sarah = (await login('sarah@student.test')).token;
   
-    const reg = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'New Person', email: 'newperson@example.com', password: 'a-long-password-1' }) });
+    const reg = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acceptTerms: true, name: 'New Person', email: 'newperson@example.com', password: 'a-long-password-1' }) });
     ok('register a new account', reg.status === 201);
   
     const course = (await call(maya, 'POST', '/courses', { title: 'Persistence Course', price: 250 })).json.course;

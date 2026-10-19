@@ -163,8 +163,8 @@ suite('API: auth, roles, courses, enrolment and access rules', async ({ ok }) =>
   ok('old access token dies with its session', (await call(sarah.token, 'GET', '/data')).status === 401);
 
   // register + apply + approve
-  const reg = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Test User', email: `t${Date.now()}@x.com`, password: 'longenough1!' }) });
+  const reg = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acceptTerms: true, name: 'Test User', email: `t${Date.now()}@x.com`, password: 'longenough1!' }) });
   ok('register ok', reg.status === 201);
-  ok('short password rejected', (await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'T', email: 'q@x.com', password: 'short' }) })).status === 400);
+  ok('short password rejected', (await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acceptTerms: true, name: 'T', email: 'q@x.com', password: 'short' }) })).status === 400);
   } finally { await srv.stop(); }
 });
