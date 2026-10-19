@@ -69,7 +69,7 @@ export default function LibraryPage() {
                 <VideoThumbnail video={video} />
                 {video.uploadStatus === 'processing' && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.82)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0 1.5rem' }}>
-                    <span className="mono" style={{ fontSize: '0.65rem', color: '#F8F8F8' }}>{(video.processing?.label || 'Processing').toUpperCase()} · {video.processing?.percent ?? 0}%</span>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#F8F8F8' }}>{(video.processing?.label || 'Processing').toUpperCase()} · {video.processing?.percent ?? 0}%</span>
                     <div style={{ background: '#292929', height: 4, width: '100%' }}>
                       <div style={{ background: '#FF2028', height: '100%', width: `${video.processing?.percent ?? 0}%`, transition: 'width 0.25s linear' }} />
                     </div>
@@ -77,13 +77,13 @@ export default function LibraryPage() {
                 )}
                 {video.uploadStatus === 'failed' && (
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 1rem' }}>
-                    <span className="mono" style={{ fontSize: '0.65rem', color: '#FF2028' }}>PROCESSING FAILED · DELETE AND UPLOAD AGAIN</span>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#FF2028' }}>PROCESSING FAILED · DELETE AND UPLOAD AGAIN</span>
                   </div>
                 )}
               </div>
               <div style={{ padding: '0.9rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
                 <div style={{ fontSize: '0.95rem', color: '#F8F8F8', lineHeight: 1.3 }}>{video.title}</div>
-                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                   <span style={{ color: '#FF2028' }}>{video.courseName}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={10} /> {video.duration}</span>
                 </div>

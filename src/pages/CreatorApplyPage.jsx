@@ -14,8 +14,8 @@ import {
 } from '../../shared/validation.js';
 
 const fieldError = (msg) => msg && <div role="alert" style={{ color: '#FF2028', fontSize: '0.7rem', marginTop: '0.3rem' }}>{msg}</div>;
-const hint = { fontSize: '0.7rem', color: '#565656', marginTop: '0.3rem' };
-const section = { fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', letterSpacing: '0.1em', color: '#A0A0A0', textTransform: 'uppercase', margin: '0.5rem 0' };
+const hint = { fontSize: '0.7rem', color: '#8B8B8B', marginTop: '0.3rem' };
+const section = { fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: '#A0A0A0', textTransform: 'uppercase', margin: '0.5rem 0' };
 const safeHref = (url) => (/^https?:\/\//i.test(url || '') ? url : null);
 const formatSize = (bytes) => (bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
@@ -29,9 +29,9 @@ function Summary({ application, onCv }) {
   const otherLink = safeHref(other?.platformUrl);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
-      {rows.map(([k, v]) => (<div key={k}><div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{k.toUpperCase()}</div><div style={{ color: '#F8F8F8' }}>{v}</div></div>))}
-      <div><div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>TEACHING HISTORY</div><div style={{ color: '#A0A0A0', whiteSpace: 'pre-wrap' }}>{a.teachingHistory}</div></div>
-      {a.cv && <div><button type="button" className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={onCv}><FileText size={12} /> {a.cv.originalName}</button></div>}
+      {rows.map(([k, v]) => (<div key={k}><div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{k.toUpperCase()}</div><div style={{ color: '#F8F8F8' }}>{v}</div></div>))}
+      <div><div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>TEACHING HISTORY</div><div style={{ color: '#A0A0A0', whiteSpace: 'pre-wrap' }}>{a.teachingHistory}</div></div>
+      {a.cv && <div><button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={onCv}><FileText size={12} /> {a.cv.originalName}</button></div>}
       {linkedin && <div><a href={linkedin} target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>LinkedIn profile <ExternalLink size={11} /></a></div>}
       {other && otherLink && <div style={{ color: '#A0A0A0' }}>Also teaches on {other.platform === 'Other' ? other.platformName : other.platform}: <a href={otherLink} target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>{other.platformUrl}</a>{other.audienceSize != null && ` · ${other.audienceSize.toLocaleString()} followers/students`}</div>}
     </div>
@@ -109,8 +109,8 @@ export default function CreatorApplyPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
           <Link to="/" style={{ textDecoration: 'none' }}><Logo size="sm" /></Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>{currentUser.email}</span>
-            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={logout}><LogOut size={12} /> LOGOUT</button>
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{currentUser.email}</span>
+            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={logout}><LogOut size={12} /> LOGOUT</button>
           </div>
         </div>
 
@@ -169,7 +169,7 @@ export default function CreatorApplyPage() {
                 {keepCv && previous?.cv && !file && (
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.4rem', fontSize: '0.8rem', color: '#A0A0A0', flexWrap: 'wrap' }}>
                     <FileText size={14} /> {previous.cv.originalName} ({formatSize(previous.cv.size)})
-                    <button type="button" className="btn btn-ghost" style={{ fontSize: '0.6rem' }} onClick={() => setKeepCv(false)}>REMOVE</button>
+                    <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => setKeepCv(false)}>REMOVE</button>
                   </div>
                 )}
                 <input id="ca-cv" type="file" accept=".pdf,.doc,.docx" className="form-input" onChange={chooseFile} />

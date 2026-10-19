@@ -2,15 +2,16 @@
 // LEARNER ACCOUNT — profile, password, become-a-creator
 // ============================================
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, Clapperboard, Award, Lock, Flame } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { changePassword, getEnrolledCourses, getProgressMap, getActivity } from '../../services/dataService';
+import { getEnrolledCourses, getProgressMap, getActivity } from '../../services/dataService';
 import { useLiveData } from '../../services/useLiveData';
 import { activityStats, formatHours } from '../../services/learningStats';
 import { ProgressRing, ActivityHeatmap, StatTile } from '../../components/LearningWidgets';
 import { PageHeader, Panel } from '../../components/DashboardKit';
+import SecurityPanel from '../../components/SecurityPanel';
 
 const Card = ({ children, style }) => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem', ...style }}>{children}</div>
@@ -81,7 +82,7 @@ const LearningDashboard = ({ userId }) => {
             ))}
           </div>
           {next && (
-            <div className="mono" style={{ fontSize: '0.6rem', color: '#808080', marginTop: '0.9rem' }}>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#808080', marginTop: '0.9rem' }}>
               NEXT: {next.label.toUpperCase()} · {Math.min(next.have, next.need)}/{next.need}
             </div>
           )}
@@ -117,21 +118,11 @@ const LearningDashboard = ({ userId }) => {
 };
 
 export default function LearnerAccount() {
-  const { currentUser, refreshUser, logout, showNotification } = useApp();
+  const { currentUser, refreshUser, logout } = useApp();
   const navigate = useNavigate();
-
-  const [pw, setPw] = useState({ current: '', next: '' });
 
   // Pick up an approval/suspension decided since login
   useEffect(() => { refreshUser(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handlePassword = async (e) => {
-    e.preventDefault();
-    const result = await changePassword(currentUser.id, pw.current, pw.next);
-    if (!result.success) { showNotification(result.error, 'error'); return; }
-    setPw({ current: '', next: '' });
-    showNotification('Password updated.');
-  };
 
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease', maxWidth: 1000 }}>
@@ -146,7 +137,7 @@ export default function LearnerAccount() {
             ['MEMBER SINCE', currentUser.joinDate || '—'],
           ].map(([k, v]) => (
             <div key={k}>
-              <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', marginBottom: '0.2rem' }}>{k}</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.2rem' }}>{k}</div>
               <div style={{ fontSize: '0.9rem', color: '#F8F8F8', wordBreak: 'break-all' }}>{v}</div>
             </div>
           ))}
@@ -164,19 +155,7 @@ export default function LearnerAccount() {
         </Panel>
       )}
 
-      <Panel title="CHANGE PASSWORD" style={{ marginBottom: '1.5rem' }}>
-        <form onSubmit={handlePassword} style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: 360 }}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="pw-cur">Current password</label>
-            <input id="pw-cur" type="password" className="form-input" autoComplete="current-password" value={pw.current} onChange={e => setPw({ ...pw, current: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="pw-new">New password (min. 8 characters)</label>
-            <input id="pw-new" type="password" className="form-input" autoComplete="new-password" value={pw.next} onChange={e => setPw({ ...pw, next: e.target.value })} />
-          </div>
-          <button type="submit" className="btn btn-secondary" style={{ alignSelf: 'flex-start', fontSize: '0.7rem' }}>UPDATE PASSWORD</button>
-        </form>
-      </Panel>
+      <SecurityPanel />
 
       <button className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={async () => { await logout(); navigate('/'); }}>
         <LogOut size={14} /> SIGN OUT

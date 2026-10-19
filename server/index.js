@@ -14,11 +14,12 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { initDb, closeDb, mongoEnabled } from './db.js';
 import { backend } from './blobs.js';
-import { mailConfigured } from './mail.js';
+import { mailConfigured, appUrl } from './mail.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
 import { ensureAdmin, removeDemoData } from './bootstrap.js';
 import authRoutes from './routes/auth.js';
 import creatorApplicationRoutes from './routes/creatorApplication.js';
+import mfaRoutes from './routes/mfa.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
 import videoRoutes from './routes/videos.js';
@@ -34,13 +35,43 @@ const PORT = Number(process.env.API_PORT || (process.env.NODE_ENV === 'productio
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // behind Vite's proxy / a load balancer: use the real client IP
-app.use(helmet({ contentSecurityPolicy: false })); // SPA uses inline styles + Google Fonts
+// A strict Content Security Policy: only this site's own scripts run; the exceptions are Google Fonts
+// (styles and fonts) and Razorpay's payment window. The app styles itself inline, hence 'unsafe-inline' for styles only.
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://checkout.razorpay.com'],
+      scriptSrcAttr: ["'none'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      mediaSrc: ["'self'", 'blob:'],
+      connectSrc: ["'self'", 'https://api.razorpay.com', 'https://lumberjack.razorpay.com'],
+      frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+      formAction: ["'self'", 'https://api.razorpay.com'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 app.use(compression()); // JSON and the site's JS/CSS shrink a lot; video and other already-compressed types are skipped automatically
 app.use(cookieParser());
-app.use(express.json({ limit: '100kb' }));
+// The webhook needs the exact bytes that were signed, so keep them for that route
+app.use(express.json({ limit: '100kb', verify: (req, res, buf) => { if (req.originalUrl.startsWith('/api/webhooks/')) req.rawBody = buf; } }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
+// For search engines: only the public pages are listed, the signed-in areas and the API are not
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(`User-agent: *\nDisallow: /api/\nDisallow: /admin\nDisallow: /studio\nDisallow: /learn\nSitemap: ${appUrl(req)}/sitemap.xml\n`));
+app.get('/sitemap.xml', (req, res) => {
+  const urls = ['/', '/login', '/creator/login', '/privacy'].map(p => `  <url><loc>${appUrl(req)}${p}</loc></url>`).join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+});
+
+app.use('/api/auth/mfa', mfaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/creator', creatorApplicationRoutes);
 app.use('/api/data', dataRoutes);
@@ -78,7 +109,6 @@ if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
 }
 ensureAdmin(); // creates / updates the admin from ADMIN_EMAIL + ADMIN_PASSWORD (required in production)
 await removeDemoData(); // clears the old built-in beta accounts from databases created before they were removed
-// refuses to start in production without ADMIN_PASSWORD
 backfillActivity();
 await recoverInterruptedUploads(); // fail uploads that were mid-processing when the server stopped
 migrateCreatorApplications();
@@ -97,3 +127,12 @@ const shutdown = async () => {
 };
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
+
+// A crash still saves what was waiting to be written (up to 3 seconds), then exits so the host restarts the app
+const crashed = async (err) => {
+  console.error('[fatal]', err);
+  try { await Promise.race([closeDb(), new Promise(resolve => setTimeout(resolve, 3000))]); } catch { /* nothing more to do */ }
+  process.exit(1);
+};
+process.on('uncaughtException', crashed);
+process.on('unhandledRejection', crashed);

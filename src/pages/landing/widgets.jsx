@@ -146,8 +146,8 @@ export const HeroShowcase = () => {
               <div className="lp-scan" />
               <Shield size={46} color="#FF2028" strokeWidth={1.4} style={{ position: 'relative', zIndex: 2 }} />
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', position: 'relative', zIndex: 2 }}>
-                <span className="badge badge-red" style={{ fontSize: '0.55rem' }}>⚿ PROTECTED</span>
-                <span className="badge badge-green" style={{ fontSize: '0.55rem' }}>✓ ENCRYPTED</span>
+                <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>⚿ PROTECTED</span>
+                <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>✓ ENCRYPTED</span>
               </div>
               <span className="lp-wm mono">SARAH CHEN · SS-A1B2C3D4</span>
             </div>

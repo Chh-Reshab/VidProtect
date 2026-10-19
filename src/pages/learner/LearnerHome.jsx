@@ -34,9 +34,9 @@ export default function LearnerHome() {
       {resume && (
         <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.5rem', marginBottom: '2rem', display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 240 }}>
-            <div className="mono" style={{ fontSize: '0.6rem', color: '#FF2028', marginBottom: '0.4rem' }}>CONTINUE WATCHING</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginBottom: '0.4rem' }}>CONTINUE WATCHING</div>
             <div style={{ fontSize: '1.15rem', color: '#F8F8F8', marginBottom: '0.25rem' }}>{resume.video.title}</div>
-            <div className="mono" style={{ fontSize: '0.62rem', color: '#565656', marginBottom: '0.75rem' }}>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.75rem' }}>
               {resume.video.courseName} · {formatDuration(resume.p.positionSeconds)} / {resume.video.duration}
             </div>
             <ProgressBar percent={Math.round((resume.p.positionSeconds / (resume.video.durationSeconds || 600)) * 100)} />
@@ -47,10 +47,10 @@ export default function LearnerHome() {
         </div>
       )}
 
-      <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '0.75rem' }}>MY COURSES</div>
+      <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '0.75rem' }}>MY COURSES</div>
 
       {courses.length === 0 ? (
-        <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#565656' }}>
+        <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#8B8B8B' }}>
           <BookOpen size={28} color="#292929" style={{ marginBottom: '0.75rem' }} />
           <div style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>You are not enrolled in any courses yet.</div>
           <Link to="/learn/catalog" className="btn btn-primary" style={{ fontSize: '0.8rem' }}><Compass size={14} /> Browse courses</Link>
@@ -65,7 +65,7 @@ export default function LearnerHome() {
               footer={
                 <div>
                   <ProgressBar percent={c.percent} />
-                  <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', marginTop: '0.4rem' }}>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginTop: '0.4rem' }}>
                     {c.completedVideos}/{c.totalVideos} videos · {c.percent}%
                   </div>
                 </div>

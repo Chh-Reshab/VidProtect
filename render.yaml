@@ -33,6 +33,12 @@ services:
         sync: false
       - key: MAIL_FROM # your Gmail address (or a sender verified in Brevo if you use BREVO_API_KEY instead)
         sync: false
+      - key: RAZORPAY_KEY_ID # online payments: rzp_test_... (test mode, free) or rzp_live_... Leave unset to use the built-in test checkout
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET # the secret you type when adding the webhook in Razorpay
+        sync: false
       - key: S3_BUCKET # Amazon S3 bucket that holds the encrypted videos and thumbnails
         sync: false
       - key: AWS_REGION # region of the bucket, e.g. ap-south-1

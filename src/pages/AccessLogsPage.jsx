@@ -78,7 +78,7 @@ export default function AccessLogsPage() {
           { label: 'TOKEN EVENTS', value: logs.filter(l => l.eventType === 'token_expired').length },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, background: '#1D1D1D', padding: '0.75rem 1rem' }}>
-            <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{s.label}</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{s.label}</div>
             <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.4rem', lineHeight: 1, marginTop: '0.25rem' }}>{s.value}</div>
           </div>
         ))}
@@ -106,26 +106,26 @@ export default function AccessLogsPage() {
               <tbody>
                 {paginated.map(log => (
                   <tr key={log.id}>
-                    <td className="mono" style={{ fontSize: '0.65rem', color: '#565656', whiteSpace: 'nowrap' }}>
+                    <td className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', whiteSpace: 'nowrap' }}>
                       {formatTimestamp(log.timestamp)}
                     </td>
                     <td>
                       <div style={{ fontSize: '0.8rem' }}>{log.userName}</div>
-                      <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{log.userId}</div>
+                      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{log.userId}</div>
                     </td>
                     <td style={{ fontSize: '0.8rem', color: '#A0A0A0', maxWidth: '160px' }}>
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.videoTitle}</div>
                     </td>
                     <td>
-                      <span className="mono" style={{ fontSize: '0.62rem', color: '#A0A0A0' }}>{eventLabel(log.eventType)}</span>
+                      <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{eventLabel(log.eventType)}</span>
                     </td>
                     <td><ResultBadge result={log.result} /></td>
-                    <td style={{ fontSize: '0.75rem', color: '#565656', maxWidth: '200px' }}>
+                    <td style={{ fontSize: '0.75rem', color: '#8B8B8B', maxWidth: '200px' }}>
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.reason}</div>
                     </td>
-                    <td className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>{log.sessionRef}</td>
+                    <td className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{log.sessionRef}</td>
                     <td>
-                      <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.25rem 0.4rem' }} onClick={() => setSelectedLog(log)} aria-label="View details">
+                      <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.25rem 0.4rem' }} onClick={() => setSelectedLog(log)} aria-label="View details">
                         <Info size={12} />
                       </button>
                     </td>
@@ -138,14 +138,14 @@ export default function AccessLogsPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-              <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                 Page {page} of {totalPages} · {filtered.length} events
               </span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-ghost" style={{ fontSize: '0.65rem', padding: '0.35rem 0.6rem' }} onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.35rem 0.6rem' }} onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                   <ChevronLeft size={12} /> PREV
                 </button>
-                <button className="btn btn-ghost" style={{ fontSize: '0.65rem', padding: '0.35rem 0.6rem' }} onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.35rem 0.6rem' }} onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
                   NEXT <ChevronRight size={12} />
                 </button>
               </div>
@@ -160,7 +160,7 @@ export default function AccessLogsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <ResultBadge result={selectedLog.result} />
-              <span className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', padding: '0.25rem 0.5rem', border: '1px solid #292929' }}>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', padding: '0.25rem 0.5rem', border: '1px solid #292929' }}>
                 {eventLabel(selectedLog.eventType)}
               </span>
             </div>
@@ -175,12 +175,12 @@ export default function AccessLogsPage() {
               { label: 'Reason', value: selectedLog.reason },
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', gap: '1rem', padding: '0.5rem 0', borderBottom: '1px solid #292929' }}>
-                <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', minWidth: '120px' }}>{item.label.toUpperCase()}</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', minWidth: '120px' }}>{item.label.toUpperCase()}</span>
                 <span style={{ fontSize: '0.8rem', color: '#F8F8F8', flex: 1, wordBreak: 'break-all' }}>{item.value}</span>
               </div>
             ))}
             <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-              <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>Recorded by the VidProtect server</span>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>Recorded by the VidProtect server</span>
             </div>
           </div>
         )}

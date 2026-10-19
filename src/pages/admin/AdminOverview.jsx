@@ -27,20 +27,20 @@ export default function AdminOverview() {
       {stats.pendingCreators > 0 && (
         <div style={{ background: '#1D1D1D', border: '1px solid #FF2028', padding: '1rem 1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.85rem' }}>{stats.pendingCreators} creator application(s) are waiting for review.</span>
-          <Link to="/admin/creators" className="btn btn-primary" style={{ fontSize: '0.65rem' }}>REVIEW</Link>
+          <Link to="/admin/creators" className="btn btn-primary" style={{ fontSize: '0.7rem' }}>REVIEW</Link>
         </div>
       )}
 
-      <Panel title="RECENT ADMIN ACTIONS" action={<Link to="/admin/audit" className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>FULL LOG</Link>}>
+      <Panel title="RECENT ADMIN ACTIONS" action={<Link to="/admin/audit" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }}>FULL LOG</Link>}>
         {recent.length === 0 ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>No admin actions recorded yet.</div>
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.85rem' }}>No admin actions recorded yet.</div>
         ) : recent.map(a => (
           <div key={a.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.85rem' }}>
               <span className="mono" style={{ color: '#FF2028', fontSize: '0.7rem' }}>{a.action}</span>
               {' '}· {getUserById(a.actorId)?.name || a.actorId} → {a.targetId}
             </span>
-            <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{formatDate(a.createdAt)}</span>
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{formatDate(a.createdAt)}</span>
           </div>
         ))}
       </Panel>

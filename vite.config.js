@@ -11,8 +11,8 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
-            { name: 'icons', test: /node_modules[\/]lucide-react/ },
-            { name: 'react', test: /node_modules[\/](react|react-dom|react-router|react-router-dom|scheduler)[\/]/ },
+            { name: 'icons', test: /node_modules[/]lucide-react/ },
+            { name: 'react', test: /node_modules[/](react|react-dom|react-router|react-router-dom|scheduler)[/]/ },
           ],
         },
       },

@@ -8,10 +8,13 @@ import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { db, save, uid } from '../db.js';
 import { clean, sha256 } from '../util.js';
-import { verificationRequired, sendVerificationEmail, appUrl } from '../mail.js';
+import { verificationRequired, emailAvailable, sendVerificationEmail, sendPasswordResetEmail, appUrl } from '../mail.js';
+import { confirmIdentity } from './mfa.js';
+import { removeUsers } from '../accountData.js';
+import { audit } from '../access.js';
 import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
 import {
-  toPublic, signAccess, createSession, setRefreshCookie, clearRefreshCookie,
+  toPublic, signAccess, signMfaToken, createSession, setRefreshCookie, clearRefreshCookie,
   rotateRefresh, revokeSession, revokeAllSessions, requireAuthAllowLocked,
 } from '../auth.js';
 
@@ -107,6 +110,45 @@ router.post('/resend-verification', authLimiter, async (req, res) => {
   res.json(reply);
 });
 
+// What the sign-in pages may offer (the "forgot password" link needs email to work)
+router.get('/options', (req, res) => res.json({ passwordReset: emailAvailable() }));
+
+// ── Forgotten password ───────────────────────
+const RESET_TTL_MS = 60 * 60 * 1000;
+
+// Always the same answer, so this cannot be used to find out who has an account
+router.post('/forgot-password', authLimiter, (req, res) => {
+  if (!emailAvailable()) return res.status(503).json({ error: 'Password reset by email is not set up on this site yet. Ask an admin for help.' });
+  const { value: email, error } = validateEmail(req.body?.email);
+  if (error) return res.status(400).json({ error });
+  const user = db.users.find(u => u.email.toLowerCase() === email);
+  if (user && user.status !== 'suspended' && !(user.passwordReset?.sentAt && Date.now() - user.passwordReset.sentAt < RESEND_COOLDOWN_MS)) {
+    const token = crypto.randomBytes(32).toString('hex');
+    user.passwordReset = { hash: sha256(token), expires: Date.now() + RESET_TTL_MS, sentAt: Date.now() };
+    save();
+    // not awaited: the answer takes the same time whether or not the account exists
+    sendPasswordResetEmail({ to: user.email, name: user.name, link: `${appUrl(req)}/reset-password?token=${token}` })
+      .catch(err => console.error(`[mail] Could not send the password reset email to ${email}: ${err.message}`));
+  }
+  res.json({ success: true, message: 'If an account exists for that email, we sent a link to reset the password.' });
+});
+
+router.post('/reset-password', authLimiter, async (req, res) => {
+  const token = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  const hash = token.length === 64 ? sha256(token) : null;
+  const user = hash && db.users.find(u => u.passwordReset?.hash === hash);
+  if (!user) return res.status(400).json({ error: 'This reset link is invalid or has already been used.' });
+  if (user.passwordReset.expires < Date.now()) return res.status(400).json({ error: 'This reset link has expired. Ask for a new one.', code: 'EXPIRED' });
+  const check = validatePassword(req.body?.password, { name: user.name, email: user.email });
+  if (check.error) return res.status(400).json({ error: check.error, fields: { password: check.error } });
+  user.passwordHash = await bcrypt.hash(check.value, 12);
+  delete user.passwordReset;
+  if (user.emailVerified === false) { user.emailVerified = true; delete user.emailVerification; } // they just proved they own the inbox
+  save();
+  revokeAllSessions(user.id); // every device is signed out
+  res.json({ success: true, message: 'Password updated. Sign in with your new password.', portal: user.role === 'creator' ? 'creator' : 'learner' });
+});
+
 router.post('/login', authLimiter, async (req, res) => {
   const email = clean(req.body?.email, 254).toLowerCase();
   const password = typeof req.body?.password === 'string' ? req.body.password.slice(0, 1000) : '';
@@ -126,6 +168,7 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(403).json({ error: 'Verify your email address first. Check your inbox for the link.', code: 'EMAIL_NOT_VERIFIED' });
   }
   if (user.status === 'suspended') return res.status(403).json({ error: 'This account is suspended. Contact support.' });
+  if (user.mfa?.enabled) return res.json({ mfaRequired: true, mfaToken: signMfaToken(user) }); // the second step finishes the sign-in
 
   const { sid, cookieValue } = createSession(user, req);
   setRefreshCookie(res, cookieValue);
@@ -162,6 +205,27 @@ router.post('/change-password', requireAuthAllowLocked, authLimiter, async (req,
   req.user.passwordHash = await bcrypt.hash(next, 12);
   save();
   revokeAllSessions(req.user.id, req.sid); // sign out every other device
+  res.json({ success: true });
+});
+
+// Deletes the account and everything that belongs to it. Needs the password (and a code if two-step is on).
+router.delete('/account', requireAuthAllowLocked, authLimiter, async (req, res) => {
+  const user = req.user;
+  const problem = await confirmIdentity(user, req.body);
+  if (problem) return res.status(problem.status).json({ error: problem.error });
+  if (user.role === 'admin' && !db.users.some(u => u.id !== user.id && u.role === 'admin' && u.status === 'active')) {
+    return res.status(400).json({ error: 'You are the only admin. Make someone else an admin first.' });
+  }
+  if (user.role === 'creator') {
+    const live = db.courses.filter(c => c.creatorId === user.id && c.status === 'active' && db.enrollments.some(e => e.courseId === c.id && e.studentId !== user.id));
+    if (live.length) {
+      return res.status(409).json({ error: `${live.length === 1 ? 'One of your published courses has' : `${live.length} of your published courses have`} learners enrolled. Unpublish ${live.length === 1 ? 'it' : 'them'} first, or ask an admin to remove your account.` });
+    }
+  }
+  const id = user.id;
+  await removeUsers(new Set([id]));
+  audit('deleted-user', 'account.delete', 'user', 'deleted-user', { role: user.role });
+  clearRefreshCookie(res);
   res.json({ success: true });
 });
 

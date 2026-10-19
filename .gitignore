@@ -27,3 +27,4 @@ dist-ssr
 server/data/
 server/uploads/
 .env
+backups/

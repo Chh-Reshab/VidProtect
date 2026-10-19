@@ -1,11 +1,11 @@
 // ============================================
-// Outgoing email (account verification). Two free providers, both over HTTPS so they work on
+// Outgoing email (verification, password reset, creator decisions). Two free providers, both over HTTPS so they work on
 // hosts that block SMTP ports, like Render's free plan:
 //   Gmail API : sends from your own Gmail address (signed by Google, so it is not marked as spam).
 //               GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, MAIL_FROM
 //   Brevo     : BREVO_API_KEY, MAIL_FROM (an address verified in Brevo)
 // Gmail is used when both are set. With neither, nothing is sent: verification stays off (or, with
-// REQUIRE_EMAIL_VERIFICATION=true for local testing, the link is printed in the server log).
+// REQUIRE_EMAIL_VERIFICATION=true for local testing, the links are printed in the server log).
 // ============================================
 
 const gmailConfigured = () => Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN && process.env.MAIL_FROM);
@@ -24,11 +24,31 @@ const senderName = () => process.env.MAIL_FROM_NAME || 'VidProtect AI';
 // Header values must never contain line breaks (header injection)
 const oneLine = (text) => String(text).replace(/[\r\n]+/g, ' ').trim();
 
-const verificationContent = ({ name, link }) => ({
-  subject: 'Verify your email for VidProtect AI',
-  text: `Hi ${name},\n\nConfirm your email address to finish creating your VidProtect AI account:\n${link}\n\nThis link works for 24 hours. If you did not sign up, you can ignore this message.`,
-  html: `<div style="font-family:Arial,sans-serif;max-width:480px"><h2>Verify your email</h2><p>Hi ${escapeHtml(name)},</p><p>Confirm your email address to finish creating your VidProtect AI account.</p><p><a href="${escapeHtml(link)}" style="display:inline-block;background:#FF2028;color:#fff;padding:12px 20px;text-decoration:none;font-weight:bold">Verify email</a></p><p style="color:#666;font-size:13px">Or paste this link into your browser:<br>${escapeHtml(link)}</p><p style="color:#666;font-size:13px">The link works for 24 hours. If you did not sign up, ignore this message.</p></div>`,
+// One look for every message: a heading, some paragraphs, an optional button, and a small footer
+const layout = ({ heading, paragraphs, button, link, footer }) => ({
+  text: [...paragraphs, link ? `${button}: ${link}` : '', footer].filter(Boolean).join('\n\n'),
+  html: `<div style="font-family:Arial,sans-serif;max-width:480px"><h2>${escapeHtml(heading)}</h2>${paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('')}${link ? `<p><a href="${escapeHtml(link)}" style="display:inline-block;background:#FF2028;color:#fff;padding:12px 20px;text-decoration:none;font-weight:bold">${escapeHtml(button)}</a></p><p style="color:#666;font-size:13px">Or paste this link into your browser:<br>${escapeHtml(link)}</p>` : ''}${footer ? `<p style="color:#666;font-size:13px">${escapeHtml(footer)}</p>` : ''}</div>`,
 });
+
+const messages = {
+  verification: ({ name, link }) => ({
+    subject: 'Verify your email for VidProtect AI',
+    ...layout({ heading: 'Verify your email', paragraphs: [`Hi ${name},`, 'Confirm your email address to finish creating your VidProtect AI account.'], button: 'Verify email', link, footer: 'The link works for 24 hours. If you did not sign up, ignore this message.' }),
+  }),
+  'password reset': ({ name, link }) => ({
+    subject: 'Reset your VidProtect AI password',
+    ...layout({ heading: 'Reset your password', paragraphs: [`Hi ${name},`, 'We received a request to reset the password of your VidProtect AI account.'], button: 'Choose a new password', link, footer: 'The link works for 1 hour and only once. If you did not ask for this, ignore this message: your password has not changed.' }),
+  }),
+  'creator decision': ({ name, link, approved, note }) => (approved
+    ? {
+      subject: 'Your VidProtect AI creator application was approved',
+      ...layout({ heading: 'You are approved', paragraphs: [`Hi ${name},`, 'Good news: your creator application has been approved and your studio is now open.'], button: 'Open your studio', link }),
+    }
+    : {
+      subject: 'Update on your VidProtect AI creator application',
+      ...layout({ heading: 'Your application needs changes', paragraphs: [`Hi ${name},`, 'We could not approve your creator application yet.', note ? `Reviewer note: ${note}` : '', 'You can update your details and apply again.'].filter(Boolean), button: 'Update your application', link }),
+    }),
+};
 
 // ── Gmail API ────────────────────────────────
 let gmailToken = { value: null, expires: 0 };
@@ -102,12 +122,20 @@ const sendViaBrevo = async ({ to, name, subject, text, html }) => {
   if (!res.ok) throw new Error(`Brevo responded ${res.status}: ${(await res.text()).slice(0, 200)}`);
 };
 
-export const sendVerificationEmail = async ({ to, name, link }) => {
+// Sends one of the messages above. Without a provider the link is printed in the server log instead.
+const deliver = async (kind, { to, name, link, ...rest }) => {
   if (!mailConfigured()) {
-    console.log(`[mail] (not sent, no mail provider configured) verification link for ${to}: ${link}`);
+    console.log(`[mail] (not sent, no mail provider configured) ${kind} link for ${to}: ${link}`);
     return;
   }
-  const message = { to, name, ...verificationContent({ name, link }) };
+  const message = { to, name, ...messages[kind]({ name, link, ...rest }) };
   if (gmailConfigured()) await sendViaGmail(message);
   else await sendViaBrevo(message);
 };
+
+// In production a real provider is needed; on a developer machine the links go to the console
+export const emailAvailable = () => mailConfigured() || process.env.NODE_ENV !== 'production';
+
+export const sendVerificationEmail = (to) => deliver('verification', to);
+export const sendPasswordResetEmail = (to) => deliver('password reset', to);
+export const sendCreatorDecisionEmail = (to) => deliver('creator decision', to); // { to, name, link, approved, note }

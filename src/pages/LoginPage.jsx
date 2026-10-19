@@ -2,11 +2,11 @@
 // LOGIN & REGISTRATION — VidProtect AI
 // ============================================
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, ArrowRight, CheckCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { authLogin, authRegister, authCreatorRegister, authResendVerification } from '../services/dataService';
+import { authLogin, authMfaLogin, authForgotPassword, getAuthOptions, authRegister, authCreatorRegister, authResendVerification } from '../services/dataService';
 import { Logo } from '../components/SharedComponents';
 import { homeFor } from '../auth/permissions';
 import { validateRegistration, validateEmail, NAME_MAX, EMAIL_MAX, PASSWORD_MIN, SPECIAL_CHAR } from '../../shared/validation.js';
@@ -19,7 +19,11 @@ export default function LoginPage({ portal = 'learner' }) {
   const { login, showNotification } = useApp();
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
+  const [canReset, setCanReset] = useState(false); // the server can email reset links
+  const [mfaToken, setMfaToken] = useState(''); // set after the password step when a code is also needed
+  const [mfaCode, setMfaCode] = useState('');
+  useEffect(() => { getAuthOptions().then(o => setCanReset(!!o.passwordReset)); }, []);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,6 +64,7 @@ export default function LoginPage({ portal = 'learner' }) {
     const result = await authLogin(loginEmail, loginPassword, portal);
     setLoading(false);
     setNeedsVerify(result.code === 'EMAIL_NOT_VERIFIED');
+    if (result.mfaRequired) { setMfaToken(result.mfaToken); setMfaCode(''); return; }
     if (result.success) {
       login(result.user);
       showNotification(`Welcome back, ${result.user.name}!`);
@@ -67,6 +72,33 @@ export default function LoginPage({ portal = 'learner' }) {
     } else {
       setError(result.error);
     }
+  };
+
+  const handleMfa = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const result = await authMfaLogin(mfaToken, mfaCode);
+    setLoading(false);
+    if (result.success) {
+      login(result.user);
+      showNotification(`Welcome back, ${result.user.name}!`);
+      navigate(homeFor(result.user));
+    } else {
+      setError(result.error);
+      if (result.code === 'MFA_EXPIRED') { setMfaToken(''); setLoginPassword(''); }
+    }
+  };
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    setError('');
+    const emailCheck = validateEmail(loginEmail);
+    if (emailCheck.error) { setError(emailCheck.error); return; }
+    setLoading(true);
+    const result = await authForgotPassword(emailCheck.value);
+    setLoading(false);
+    if (result.success) { setSuccess(result.message); setMode('login'); } else { setError(result.error); }
   };
 
   const resendVerification = async () => {
@@ -156,7 +188,43 @@ export default function LoginPage({ portal = 'learner' }) {
           </div>
 
           <div style={{ padding: '2rem' }}>
-            {mode === 'login' ? (
+            {mfaToken ? (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>TWO-STEP VERIFICATION</h1>
+                  <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>Enter the 6-digit code from your authenticator app, or one of your recovery codes.</p>
+                </div>
+                {error && <div role="alert" style={{ padding: '0.75rem', background: 'rgba(255,32,40,0.1)', border: '1px solid #FF2028', marginBottom: '1rem' }}><span style={{ fontSize: '0.8rem', color: '#FF2028' }}>⊗ {error}</span></div>}
+                <form onSubmit={handleMfa} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="mfa-code">Verification code</label>
+                    <input id="mfa-code" className="form-input" inputMode="text" autoComplete="one-time-code" autoFocus placeholder="123456" value={mfaCode} onChange={e => setMfaCode(e.target.value)} />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center' }} disabled={loading || !mfaCode.trim()}>
+                    {loading ? <><div className="spinner" style={{ width: 14, height: 14 }} /> VERIFYING...</> : <>VERIFY <ArrowRight size={14} /></>}
+                  </button>
+                  <button type="button" className="btn btn-ghost" style={{ justifyContent: 'center', fontSize: '0.7rem' }} onClick={() => { setMfaToken(''); setError(''); setLoginPassword(''); }}>BACK TO SIGN IN</button>
+                </form>
+              </>
+            ) : mode === 'forgot' ? (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>RESET PASSWORD</h1>
+                  <p style={{ color: '#A0A0A0', fontSize: '0.8rem', marginTop: '0.3rem' }}>Enter your email and we will send you a link to choose a new password.</p>
+                </div>
+                {error && <div role="alert" style={{ padding: '0.75rem', background: 'rgba(255,32,40,0.1)', border: '1px solid #FF2028', marginBottom: '1rem' }}><span style={{ fontSize: '0.8rem', color: '#FF2028' }}>⊗ {error}</span></div>}
+                <form onSubmit={handleForgot} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="forgot-email">Email Address</label>
+                    <input id="forgot-email" type="email" className="form-input" placeholder="you@example.com" autoComplete="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center' }} disabled={loading}>
+                    {loading ? <><div className="spinner" style={{ width: 14, height: 14 }} /> SENDING...</> : <>SEND RESET LINK <ArrowRight size={14} /></>}
+                  </button>
+                  <button type="button" className="btn btn-ghost" style={{ justifyContent: 'center', fontSize: '0.7rem' }} onClick={() => { setMode('login'); setError(''); }}>BACK TO SIGN IN</button>
+                </form>
+              </>
+            ) : mode === 'login' ? (
               <>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
@@ -216,13 +284,19 @@ export default function LoginPage({ portal = 'learner' }) {
                       <button
                         type="button"
                         onClick={() => setShowPass(!showPass)}
-                        style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#565656', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#8B8B8B', cursor: 'pointer' }}
                         aria-label={showPass ? 'Hide password' : 'Show password'}
                       >
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
                   </div>
+
+                  {canReset && (
+                    <button type="button" onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }} style={{ alignSelf: 'flex-end', background: 'none', border: 'none', color: '#A0A0A0', fontSize: '0.75rem', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                      Forgot password?
+                    </button>
+                  )}
 
                   <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: '0.5rem' }} disabled={loading}>
                     {loading ? (
@@ -268,13 +342,13 @@ export default function LoginPage({ portal = 'learner' }) {
                     <label className="form-label" htmlFor="reg-password">Password</label>
                     <div style={{ position: 'relative' }}>
                       <input id="reg-password" type={showPass ? 'text' : 'password'} className="form-input" placeholder="Min. 8 characters, with a symbol" value={regPassword} autoComplete="new-password" aria-invalid={!!shown('password')} onBlur={() => touch('password')} onChange={e => setRegPassword(e.target.value)} style={{ paddingRight: '2.5rem' }} />
-                      <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#565656', cursor: 'pointer' }}>
+                      <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#8B8B8B', cursor: 'pointer' }}>
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
                       {rules.map(r => (
-                        <span key={r.text} className="mono" style={{ fontSize: '0.6rem', color: r.ok ? '#22c55e' : '#565656' }}>{r.ok ? '✓' : '○'} {r.text}</span>
+                        <span key={r.text} className="mono" style={{ fontSize: '0.7rem', color: r.ok ? '#22c55e' : '#565656' }}>{r.ok ? '✓' : '○'} {r.text}</span>
                       ))}
                     </div>
                     {fieldError(shown('password'))}
@@ -291,8 +365,8 @@ export default function LoginPage({ portal = 'learner' }) {
                 </form>
 
                 <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Shield size={12} color="#565656" />
-                  <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>{isCreator ? 'THE STUDIO OPENS AFTER ADMIN APPROVAL' : 'LEARNER ACCOUNTS CANNOT BECOME CREATORS'}</span>
+                  <Shield size={12} color="#8B8B8B" />
+                  <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{isCreator ? 'THE STUDIO OPENS AFTER ADMIN APPROVAL' : 'LEARNER ACCOUNTS CANNOT BECOME CREATORS'}</span>
                 </div>
               </>
             )}
@@ -303,7 +377,7 @@ export default function LoginPage({ portal = 'learner' }) {
           {isCreator
             ? <Link to="/login" style={{ color: '#A0A0A0', fontSize: '0.8rem', textDecoration: 'none' }}>Here to learn? Learner login →</Link>
             : <Link to="/creator/login" style={{ color: '#A0A0A0', fontSize: '0.8rem', textDecoration: 'none' }}>Want to teach? Creator login →</Link>}
-          <Link to="/" style={{ color: '#565656', fontSize: '0.8rem', textDecoration: 'none' }}>
+          <Link to="/" style={{ color: '#8B8B8B', fontSize: '0.8rem', textDecoration: 'none' }}>
             ← Back to VidProtect AI
           </Link>
         </div>

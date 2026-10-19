@@ -41,6 +41,7 @@ const ADMIN_NAV = [
 ];
 const ADMIN_MORE = [
   { to: '/admin/audit', icon: ClipboardList, label: 'Audit log' },
+  { to: '/admin/account', icon: User, label: 'Account' },
 ];
 
 const initials = (name) =>
@@ -108,11 +109,11 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link to={homePath} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Logo size="sm" />
-            <span className="mono" style={{ fontSize: '0.5rem', color: '#eab308', border: '1px solid #eab308', padding: '1px 4px' }}>BETA</span>
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#eab308', border: '1px solid #eab308', padding: '1px 4px' }}>BETA</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            style={{ background: 'none', border: 'none', color: '#565656', cursor: 'pointer', display: 'none' }}
+            style={{ background: 'none', border: 'none', color: '#8B8B8B', cursor: 'pointer', display: 'none' }}
             className="sidebar-close-btn"
           >
             <X size={18} />
@@ -134,7 +135,7 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F8F8F8', lineHeight: 1.2 }}>{currentUser?.name}</div>
-            <div className="mono" style={{ fontSize: '0.58rem', color: '#FF2028' }}>{roleLabel}</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028' }}>{roleLabel}</div>
           </div>
         </div>
 
@@ -143,7 +144,7 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
           {navItems.map(item => renderLink(item, true))}
           {moreItems.length > 0 && (
             <>
-              <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', padding: '1.25rem 1rem 0.35rem', letterSpacing: '0.12em' }}>MORE</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', padding: '1.25rem 1rem 0.35rem', letterSpacing: '0.12em' }}>MORE</div>
               {moreItems.map(item => renderLink(item, false))}
             </>
           )}
@@ -167,7 +168,7 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
             display: 'flex', alignItems: 'center', gap: '0.75rem',
             padding: '0.85rem 1rem',
             background: 'none', border: 'none',
-            color: '#565656', cursor: 'pointer',
+            color: '#8B8B8B', cursor: 'pointer',
             fontSize: '0.85rem', width: '100%', textAlign: 'left',
             transition: 'color 0.15s',
           }}
@@ -195,7 +196,7 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
         }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            style={{ background: 'none', border: 'none', color: '#565656', cursor: 'pointer', display: 'none', padding: '4px' }}
+            style={{ background: 'none', border: 'none', color: '#8B8B8B', cursor: 'pointer', display: 'none', padding: '4px' }}
             className="mobile-menu-btn"
             aria-label="Open menu"
           >

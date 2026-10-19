@@ -88,7 +88,7 @@ export default function OverviewPage() {
 
         {/* Quick Actions */}
         <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
-          <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.65rem' }}>QUICK ACTIONS</div>
+          <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.7rem' }}>QUICK ACTIONS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {[
               { label: 'Upload New Video', icon: Upload, to: '/studio/upload', variant: 'primary' },
@@ -112,8 +112,8 @@ export default function OverviewPage() {
       {/* Recent Activity */}
       <div style={{ marginTop: '2rem', background: '#1D1D1D', border: '1px solid #292929' }}>
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="mono" style={{ color: '#A0A0A0', fontSize: '0.65rem' }}>RECENT ACCESS ACTIVITY</div>
-          <Link to="/studio/logs" className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>VIEW ALL</Link>
+          <div className="mono" style={{ color: '#A0A0A0', fontSize: '0.7rem' }}>RECENT ACCESS ACTIVITY</div>
+          <Link to="/studio/logs" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }}>VIEW ALL</Link>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="vp-table">
@@ -129,10 +129,10 @@ export default function OverviewPage() {
             <tbody>
               {recentLogs.map(log => (
                 <tr key={log.id}>
-                  <td className="mono" style={{ fontSize: '0.7rem', color: '#565656', whiteSpace: 'nowrap' }}>{formatTime(log.timestamp)}</td>
+                  <td className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', whiteSpace: 'nowrap' }}>{formatTime(log.timestamp)}</td>
                   <td style={{ fontSize: '0.8rem' }}>{log.userName}</td>
                   <td style={{ fontSize: '0.8rem', color: '#A0A0A0' }}>{log.videoTitle}</td>
-                  <td className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>{log.eventType.replace(/_/g, ' ').toUpperCase()}</td>
+                  <td className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{log.eventType.replace(/_/g, ' ').toUpperCase()}</td>
                   <td><ResultBadge result={log.result} /></td>
                 </tr>
               ))}
@@ -147,9 +147,9 @@ export default function OverviewPage() {
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,32,40,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldAlert size={16} color="#FF2028" />
-              <div className="mono" style={{ color: '#FF2028', fontSize: '0.65rem' }}>OPEN SECURITY ALERTS — ACTION REQUIRED</div>
+              <div className="mono" style={{ color: '#FF2028', fontSize: '0.7rem' }}>OPEN SECURITY ALERTS — ACTION REQUIRED</div>
             </div>
-            <Link to="/studio/alerts" className="btn btn-danger" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }}>REVIEW ALL</Link>
+            <Link to="/studio/alerts" className="btn btn-danger" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }}>REVIEW ALL</Link>
           </div>
           {recentAlerts.map(alert => (
             <div key={alert.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929' }}>
@@ -157,11 +157,11 @@ export default function OverviewPage() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
                     <SeverityBadge severity={alert.severity} />
-                    <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>{alert.alertType.replace(/_/g, ' ').toUpperCase()}</span>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{alert.alertType.replace(/_/g, ' ').toUpperCase()}</span>
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#A0A0A0', maxWidth: '600px' }}>{alert.explanation.substring(0, 120)}...</div>
                 </div>
-                <button onClick={() => navigate('/studio/alerts')} className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }}>
+                <button onClick={() => navigate('/studio/alerts')} className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', whiteSpace: 'nowrap' }}>
                   REVIEW
                 </button>
               </div>

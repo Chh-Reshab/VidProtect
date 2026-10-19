@@ -10,6 +10,8 @@ import { requireAuth, requireRole, revokeAllSessions, toPublic } from '../auth.j
 import { audit, findCourse, findUser } from '../access.js';
 import { removeThumb } from './thumbnails.js';
 import { sendCv } from './creatorApplication.js';
+import { removeUsers } from '../accountData.js';
+import { sendCreatorDecisionEmail, appUrl } from '../mail.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
@@ -25,6 +27,9 @@ router.post('/creators/:id/review', (req, res) => {
   user.creatorApplication = { ...(user.creatorApplication || {}), reviewNote: note, reviewedAt: new Date().toISOString(), reviewedBy: req.user.id };
   save();
   audit(req.user.id, approve ? 'creator.approve' : 'creator.reject', 'user', user.id);
+  // The applicant hears about the decision by email (a failed email never blocks the decision)
+  sendCreatorDecisionEmail({ to: user.email, name: user.name, link: `${appUrl(req)}/creator/login`, approved: approve, note })
+    .catch(err => console.error(`[mail] Could not send the decision email to ${user.email}: ${err.message}`));
   res.json({ success: true });
 });
 
@@ -54,6 +59,17 @@ router.patch('/users/:id', (req, res) => {
   }
   save();
   res.json({ success: true, user: toPublic(user) });
+});
+
+// Permanently removes an account and its data
+router.delete('/users/:id', async (req, res) => {
+  const user = findUser(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found.' });
+  if (user.id === req.user.id) return res.status(400).json({ error: 'Use your own account page to delete your account.' });
+  if (user.role === 'admin' && db.users.filter(u => u.role === 'admin').length < 2) return res.status(400).json({ error: 'That is the only admin.' });
+  const removed = await removeUsers(new Set([user.id]));
+  audit(req.user.id, 'user.delete', 'user', 'deleted-user', { role: user.role, courses: removed.courses });
+  res.json({ success: true, removed });
 });
 
 router.post('/courses/:id/moderate', (req, res) => {

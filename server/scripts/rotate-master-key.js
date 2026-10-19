@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { db, save, DATA_DIR, initDb, closeDb } from '../db.js';
 import { getMasterKey, unwrapKey, wrapKey, keyId } from '../encryption.js';
+import { sealSecret, openSecret } from '../totp.js';
 
 const next = (process.argv[2] || '').trim();
 if (!/^[0-9a-fA-F]{64}$/.test(next)) {
@@ -36,10 +37,19 @@ for (const video of db.videos) {
   rewrapped.push([enc, wrapKey(dek, video.id, newKey)]);
 }
 
+// Two-step verification secrets are sealed with the master key too
+const resealed = [];
+for (const user of db.users) {
+  for (const field of ['secret', 'pending']) {
+    if (user.mfa?.[field]) resealed.push([user.mfa, field, sealSecret(openSecret(user.mfa[field], oldKey), newKey)]);
+  }
+}
+
 for (const [enc, wrapped] of rewrapped) {
   enc.wrappedKey = wrapped;
   enc.kid = keyId(newKey);
 }
+for (const [mfa, field, sealed] of resealed) mfa[field] = sealed;
 save();
 await closeDb(); // makes sure a MongoDB write is finished before the script exits
 
@@ -51,4 +61,4 @@ if (!process.env.VP_MASTER_KEY && fs.existsSync(keyFile)) {
 } else {
   console.log('Set VP_MASTER_KEY to the new key before starting the server.');
 }
-console.log(`Re-wrapped ${rewrapped.length} video key(s): ${keyId(oldKey)} -> ${keyId(newKey)}.`);
+console.log(`Re-wrapped ${rewrapped.length} video key(s) and ${resealed.length} two-step secret(s): ${keyId(oldKey)} -> ${keyId(newKey)}.`);

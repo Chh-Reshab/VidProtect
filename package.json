@@ -13,6 +13,9 @@
     "start": "npm run build && node server/index.js",
     "migrate:mongo": "node server/scripts/migrate-to-mongo.js",
     "gmail:token": "node server/scripts/gmail-token.js",
+    "backup": "node server/scripts/backup.js",
+    "rotate:key": "node server/scripts/rotate-master-key.js",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -30,6 +33,7 @@
     "lucide-react": "^1.55.0",
     "mongodb": "^7.7.0",
     "multer": "^2.4.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4"

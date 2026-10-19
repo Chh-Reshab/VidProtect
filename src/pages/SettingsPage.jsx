@@ -8,6 +8,7 @@ import { Settings, Save, LogOut, Shield, Bell, User, Lock } from 'lucide-react';
 import { getSettings, updateSettings } from '../services/dataService';
 import { useApp } from '../context/AppContext';
 import { SectionLabel } from '../components/SharedComponents';
+import SecurityPanel from '../components/SecurityPanel';
 
 const Toggle = ({ checked, onChange, id, label }) => (
   <label htmlFor={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '0.6rem 0', borderBottom: '1px solid #292929' }}>
@@ -46,7 +47,7 @@ const SettingsSection = ({ title, icon: Icon, children }) => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', marginBottom: '1.5rem' }}>
     <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#171717' }}>
       <Icon size={16} color="#FF2028" />
-      <div className="mono" style={{ fontSize: '0.65rem', color: '#F8F8F8', letterSpacing: '0.1em' }}>{title}</div>
+      <div className="mono" style={{ fontSize: '0.7rem', color: '#F8F8F8', letterSpacing: '0.1em' }}>{title}</div>
     </div>
     <div style={{ padding: '1.25rem' }}>
       {children}
@@ -131,7 +132,7 @@ export default function SettingsPage() {
                 <label className="form-label" htmlFor="s-token-expiry">Default Token Expiry (minutes)</label>
                 <input id="s-token-expiry" type="number" min="5" max="120" className="form-input" value={settings.defaultTokenExpiry}
                   onChange={e => update('defaultTokenExpiry', parseInt(e.target.value) || 30)} />
-                <div style={{ fontSize: '0.75rem', color: '#565656', marginTop: '0.25rem' }}>Default TTL for streaming tokens (5–120 min)</div>
+                <div style={{ fontSize: '0.75rem', color: '#8B8B8B', marginTop: '0.25rem' }}>Default TTL for streaming tokens (5–120 min)</div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="s-session">Session Display</label>
@@ -158,7 +159,7 @@ export default function SettingsPage() {
             <Toggle id="notif-denied" label="Access Denied Notifications" checked={settings.notifications.accessDenied} onChange={v => update('notifications.accessDenied', v)} />
             <Toggle id="notif-updates" label="Security Update Notifications" checked={settings.notifications.securityUpdates} onChange={v => update('notifications.securityUpdates', v)} />
             <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-              <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>Notifications appear in your dashboard. Email delivery is not available during beta.</span>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>Alerts appear in your dashboard. Account emails (verification, password reset, creator decisions) are sent separately.</span>
             </div>
           </SettingsSection>
 
@@ -172,11 +173,11 @@ export default function SettingsPage() {
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '0.6rem 0', borderBottom: '1px solid #292929' }}>
                 <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{item.label}</div>
-                <span className="badge" style={{ color: '#22c55e', borderColor: '#22c55e', fontSize: '0.55rem', textAlign: 'right' }}>● {item.value}</span>
+                <span className="badge" style={{ color: '#22c55e', borderColor: '#22c55e', fontSize: '0.7rem', textAlign: 'right' }}>● {item.value}</span>
               </div>
             ))}
             <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #eab308' }}>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#eab308', marginBottom: '0.35rem' }}>BETA TESTING</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#eab308', marginBottom: '0.35rem' }}>BETA TESTING</div>
               <p style={{ fontSize: '0.75rem', color: '#808080', lineHeight: 1.6 }}>
                 These protections run on the VidProtect server. Payments are in test mode while we are in beta, so no real money is charged.
               </p>
@@ -199,6 +200,8 @@ export default function SettingsPage() {
           </SettingsSection>
         </div>
       </div>
+
+      <div style={{ marginTop: '1.5rem', maxWidth: 900 }}><SecurityPanel /></div>
 
       <style>{`
         @media (max-width: 900px) {

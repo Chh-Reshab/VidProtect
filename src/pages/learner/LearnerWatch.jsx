@@ -28,7 +28,7 @@ const Denied = ({ reason }) => (
       <XCircle size={48} color="#FF2028" style={{ marginBottom: '1rem' }} />
       <h2 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.2rem', textTransform: 'uppercase', color: '#FF2028', marginBottom: '0.5rem' }}>ACCESS DENIED</h2>
       <p style={{ color: '#A0A0A0', fontSize: '0.9rem', marginBottom: '1.25rem' }}>{reason}</p>
-      <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '1.5rem' }}>THIS ATTEMPT HAS BEEN LOGGED</div>
+      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1.5rem' }}>THIS ATTEMPT HAS BEEN LOGGED</div>
       <Link to="/learn/courses" className="btn btn-secondary" style={{ fontSize: '0.7rem' }}>BACK TO MY COURSES</Link>
     </div>
   </div>
@@ -239,7 +239,7 @@ const Player = ({ access, user, isStudioPreview }) => {
       <Link
         to={isStudioPreview ? `/studio/video/${video.id}` : `/learn/course/${course.id}`}
         className="btn btn-ghost"
-        style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }}
+        style={{ fontSize: '0.7rem', marginBottom: '1.5rem' }}
       >
         <ChevronLeft size={14} /> {isStudioPreview ? 'BACK TO DETAILS' : course.title.toUpperCase()}
       </Link>
@@ -273,8 +273,8 @@ const Player = ({ access, user, isStudioPreview }) => {
                 <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.5 }} />
                 <div style={{ position: 'relative', textAlign: 'center' }}>
                   <Shield size={56} color="#FF2028" strokeWidth={1.2} />
-                  <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginTop: '0.75rem' }}>{statusText}</div>
-                  <div className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginTop: '0.25rem' }}>SAMPLE VIDEO — NO MEDIA FILE UPLOADED</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginTop: '0.75rem' }}>{statusText}</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginTop: '0.25rem' }}>SAMPLE VIDEO — NO MEDIA FILE UPLOADED</div>
                 </div>
               </>
             )}
@@ -286,7 +286,7 @@ const Player = ({ access, user, isStudioPreview }) => {
               <div style={{ position: 'absolute', inset: 0, background: 'rgba(16,16,16,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', textAlign: 'center' }}>
                 <XCircle size={36} color="#FF2028" />
                 <div style={{ color: '#F8F8F8', fontSize: '0.9rem', maxWidth: 420 }}>{stopReason || mediaError}</div>
-                {stopReason && <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>PLAYBACK SESSION COULD NOT BE RENEWED</div>}
+                {stopReason && <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>PLAYBACK SESSION COULD NOT BE RENEWED</div>}
               </div>
             )}
           </div>
@@ -300,16 +300,16 @@ const Player = ({ access, user, isStudioPreview }) => {
               style={{ width: '100%', accentColor: '#FF2028' }}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-              <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.65rem' }} onClick={togglePlay} disabled={!!stopReason}>
+              <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem' }} onClick={togglePlay} disabled={!!stopReason}>
                 {playing ? <><Pause size={12} /> PAUSE</> : <><Play size={12} /> {position > 0 && !finished ? 'RESUME' : 'PLAY'}</>}
               </button>
               <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem' }} onClick={() => seek(position - 10)} aria-label="Back 10 seconds" disabled={!!stopReason}><RotateCcw size={13} /></button>
               <button className="btn btn-ghost" style={{ padding: '0.4rem 0.6rem' }} onClick={() => seek(position + 10)} aria-label="Forward 10 seconds" disabled={!!stopReason}><RotateCw size={13} /></button>
               <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{formatDuration(position)} / {formatDuration(duration)}</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginRight: '0.25rem' }}>{hasMedia ? 'SPEED' : 'SAMPLE SPEED'}</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginRight: '0.25rem' }}>{hasMedia ? 'SPEED' : 'SAMPLE SPEED'}</span>
                 {speeds.map(s => (
-                  <button key={s} onClick={() => changeSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.6rem' }}>{s}×</button>
+                  <button key={s} onClick={() => changeSpeed(s)} className={speed === s ? 'btn btn-secondary' : 'btn btn-ghost'} style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem' }}>{s}×</button>
                 ))}
                 <button className="btn btn-ghost" style={{ padding: '0.3rem 0.5rem' }} onClick={fullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
                   {isFullscreen ? <Minimize size={13} /> : <Maximize size={13} />}
@@ -332,7 +332,7 @@ const Player = ({ access, user, isStudioPreview }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <TokenCountdown token={token} />
           <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1rem' }}>
-            <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.6rem' }}>SESSION PROTECTION</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.6rem' }}>SESSION PROTECTION</div>
             {[
               'Enrollment verified by the server',
               'Checked again on every stream request',

@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         <div style={{ marginBottom: '2rem' }}><Link to="/" style={{ textDecoration: 'none' }}><Logo size="sm" /></Link></div>
         <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '2rem' }}>
           <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.6rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Privacy Policy</h1>
-          <p className="mono" style={{ fontSize: '0.65rem', color: '#565656', marginBottom: '1.5rem' }}>VIDPROTECT AI · LAST UPDATED OCTOBER 2026</p>
+          <p className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1.5rem' }}>VIDPROTECT AI · LAST UPDATED OCTOBER 2026</p>
           {sections.map(([title, body]) => (
             <section key={title} style={{ marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>{title}</h2>
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           )}
         </div>
         <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <Link to="/" style={{ color: '#565656', fontSize: '0.8rem', textDecoration: 'none' }}>← Back to VidProtect AI</Link>
+          <Link to="/" style={{ color: '#8B8B8B', fontSize: '0.8rem', textDecoration: 'none' }}>← Back to VidProtect AI</Link>
         </div>
       </div>
     </div>

@@ -45,7 +45,7 @@ const ProcessingScreen = ({ title, fileName, processing }) => {
 
         <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>OVERALL PROGRESS</span>
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>OVERALL PROGRESS</span>
             <span className="mono" style={{ fontSize: '0.75rem', color: '#F8F8F8' }}>{percent}%</span>
           </div>
           <div style={{ background: '#292929', height: 6 }} role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
@@ -66,11 +66,11 @@ const ProcessingScreen = ({ title, fileName, processing }) => {
                   <span style={{ marginTop: 1, display: 'flex' }}>
                     {done ? <CheckCircle size={18} color="#22c55e" />
                       : active ? <Loader2 size={18} color="#FF2028" style={{ animation: 'vpSpin 0.9s linear infinite' }} />
-                      : <Circle size={18} color="#565656" />}
+                      : <Circle size={18} color="#8B8B8B" />}
                   </span>
                   <span>
                     <span style={{ display: 'block', fontSize: '0.9rem', color: '#F8F8F8' }}>{step.label}</span>
-                    {active && <span className="mono" style={{ display: 'block', fontSize: '0.6rem', color: '#808080', marginTop: 2 }}>{step.hint}</span>}
+                    {active && <span className="mono" style={{ display: 'block', fontSize: '0.7rem', color: '#808080', marginTop: 2 }}>{step.hint}</span>}
                   </span>
                 </li>
               );
@@ -252,7 +252,7 @@ export default function UploadPage() {
             <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1rem', textTransform: 'uppercase', marginBottom: '0.3rem', wordBreak: 'break-all' }}>
               {file?.name}
             </div>
-            <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '1rem' }}>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '1rem' }}>
               {file && formatSize(file.size)} · keep this tab open
             </div>
             <div style={{ background: '#292929', height: '6px', width: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -290,8 +290,8 @@ export default function UploadPage() {
             <div>
               <File size={32} color="#22c55e" style={{ marginBottom: '0.75rem' }} />
               <div style={{ fontSize: '0.95rem', color: '#F8F8F8', marginBottom: '0.25rem', wordBreak: 'break-all' }}>{file.name}</div>
-              <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>{formatSize(file.size)}</div>
-              <button className="btn btn-ghost" style={{ fontSize: '0.65rem', marginTop: '0.75rem' }} onClick={e => { e.stopPropagation(); setFile(null); }}>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{formatSize(file.size)}</div>
+              <button className="btn btn-ghost" style={{ fontSize: '0.7rem', marginTop: '0.75rem' }} onClick={e => { e.stopPropagation(); setFile(null); }}>
                 <X size={12} /> Choose a different file
               </button>
             </div>
@@ -299,7 +299,7 @@ export default function UploadPage() {
             <div>
               <Upload size={34} color={dragging ? '#FF2028' : '#565656'} style={{ marginBottom: '0.75rem' }} />
               <div style={{ fontSize: '1rem', color: '#F8F8F8', marginBottom: '0.25rem' }}>Drop your video here, or click to choose</div>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>MP4 · WEBM · MOV · MKV · AVI · UP TO 2 GB</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>MP4 · WEBM · MOV · MKV · AVI · UP TO 2 GB</div>
             </div>
           )}
         </div>
@@ -350,7 +350,7 @@ export default function UploadPage() {
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="upload-desc">Description <span style={{ color: '#565656' }}>(optional)</span></label>
+          <label className="form-label" htmlFor="upload-desc">Description <span style={{ color: '#8B8B8B' }}>(optional)</span></label>
           <textarea id="upload-desc" className="form-input" rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
         </div>
 

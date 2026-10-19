@@ -1,6 +1,6 @@
 # VidProtect AI — Plan: Learner Dashboard, Creator Studio & Auth
 
-Status: **Phases 1-3 implemented in part** (role dashboards; Express backend with JWT auth, ownership checks, real uploads and range streaming) · Remaining: Postgres, encryption at rest, HLS, email verification, 2FA · Date: 2026-10-13
+Status: **Implemented** (role dashboards; Express backend with JWT auth, ownership checks, real uploads, range streaming; AES-256-GCM encryption at rest; email verification, password reset and two-step verification; MongoDB + S3 storage; creator applications; Razorpay payments) · Not done: HLS / adaptive quality, Postgres (MongoDB is used instead) · Updated: 2026-10-19
 
 ---
 

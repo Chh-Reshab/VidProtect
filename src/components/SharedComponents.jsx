@@ -50,7 +50,7 @@ export const KpiCard = ({ label, value, sublabel, icon: Icon, accent = false }) 
   }}>
     {accent && <div style={{ position: 'absolute', top: 0, left: 0, width: '3px', height: '100%', background: '#FF2028' }} />}
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <span className="mono" style={{ color: '#A0A0A0', fontSize: '0.65rem' }}>{label}</span>
+      <span className="mono" style={{ color: '#A0A0A0', fontSize: '0.7rem' }}>{label}</span>
       {Icon && <Icon size={18} color={accent ? '#FF2028' : '#565656'} />}
     </div>
     <div style={{
@@ -61,7 +61,7 @@ export const KpiCard = ({ label, value, sublabel, icon: Icon, accent = false }) 
     }}>
       {value}
     </div>
-    {sublabel && <span style={{ fontSize: '0.75rem', color: '#565656' }}>{sublabel}</span>}
+    {sublabel && <span style={{ fontSize: '0.75rem', color: '#8B8B8B' }}>{sublabel}</span>}
   </div>
 );
 
@@ -74,7 +74,7 @@ export const SectionLabel = ({ children }) => (
     border: '1px solid #FF2028',
     padding: '0.25rem 0.75rem',
     fontFamily: 'IBM Plex Mono, monospace',
-    fontSize: '0.65rem',
+    fontSize: '0.7rem',
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     color: '#FF2028',
@@ -120,7 +120,7 @@ export const NotificationToast = () => {
 // ─── EMPTY STATE ──────────────────────────────
 export const EmptyState = ({ icon: Icon, title, description, action }) => (
   <div style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-    {Icon && <Icon size={48} color="#565656" />}
+    {Icon && <Icon size={48} color="#8B8B8B" />}
     <div>
       <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.1rem', textTransform: 'uppercase', marginBottom: '0.4rem' }}>{title}</div>
       <div style={{ color: '#A0A0A0', fontSize: '0.85rem' }}>{description}</div>
@@ -200,7 +200,7 @@ export const SearchInput = ({ value, onChange, placeholder = 'Search...' }) => (
       className="form-input"
       style={{ paddingLeft: '2.5rem', minWidth: '220px' }}
     />
-    <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#565656', pointerEvents: 'none', fontSize: '0.85rem' }}>⌕</span>
+    <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#8B8B8B', pointerEvents: 'none', fontSize: '0.85rem' }}>⌕</span>
   </div>
 );
 
@@ -217,7 +217,7 @@ export const SelectFilter = ({ value, onChange, options, placeholder }) => (
 // ─── PROTECTION STATUS PANEL ──────────────────
 export const ProtectionStatusPanel = () => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
-    <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.65rem' }}>PROTECTION STATUS</div>
+    <div className="mono" style={{ color: '#A0A0A0', marginBottom: '1rem', fontSize: '0.7rem' }}>PROTECTION STATUS</div>
     {[
       { label: 'AES-256-GCM Encryption', status: 'active', desc: 'Active' },
       { label: 'JWT Authentication', status: 'active', desc: 'Active' },
@@ -227,13 +227,13 @@ export const ProtectionStatusPanel = () => (
     ].map(item => (
       <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #292929' }}>
         <span style={{ fontSize: '0.8rem', color: '#F8F8F8' }}>{item.label}</span>
-        <span className="badge" style={{ color: item.status === 'active' ? '#22c55e' : '#eab308', borderColor: item.status === 'active' ? '#22c55e' : '#eab308', fontSize: '0.6rem' }}>
+        <span className="badge" style={{ color: item.status === 'active' ? '#22c55e' : '#eab308', borderColor: item.status === 'active' ? '#22c55e' : '#eab308', fontSize: '0.7rem' }}>
           {item.status === 'active' ? '● ' : '◐ '}{item.desc}
         </span>
       </div>
     ))}
     <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-      <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>● Enforced by the VidProtect server · Beta</span>
+      <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>● Enforced by the VidProtect server · Beta</span>
     </div>
   </div>
 );
@@ -263,11 +263,11 @@ export const VideoThumbnail = ({ video, size = 'md' }) => {
         <>
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, #292929 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.4 }} />
           <Shield size={size === 'sm' ? 20 : 32} color="#FF2028" strokeWidth={1.5} style={{ position: 'relative', zIndex: 1 }} />
-          <span className="mono" style={{ fontSize: '0.55rem', color: '#FF2028', marginTop: '0.4rem', position: 'relative', zIndex: 1 }}>PROTECTED</span>
+          <span className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginTop: '0.4rem', position: 'relative', zIndex: 1 }}>PROTECTED</span>
         </>
       )}
       {video.duration && (
-        <span className="mono" style={{ position: 'absolute', bottom: '0.4rem', right: '0.4rem', fontSize: '0.6rem', color: '#A0A0A0', background: 'rgba(0,0,0,0.7)', padding: '1px 4px' }}>
+        <span className="mono" style={{ position: 'absolute', bottom: '0.4rem', right: '0.4rem', fontSize: '0.7rem', color: '#A0A0A0', background: 'rgba(0,0,0,0.7)', padding: '1px 4px' }}>
           {video.duration}
         </span>
       )}
@@ -284,7 +284,7 @@ export const SeverityBadge = ({ severity }) => {
   };
   const s = map[severity] || map.low;
   return (
-    <span className="badge" style={{ color: s.color, borderColor: s.color, fontSize: '0.6rem' }}>
+    <span className="badge" style={{ color: s.color, borderColor: s.color, fontSize: '0.7rem' }}>
       ▲ {s.label}
     </span>
   );
@@ -298,7 +298,7 @@ export const ResultBadge = ({ result }) => {
   };
   const r = map[result] || { label: result?.toUpperCase(), color: '#A0A0A0' };
   return (
-    <span className="badge" style={{ color: r.color, borderColor: r.color, fontSize: '0.6rem' }}>
+    <span className="badge" style={{ color: r.color, borderColor: r.color, fontSize: '0.7rem' }}>
       {r.label}
     </span>
   );
@@ -318,11 +318,11 @@ export const BetaBanner = () => {
   };
   return (
     <div role="note" style={{ background: '#171717', borderBottom: '1px solid #292929', borderLeft: '3px solid #eab308', padding: '0.55rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-      <span className="badge" style={{ color: '#eab308', borderColor: '#eab308', fontSize: '0.55rem', flexShrink: 0 }}>BETA</span>
+      <span className="badge" style={{ color: '#eab308', borderColor: '#eab308', fontSize: '0.7rem', flexShrink: 0 }}>BETA</span>
       <span style={{ fontSize: '0.75rem', color: '#A0A0A0', flex: 1 }}>
         VidProtect AI is in beta testing. Payments run in test mode and you may hit rough edges. Tell us about anything that looks wrong.
       </span>
-      <button type="button" onClick={dismiss} aria-label="Dismiss beta notice" style={{ background: 'none', border: 'none', color: '#565656', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>×</button>
+      <button type="button" onClick={dismiss} aria-label="Dismiss beta notice" style={{ background: 'none', border: 'none', color: '#8B8B8B', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}>×</button>
     </div>
   );
 };
@@ -357,7 +357,7 @@ export const TokenCountdown = ({ token }) => {
       fontFamily: 'IBM Plex Mono, monospace',
       fontSize: '0.8rem',
     }}>
-      <div className="mono" style={{ color: '#565656', fontSize: '0.6rem', marginBottom: '0.3rem' }}>TOKEN EXPIRY</div>
+      <div className="mono" style={{ color: '#8B8B8B', fontSize: '0.7rem', marginBottom: '0.3rem' }}>TOKEN EXPIRY</div>
       {expired ? (
         <span style={{ color: '#FF2028' }}>⊗ TOKEN EXPIRED</span>
       ) : (
@@ -365,7 +365,7 @@ export const TokenCountdown = ({ token }) => {
           {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')} REMAINING
         </span>
       )}
-      <div className="mono" style={{ fontSize: '0.55rem', color: '#565656', marginTop: '0.3rem', wordBreak: 'break-all' }}>
+      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginTop: '0.3rem', wordBreak: 'break-all' }}>
         {token.tokenId}
       </div>
     </div>

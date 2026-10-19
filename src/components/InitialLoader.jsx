@@ -54,8 +54,8 @@ export const InitialLoader = ({ children }) => {
               }} />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem' }}>
-              <span style={{ color: '#565656', letterSpacing: '0.1em' }}>INITIALIZING SYSTEM</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: '0.75rem', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem' }}>
+              <span style={{ color: '#8B8B8B', letterSpacing: '0.1em' }}>INITIALIZING SYSTEM</span>
               <span style={{ color: '#FF2028', fontWeight: 600 }}>{ready ? '100%' : '...'}</span>
             </div>
           </div>

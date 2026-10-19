@@ -17,7 +17,7 @@ const formatTime = (iso) => new Date(iso).toLocaleString('en-GB', { dateStyle: '
 
 const Row = ({ label, children }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.6rem 0', borderBottom: '1px solid #292929', fontSize: '0.8rem' }}>
-    <span className="mono" style={{ color: '#565656', fontSize: '0.65rem' }}>{label}</span>
+    <span className="mono" style={{ color: '#8B8B8B', fontSize: '0.7rem' }}>{label}</span>
     <span style={{ color: '#F8F8F8', textAlign: 'right' }}>{children}</span>
   </div>
 );
@@ -62,13 +62,13 @@ export default function VideoDetailPage() {
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <button className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={() => navigate('/studio/library')}>
+        <button className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => navigate('/studio/library')}>
           <ChevronLeft size={14} /> BACK TO LIBRARY
         </button>
-        <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} onClick={() => navigate(`/studio/preview/${video.id}`)} disabled={video.uploadStatus === 'processing' || video.uploadStatus === 'failed'}>
+        <button className="btn btn-primary" style={{ fontSize: '0.7rem' }} onClick={() => navigate(`/studio/preview/${video.id}`)} disabled={video.uploadStatus === 'processing' || video.uploadStatus === 'failed'}>
           <Play size={12} /> PREVIEW VIDEO
         </button>
-        <button className="btn btn-ghost" style={{ fontSize: '0.65rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setConfirmDelete(true)}>
+        <button className="btn btn-ghost" style={{ fontSize: '0.7rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setConfirmDelete(true)}>
           <Trash2 size={12} /> DELETE
         </button>
       </div>
@@ -95,15 +95,15 @@ export default function VideoDetailPage() {
 
           <div style={{ background: '#1D1D1D', border: '1px solid #292929', marginTop: '1.5rem' }}>
             <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929' }}>
-              <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>RECENT ACCESS ({events.length})</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>RECENT ACCESS ({events.length})</div>
             </div>
             {events.length === 0 ? (
-              <div style={{ padding: '1.5rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>Nobody has played this video yet.</div>
+              <div style={{ padding: '1.5rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.85rem' }}>Nobody has played this video yet.</div>
             ) : events.map(l => (
               <div key={l.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{l.userName}</div>
-                  <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{formatTime(l.timestamp)} · {l.reason}</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{formatTime(l.timestamp)} · {l.reason}</div>
                 </div>
                 <ResultBadge result={l.result} />
               </div>
@@ -122,7 +122,7 @@ export default function VideoDetailPage() {
           </div>
 
           <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
-            <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '0.5rem' }}>FILE</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '0.5rem' }}>FILE</div>
             <Row label="COURSE">{course?.title || video.courseName}</Row>
             <Row label="DURATION">{video.duration}</Row>
             <Row label="SIZE">{video.fileSize}</Row>
@@ -132,7 +132,7 @@ export default function VideoDetailPage() {
           </div>
 
           <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '1.25rem' }}>
-            <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '0.75rem' }}>PROTECTION</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '0.75rem' }}>PROTECTION</div>
             {[
               ['Enrollment check on every play', true],
               ['5-minute playback sessions, renewed while watching', true],
@@ -146,7 +146,7 @@ export default function VideoDetailPage() {
               </div>
             ))}
             {video.encryptionStatus === 'encrypted' && (
-              <div className="mono" style={{ marginTop: '0.75rem', fontSize: '0.58rem', color: '#22c55e', padding: '0.5rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <div className="mono" style={{ marginTop: '0.75rem', fontSize: '0.7rem', color: '#22c55e', padding: '0.5rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)' }}>
                 AES-256-GCM · ENCRYPTED AT REST · UNIQUE KEY PER VIDEO · TAMPER-PROOF
               </div>
             )}

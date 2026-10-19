@@ -146,7 +146,7 @@ export default function CoursesPage() {
         {/* Course List */}
         <div>
           {courses.length === 0 && (
-            <div style={{ border: '1px dashed #292929', padding: '2rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>
+            <div style={{ border: '1px dashed #292929', padding: '2rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.85rem' }}>
               <div style={{ marginBottom: '1rem' }}>You have no courses yet.</div>
               <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => setShowNewCourse(true)}><Plus size={14} /> Create your first course</button>
             </div>
@@ -172,14 +172,14 @@ export default function CoursesPage() {
                 <ChevronRight size={14} color={selectedCourse?.id === course.id ? '#FF2028' : '#565656'} style={{ flexShrink: 0 }} />
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
-                <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Video size={10} /> {course.videoCount} videos
                 </span>
-                <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <Users size={10} /> {course.enrolledCount} learners
                 </span>
                 <PriceBadge price={course.price} />
-                <span className={`badge ${course.status === 'active' ? 'badge-green' : course.status === 'taken_down' ? 'badge-red' : 'badge-grey'}`} style={{ fontSize: '0.55rem' }}>
+                <span className={`badge ${course.status === 'active' ? 'badge-green' : course.status === 'taken_down' ? 'badge-red' : 'badge-grey'}`} style={{ fontSize: '0.7rem' }}>
                   {course.status === 'active' ? 'PUBLISHED' : course.status.replace('_', ' ').toUpperCase()}
                 </span>
               </div>
@@ -193,12 +193,12 @@ export default function CoursesPage() {
             <div style={{ background: '#1D1D1D', border: '1px solid #292929', marginBottom: '1.5rem' }}>
               <div style={{ padding: '1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#FF2028', marginBottom: '0.25rem' }}>COURSE DETAIL</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginBottom: '0.25rem' }}>COURSE DETAIL</div>
                   <h2 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
                     {selectedCourse.title}
                   </h2>
                 </div>
-                <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }} onClick={() => setSelectedCourse(null)}>
+                <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }} onClick={() => setSelectedCourse(null)}>
                   <X size={12} />
                 </button>
               </div>
@@ -214,7 +214,7 @@ export default function CoursesPage() {
                   onError={(msg) => showNotification(msg, 'error')}
                 />
                 <div className="form-group" style={{ marginTop: '1rem' }}>
-                  <label className="form-label" htmlFor="course-price">Price (₹) <span style={{ color: '#565656' }}>(0 = free)</span></label>
+                  <label className="form-label" htmlFor="course-price">Price (₹) <span style={{ color: '#8B8B8B' }}>(0 = free)</span></label>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     <input
                       id="course-price"
@@ -240,25 +240,25 @@ export default function CoursesPage() {
                     const sales = courseSales(selectedCourse.id);
                     const total = sales.reduce((sum, p) => sum + p.amount, 0);
                     return sales.length > 0 && (
-                      <div className="mono" style={{ fontSize: '0.6rem', color: '#22c55e', marginTop: '0.5rem' }}>
-                        {sales.length} paid enrolment{sales.length !== 1 ? 's' : ''} · {formatPrice(total)} earned (beta test payments)
+                      <div className="mono" style={{ fontSize: '0.7rem', color: '#22c55e', marginTop: '0.5rem' }}>
+                        {sales.length} paid enrolment{sales.length !== 1 ? 's' : ''} · {formatPrice(total)} earned{sales.some(p => p.testMode) ? ' (test payments)' : ''}
                       </div>
                     );
                   })()}
                 </div>
-                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', margin: '1rem 0' }}>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', margin: '1rem 0' }}>
                   Created {formatDate(selectedCourse.createdAt)} · {selectedCourse.visibility === 'invite_only' ? 'INVITE ONLY' : 'OPEN ENROLLMENT'}
                 </div>
                 {selectedCourse.status === 'taken_down' ? (
-                  <div className="mono" style={{ fontSize: '0.65rem', color: '#FF2028' }}>⊗ TAKEN DOWN BY A MODERATOR</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028' }}>⊗ TAKEN DOWN BY A MODERATOR</div>
                 ) : selectedCourse.status === 'active' ? (
-                  <button className="btn btn-secondary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'draft' }, 'Course unpublished.')}>
+                  <button className="btn btn-secondary" style={{ fontSize: '0.7rem' }} onClick={() => handlePatchCourse({ status: 'draft' }, 'Course unpublished.')}>
                     <EyeOff size={12} /> UNPUBLISH
                   </button>
                 ) : (
                   <div>
                     <div style={{ fontSize: '0.75rem', color: '#eab308', marginBottom: '0.6rem' }}>Draft: learners cannot see this course until you publish it.</div>
-                    <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} onClick={() => handlePatchCourse({ status: 'active' }, 'Course published. Learners can now find it.')}>
+                    <button className="btn btn-primary" style={{ fontSize: '0.7rem' }} onClick={() => handlePatchCourse({ status: 'active' }, 'Course published. Learners can now find it.')}>
                       <Globe size={12} /> PUBLISH COURSE
                     </button>
                   </div>
@@ -269,18 +269,18 @@ export default function CoursesPage() {
             {/* Videos in course */}
             <div style={{ background: '#1D1D1D', border: '1px solid #292929', marginBottom: '1.5rem' }}>
               <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929' }}>
-                <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>VIDEOS IN THIS COURSE ({courseVideos.length})</div>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>VIDEOS IN THIS COURSE ({courseVideos.length})</div>
               </div>
               {courseVideos.length === 0 ? (
-                <div style={{ padding: '1.5rem', textAlign: 'center', color: '#565656', fontSize: '0.8rem' }}>No videos yet.</div>
+                <div style={{ padding: '1.5rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.8rem' }}>No videos yet.</div>
               ) : (
                 courseVideos.map(v => (
                   <div key={v.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{v.title}</div>
-                      <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>{v.duration} · {v.fileSize}</div>
+                      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{v.duration} · {v.fileSize}</div>
                     </div>
-                    <span className={`badge ${v.protectionStatus === 'protected' ? 'badge-green' : 'badge-grey'}`} style={{ fontSize: '0.55rem' }}>
+                    <span className={`badge ${v.protectionStatus === 'protected' ? 'badge-green' : 'badge-grey'}`} style={{ fontSize: '0.7rem' }}>
                       {v.protectionStatus === 'protected' ? '⚿ PROTECTED' : 'UNPROTECTED'}
                     </span>
                   </div>
@@ -291,8 +291,8 @@ export default function CoursesPage() {
             {/* Enrolled Students */}
             <div style={{ background: '#1D1D1D', border: '1px solid #292929' }}>
               <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>ENROLLED STUDENTS ({students.length})</div>
-                <button className="btn btn-primary" style={{ fontSize: '0.6rem', padding: '0.35rem 0.75rem' }} onClick={() => setShowEnrollModal(true)}>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>ENROLLED STUDENTS ({students.length})</div>
+                <button className="btn btn-primary" style={{ fontSize: '0.7rem', padding: '0.35rem 0.75rem' }} onClick={() => setShowEnrollModal(true)}>
                   <UserPlus size={12} /> ENROLL STUDENT
                 </button>
               </div>
@@ -302,26 +302,26 @@ export default function CoursesPage() {
               </div>
 
               {filteredStudents.length === 0 ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.85rem' }}>
                   {students.length === 0 ? 'No enrolled students. Click "Enroll Student" to add.' : 'No students match your search.'}
                 </div>
               ) : (
                 filteredStudents.map(student => (
                   <div key={student.id} style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: 32, height: 32, background: '#292929', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.65rem', color: '#A0A0A0', flexShrink: 0 }}>
+                    <div style={{ width: 32, height: 32, background: '#292929', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.7rem', color: '#A0A0A0', flexShrink: 0 }}>
                       {student.name?.substring(0, 2).toUpperCase()}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{student.name}</div>
-                      <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>{student.email}</div>
+                      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{student.email}</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className={`badge ${student.status === 'active' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.55rem' }}>
+                      <span className={`badge ${student.status === 'active' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.7rem' }}>
                         {student.status?.toUpperCase()}
                       </span>
                       <button
                         className="btn btn-ghost"
-                        style={{ fontSize: '0.55rem', padding: '0.25rem 0.4rem', color: '#FF2028', borderColor: '#FF2028' }}
+                        style={{ fontSize: '0.7rem', padding: '0.25rem 0.4rem', color: '#FF2028', borderColor: '#FF2028' }}
                         onClick={() => setRemoveTarget(student)}
                         aria-label={`Remove ${student.name}`}
                       >
@@ -336,10 +336,10 @@ export default function CoursesPage() {
         )}
 
         {!selectedCourse && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed #292929', padding: '4rem', color: '#565656' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed #292929', padding: '4rem', color: '#8B8B8B' }}>
             <div style={{ textAlign: 'center' }}>
               <BookOpen size={32} color="#292929" style={{ marginBottom: '0.75rem' }} />
-              <div className="mono" style={{ fontSize: '0.65rem' }}>Select a course to view details and manage enrollments</div>
+              <div className="mono" style={{ fontSize: '0.7rem' }}>Select a course to view details and manage enrollments</div>
             </div>
           </div>
         )}
@@ -347,7 +347,7 @@ export default function CoursesPage() {
 
       {/* Enroll Student Modal */}
       <Modal isOpen={showEnrollModal} onClose={() => { setShowEnrollModal(false); setEnrollSearch(''); }} title="ENROLL STUDENT">
-        <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '1rem' }}>
+        <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1rem' }}>
           COURSE: {selectedCourse?.title}
         </div>
         <p style={{ fontSize: '0.8rem', color: '#A0A0A0', marginBottom: '1rem' }}>
@@ -356,20 +356,20 @@ export default function CoursesPage() {
         <SearchInput value={enrollSearch} onChange={setEnrollSearch} placeholder="Search students..." />
         <div style={{ marginTop: '1rem', maxHeight: '300px', overflowY: 'auto' }}>
           {filteredEnroll.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#565656', fontSize: '0.85rem' }}>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#8B8B8B', fontSize: '0.85rem' }}>
               {unenrolledStudents.length === 0 ? 'All available students are already enrolled.' : 'No students match your search.'}
             </div>
           ) : (
             filteredEnroll.map(student => (
               <div key={student.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid #292929' }}>
-                <div style={{ width: 28, height: 28, background: '#292929', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.6rem', color: '#A0A0A0', flexShrink: 0 }}>
+                <div style={{ width: 28, height: 28, background: '#292929', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono', fontSize: '0.7rem', color: '#A0A0A0', flexShrink: 0 }}>
                   {student.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.85rem', color: '#F8F8F8' }}>{student.name}</div>
-                  <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{student.email}</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{student.email}</div>
                 </div>
-                <button className="btn btn-primary" style={{ fontSize: '0.6rem', padding: '0.35rem 0.7rem' }} onClick={() => handleEnroll(student.id)}>
+                <button className="btn btn-primary" style={{ fontSize: '0.7rem', padding: '0.35rem 0.7rem' }} onClick={() => handleEnroll(student.id)}>
                   ENROLL
                 </button>
               </div>
@@ -397,7 +397,7 @@ export default function CoursesPage() {
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="nc-price">Price (₹) <span style={{ color: '#565656' }}>(leave 0 for a free course)</span></label>
+            <label className="form-label" htmlFor="nc-price">Price (₹) <span style={{ color: '#8B8B8B' }}>(leave 0 for a free course)</span></label>
             <input id="nc-price" type="number" min="0" step="1" className="form-input" placeholder="0" value={newCourse.price} onChange={e => setNewCourse({ ...newCourse, price: e.target.value })} />
           </div>
           <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer', fontSize: '0.85rem', color: '#C8C8C8' }}>

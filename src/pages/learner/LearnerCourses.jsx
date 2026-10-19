@@ -48,7 +48,7 @@ const FilterChip = ({ label, value, onChange, options, active }) => (
     background: active ? 'rgba(255,32,40,0.08)' : '#171717',
     borderRadius: 999, padding: '0.35rem 0.5rem 0.35rem 0.85rem', cursor: 'pointer',
   }}>
-    <span className="mono" style={{ fontSize: '0.6rem', color: '#A0A0A0' }}>{label}</span>
+    <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{label}</span>
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
@@ -84,7 +84,7 @@ const CatalogCard = ({ course, creator, enrolled, onOpen }) => {
           </div>
         )}
         <span style={{
-          position: 'absolute', top: 10, left: 10, fontSize: '0.65rem', fontWeight: 600, padding: '0.2rem 0.55rem', borderRadius: 4,
+          position: 'absolute', top: 10, left: 10, fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.55rem', borderRadius: 4,
           background: price > 0 ? 'rgba(16,16,16,0.9)' : '#22c55e', color: price > 0 ? '#F8F8F8' : '#06260f',
         }}>
           {formatPrice(price)}
@@ -94,7 +94,7 @@ const CatalogCard = ({ course, creator, enrolled, onOpen }) => {
       {/* Details */}
       <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem', flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <div style={{ width: 28, height: 28, background: '#292929', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#A0A0A0', flexShrink: 0 }} aria-hidden="true">
+          <div style={{ width: 28, height: 28, background: '#292929', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#A0A0A0', flexShrink: 0 }} aria-hidden="true">
             {initials(creator?.name)}
           </div>
           <span style={{ fontSize: '0.8rem', color: '#A0A0A0' }}>{creator?.name || 'VidProtect creator'}</span>
@@ -116,11 +116,11 @@ const CatalogCard = ({ course, creator, enrolled, onOpen }) => {
 
         <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', minHeight: 22 }}>
           {enrolled ? (
-            <span className="badge badge-green" style={{ fontSize: '0.6rem' }}>ENROLLED</span>
+            <span className="badge badge-green" style={{ fontSize: '0.7rem' }}>ENROLLED</span>
           ) : inviteOnly ? (
-            <span className="badge badge-grey" style={{ fontSize: '0.6rem' }}><Lock size={9} style={{ marginRight: 4 }} />INVITE ONLY</span>
+            <span className="badge badge-grey" style={{ fontSize: '0.7rem' }}><Lock size={9} style={{ marginRight: 4 }} />INVITE ONLY</span>
           ) : (
-            <span className="badge" style={{ fontSize: '0.6rem', color: '#C8C8C8', borderColor: '#3a3a3a' }}>{price > 0 ? 'PAID COURSE' : 'FREE TO JOIN'}</span>
+            <span className="badge" style={{ fontSize: '0.7rem', color: '#C8C8C8', borderColor: '#3a3a3a' }}>{price > 0 ? 'PAID COURSE' : 'FREE TO JOIN'}</span>
           )}
         </div>
       </div>
@@ -161,7 +161,7 @@ export default function LearnerCourses({ mode }) {
           <SelectFilter value={progress} onChange={setProgress} options={PROGRESS_FILTERS} placeholder="All courses" />
         </div>
         {list.length === 0 ? (
-          <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#565656' }}>
+          <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#8B8B8B' }}>
             <BookOpen size={28} color="#292929" style={{ marginBottom: '0.75rem' }} />
             <div style={{ fontSize: '0.85rem' }}>No courses to show. Browse the catalog to enrol.</div>
           </div>
@@ -173,11 +173,11 @@ export default function LearnerCourses({ mode }) {
                 course={c}
                 onClick={() => navigate(`/learn/course/${c.id}`)}
                 footer={c.enrollmentStatus !== 'active' ? (
-                  <span className="badge badge-red" style={{ fontSize: '0.55rem' }}>ENROLLMENT {c.enrollmentStatus.toUpperCase()}</span>
+                  <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>ENROLLMENT {c.enrollmentStatus.toUpperCase()}</span>
                 ) : (
                   <div>
                     <ProgressBar percent={c.percent} />
-                    <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', marginTop: '0.4rem' }}>{c.completedVideos}/{c.totalVideos} videos · {c.percent}%</div>
+                    <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginTop: '0.4rem' }}>{c.completedVideos}/{c.totalVideos} videos · {c.percent}%</div>
                   </div>
                 )}
               />
@@ -233,7 +233,7 @@ export default function LearnerCourses({ mode }) {
       {/* Filter bar */}
       <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
         <div style={{ position: 'relative', minWidth: 220, flex: '0 1 280px' }}>
-          <Search size={14} color="#565656" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+          <Search size={14} color="#8B8B8B" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             className="form-input"
             style={{ paddingLeft: 34, borderRadius: 999 }}
@@ -263,16 +263,16 @@ export default function LearnerCourses({ mode }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', minHeight: 28 }}>
-        <span className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>{list.length} COURSE{list.length !== 1 ? 'S' : ''}</span>
+        <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{list.length} COURSE{list.length !== 1 ? 'S' : ''}</span>
         {activeCount > 0 && (
-          <button type="button" className="btn btn-ghost" style={{ fontSize: '0.65rem', padding: '0.25rem 0.6rem' }} onClick={clearAll}>
+          <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem' }} onClick={clearAll}>
             <X size={11} /> Clear filters ({activeCount})
           </button>
         )}
       </div>
 
       {list.length === 0 ? (
-        <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#565656' }}>
+        <div style={{ border: '1px dashed #292929', padding: '3rem', textAlign: 'center', color: '#8B8B8B' }}>
           <BookOpen size={28} color="#292929" style={{ marginBottom: '0.75rem' }} />
           <div style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>No courses match these filters.</div>
           {activeCount > 0 && <button className="btn btn-secondary" style={{ fontSize: '0.75rem' }} onClick={clearAll}>Clear filters</button>}

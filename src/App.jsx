@@ -5,8 +5,8 @@
 //   /admin/*   platform admins
 // ============================================
 
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { InitialLoader } from './components/InitialLoader';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -21,6 +21,8 @@ const LandingPage = page(() => import('./pages/LandingPage'));
 const LoginPage = page(() => import('./pages/LoginPage'));
 const VerifyEmailPage = page(() => import('./pages/VerifyEmailPage'));
 const PrivacyPage = page(() => import('./pages/PrivacyPage'));
+const ResetPasswordPage = page(() => import('./pages/ResetPasswordPage'));
+const AdminAccount = page(() => import('./pages/admin/AdminAccount'));
 const CreatorApplyPage = page(() => import('./pages/CreatorApplyPage'));
 const StudioLayout = layout('StudioLayout');
 const LearnerLayout = layout('LearnerLayout');
@@ -46,6 +48,22 @@ const AdminUsers = page(() => import('./pages/admin/AdminUsers'));
 const AdminContent = page(() => import('./pages/admin/AdminContent'));
 const AdminAudit = page(() => import('./pages/admin/AdminAudit'));
 
+// A page title for the tab and for search results
+const TITLES = [
+  ['/creator/login', 'Creator sign in'], ['/creator/apply', 'Creator application'], ['/login', 'Sign in'],
+  ['/verify-email', 'Verify your email'], ['/reset-password', 'Reset your password'], ['/privacy', 'Privacy policy'],
+  ['/learn', 'Learn'], ['/studio', 'Creator studio'], ['/admin', 'Admin'],
+];
+const DEFAULT_TITLE = 'VidProtect AI — Secure the Content. Protect the Creator.';
+const TitleManager = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const found = TITLES.find(([prefix]) => pathname.startsWith(prefix));
+    document.title = found ? `${found[1]} — VidProtect AI` : DEFAULT_TITLE;
+  }, [pathname]);
+  return null;
+};
+
 const Spinner = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>;
 
 // Old /app/* links land on the right dashboard for the signed-in role
@@ -67,6 +85,7 @@ const AppRoutes = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/creator/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage portal="creator" />} />
       <Route path="/creator/apply" element={<CreatorApplyPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to={homeFor(currentUser)} replace /> : <LoginPage />} />
@@ -109,6 +128,7 @@ const AppRoutes = () => {
           <Route path="users" element={<AdminUsers />} />
           <Route path="content" element={<AdminContent />} />
           <Route path="audit" element={<AdminAudit />} />
+          <Route path="account" element={<AdminAccount />} />
         </Route>
       </Route>
 
@@ -126,6 +146,7 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <TitleManager />
         <InitialLoader>
           <ErrorBoundary>
             <AppRoutes />

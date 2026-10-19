@@ -81,7 +81,7 @@ export default function SecurityAlertsPage() {
           { label: 'RESOLVED', value: alerts.filter(a => a.reviewStatus === 'resolved').length, color: '#22c55e' },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, background: '#1D1D1D', padding: '0.75rem 1rem' }}>
-            <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{s.label}</div>
+            <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{s.label}</div>
             <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.4rem', lineHeight: 1, marginTop: '0.25rem', color: s.color }}>{s.value}</div>
           </div>
         ))}
@@ -118,20 +118,20 @@ export default function SecurityAlertsPage() {
                   {/* Header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                     <SeverityBadge severity={alert.severity} />
-                    <span className="mono" style={{ fontSize: '0.62rem', color: '#A0A0A0' }}>{alertTypeLabel(alert.alertType)}</span>
-                    <span className="badge" style={{ color: statusColor[alert.reviewStatus], borderColor: statusColor[alert.reviewStatus], fontSize: '0.6rem' }}>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{alertTypeLabel(alert.alertType)}</span>
+                    <span className="badge" style={{ color: statusColor[alert.reviewStatus], borderColor: statusColor[alert.reviewStatus], fontSize: '0.7rem' }}>
                       {alert.reviewStatus.toUpperCase()}
                     </span>
                   </div>
                   {/* Meta */}
                   <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                    <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                       USER: {alert.userName}
                     </span>
-                    <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                       VIDEO: {alert.videoTitle}
                     </span>
-                    <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                       {formatTime(alert.timestamp)}
                     </span>
                   </div>
@@ -143,16 +143,16 @@ export default function SecurityAlertsPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-end', flexShrink: 0 }}>
-                  <button className="btn btn-secondary" style={{ fontSize: '0.6rem', padding: '0.35rem 0.7rem' }} onClick={() => setSelectedAlert(alert)}>
+                  <button className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.35rem 0.7rem' }} onClick={() => setSelectedAlert(alert)}>
                     <Eye size={12} /> DETAILS
                   </button>
                   {alert.reviewStatus === 'open' && (
-                    <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.35rem 0.7rem' }} onClick={() => handleUpdateStatus(alert.id, 'reviewed')}>
+                    <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.35rem 0.7rem' }} onClick={() => handleUpdateStatus(alert.id, 'reviewed')}>
                       MARK REVIEWED
                     </button>
                   )}
                   {alert.reviewStatus !== 'resolved' && (
-                    <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.35rem 0.7rem', color: '#22c55e', borderColor: '#22c55e' }} onClick={() => handleUpdateStatus(alert.id, 'resolved')}>
+                    <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.35rem 0.7rem', color: '#22c55e', borderColor: '#22c55e' }} onClick={() => handleUpdateStatus(alert.id, 'resolved')}>
                       <CheckCircle size={12} /> RESOLVE
                     </button>
                   )}
@@ -169,16 +169,16 @@ export default function SecurityAlertsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <SeverityBadge severity={selectedAlert.severity} />
-              <span className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', padding: '0.25rem 0.5rem', border: '1px solid #292929' }}>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', padding: '0.25rem 0.5rem', border: '1px solid #292929' }}>
                 {alertTypeLabel(selectedAlert.alertType)}
               </span>
-              <span className="badge" style={{ color: statusColor[selectedAlert.reviewStatus], borderColor: statusColor[selectedAlert.reviewStatus], fontSize: '0.6rem' }}>
+              <span className="badge" style={{ color: statusColor[selectedAlert.reviewStatus], borderColor: statusColor[selectedAlert.reviewStatus], fontSize: '0.7rem' }}>
                 {selectedAlert.reviewStatus.toUpperCase()}
               </span>
             </div>
 
             <div style={{ background: '#101010', border: '1px solid #292929', padding: '1rem' }}>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.5rem' }}>DETECTION EXPLANATION</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.5rem' }}>DETECTION EXPLANATION</div>
               <p style={{ fontSize: '0.85rem', color: '#A0A0A0', lineHeight: 1.7 }}>{selectedAlert.explanation}</p>
             </div>
 
@@ -189,37 +189,37 @@ export default function SecurityAlertsPage() {
               { label: 'Video', value: selectedAlert.videoTitle },
             ].map(item => (
               <div key={item.label} style={{ display: 'flex', gap: '1rem', padding: '0.5rem 0', borderBottom: '1px solid #292929' }}>
-                <span className="mono" style={{ fontSize: '0.6rem', color: '#565656', minWidth: '120px' }}>{item.label.toUpperCase()}</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', minWidth: '120px' }}>{item.label.toUpperCase()}</span>
                 <span style={{ fontSize: '0.8rem', color: '#F8F8F8', flex: 1 }}>{item.value}</span>
               </div>
             ))}
 
             <div style={{ background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #eab308', padding: '1rem' }}>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#eab308', marginBottom: '0.4rem' }}>RECOMMENDED ACTION</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#eab308', marginBottom: '0.4rem' }}>RECOMMENDED ACTION</div>
               <p style={{ fontSize: '0.8rem', color: '#A0A0A0', lineHeight: 1.6 }}>{selectedAlert.recommendedAction}</p>
             </div>
 
             {selectedAlert.resolvedAt && (
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#22c55e' }}>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#22c55e' }}>
                 ✓ Resolved at {formatTime(selectedAlert.resolvedAt)}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #292929' }}>
               {selectedAlert.reviewStatus === 'open' && (
-                <button className="btn btn-secondary" style={{ fontSize: '0.65rem' }} onClick={() => handleUpdateStatus(selectedAlert.id, 'reviewed')}>
+                <button className="btn btn-secondary" style={{ fontSize: '0.7rem' }} onClick={() => handleUpdateStatus(selectedAlert.id, 'reviewed')}>
                   MARK REVIEWED
                 </button>
               )}
               {selectedAlert.reviewStatus !== 'resolved' && (
-                <button className="btn btn-primary" style={{ fontSize: '0.65rem', background: '#22c55e', borderColor: '#22c55e' }} onClick={() => handleUpdateStatus(selectedAlert.id, 'resolved')}>
+                <button className="btn btn-primary" style={{ fontSize: '0.7rem', background: '#22c55e', borderColor: '#22c55e' }} onClick={() => handleUpdateStatus(selectedAlert.id, 'resolved')}>
                   <CheckCircle size={14} /> RESOLVE ALERT
                 </button>
               )}
             </div>
 
             <div style={{ padding: '0.5rem', background: '#101010', border: '1px solid #292929' }}>
-              <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                 ◈ AI ANOMALY DETECTION — Rule-based engine running server-side on every access event. Velocity · Denials · Off-hours patterns.
               </span>
             </div>

@@ -15,6 +15,8 @@ import { startParallax } from './landing/motion';
 import CardDeck3D from './landing/CardDeck3D';
 import { Reveal, Counter, SpotlightCard, Magnetic, Marquee, HeroShowcase } from './landing/widgets';
 
+const THIS_YEAR = new Date().getFullYear();
+
 // ── CURSOR PARTICLES ─────────────────────────
 const CursorParticles = () => {
   const canvasRef = useRef(null);
@@ -171,7 +173,7 @@ const Navbar = ({ active }) => {
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem', display: 'flex', alignItems: 'center', height: '60px', gap: '2rem' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
           <Logo size="sm" />
-          <span className="mono" style={{ fontSize: '0.5rem', color: '#eab308', border: '1px solid #eab308', padding: '1px 4px' }}>BETA</span>
+          <span className="mono" style={{ fontSize: '0.7rem', color: '#eab308', border: '1px solid #eab308', padding: '1px 4px' }}>BETA</span>
         </Link>
 
         <nav style={{ display: 'flex', gap: '1.75rem', flex: 1 }} className="desktop-nav">
@@ -260,7 +262,7 @@ const WorkflowStep = ({ num, label, desc, isActive, onClick }) => (
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-      <span className="mono" style={{ fontSize: '0.65rem', color: isActive ? '#FF2028' : '#565656', minWidth: '2ch' }}>{String(num).padStart(2, '0')}</span>
+      <span className="mono" style={{ fontSize: '0.7rem', color: isActive ? '#FF2028' : '#565656', minWidth: '2ch' }}>{String(num).padStart(2, '0')}</span>
       <span style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '0.85rem', textTransform: 'uppercase', color: isActive ? '#F8F8F8' : '#A0A0A0' }}>{label}</span>
     </div>
     {isActive && (
@@ -334,11 +336,11 @@ export default function LandingPage() {
             </Reveal>
             <Reveal delay={600} y={10} blur={0}>
               <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>AES-256 ENCRYPTION</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>AES-256 ENCRYPTION</span>
                 <span style={{ color: '#292929' }}>·</span>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>JWT AUTH</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>JWT AUTH</span>
                 <span style={{ color: '#292929' }}>·</span>
-                <span className="mono" style={{ fontSize: '0.65rem', color: '#565656' }}>TEMPORARY ACCESS</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>TEMPORARY ACCESS</span>
               </div>
             </Reveal>
           </div>
@@ -356,7 +358,7 @@ export default function LandingPage() {
               <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: 'clamp(2.1rem, 5vw, 3.2rem)', lineHeight: 1, color: '#F8F8F8' }}>
                 <Counter to={s.to} suffix={s.suffix} />
               </div>
-              <div className="mono" style={{ fontSize: '0.62rem', color: '#808080', marginTop: '0.7rem', letterSpacing: '0.1em' }}>{s.label}</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#808080', marginTop: '0.7rem', letterSpacing: '0.1em' }}>{s.label}</div>
             </Reveal>
           ))}
         </div>
@@ -387,7 +389,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
           <Reveal>
             <div style={{ padding: '1.5rem', border: '1px solid #FF2028', background: 'rgba(255,32,40,0.04)' }}>
-              <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '0.5rem' }}>CORE SECURITY FORMULA</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.5rem' }}>CORE SECURITY FORMULA</div>
               <div className="mono" style={{ fontSize: '0.75rem', color: '#F8F8F8', lineHeight: 1.8, letterSpacing: '0.05em' }}>
                 AES-256 ENCRYPTION + JWT AUTHENTICATION + ENROLLMENT VERIFICATION
                 <br />+ TEMPORARY STREAM TOKENS + ACCESS LOGGING + ANOMALY MONITORING
@@ -425,12 +427,12 @@ export default function LandingPage() {
 
             <Reveal delay={120} y={30} style={{ position: 'sticky', top: '80px' }}>
               <div style={{ background: '#171717', border: '1px solid #292929', padding: '2rem' }}>
-                <div className="mono" style={{ fontSize: '0.6rem', color: '#565656', marginBottom: '1rem' }}>WORKFLOW VISUALIZATION</div>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1rem' }}>WORKFLOW VISUALIZATION</div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                   {WORKFLOW_STEPS.map((s, i) => (
                     <button key={s.num} onClick={() => setActiveStep(i)} style={{
                       background: activeStep === i ? '#FF2028' : '#292929', border: 'none', color: '#F8F8F8', padding: '0.4rem 0.75rem',
-                      fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.65rem', cursor: 'pointer', transition: 'background 0.2s', letterSpacing: '0.05em',
+                      fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.7rem', cursor: 'pointer', transition: 'background 0.2s', letterSpacing: '0.05em',
                     }}>
                       {String(s.num).padStart(2, '0')} {s.label.toUpperCase()}
                     </button>
@@ -442,7 +444,7 @@ export default function LandingPage() {
                     <p style={{ color: '#A0A0A0', fontSize: '0.9rem', lineHeight: 1.7 }}>{WORKFLOW_STEPS[activeStep]?.desc}</p>
                   </div>
                 )}
-                {activeStep < 0 && <p style={{ color: '#565656', fontSize: '0.85rem' }}>Select a workflow step to learn more.</p>}
+                {activeStep < 0 && <p style={{ color: '#8B8B8B', fontSize: '0.85rem' }}>Select a workflow step to learn more.</p>}
               </div>
             </Reveal>
           </div>
@@ -463,7 +465,7 @@ export default function LandingPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1px', background: '#292929' }}>
             <div style={{ background: '#1D1D1D', padding: '2rem' }}>
-              <Reveal><div className="mono" style={{ fontSize: '0.7rem', color: '#565656', marginBottom: '1.5rem' }}>TRADITIONAL VIDEO HOSTING</div></Reveal>
+              <Reveal><div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1.5rem' }}>TRADITIONAL VIDEO HOSTING</div></Reveal>
               {[
                 'Potentially permanent, shareable video links',
                 'Basic or limited access controls',
@@ -503,7 +505,7 @@ export default function LandingPage() {
 
           <Reveal delay={200}>
             <div style={{ marginTop: '1.5rem', padding: '0.75rem 1rem', border: '1px solid #292929', background: '#101010' }}>
-              <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
+              <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                 Note: Traditional platforms may include various security features. VidProtect AI does not guarantee complete piracy prevention, and it is currently in beta testing.
               </span>
             </div>
@@ -529,7 +531,7 @@ export default function LandingPage() {
                   <div className="mono" style={{ fontSize: '1.5rem', color: '#333', marginBottom: '0.75rem' }}>{item.num}</div>
                   <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '0.9rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{item.label}</div>
                   <p style={{ color: '#808080', fontSize: '0.8rem', lineHeight: 1.6 }}>{item.desc}</p>
-                  <div style={{ marginTop: '1rem' }}><span className="badge badge-grey" style={{ fontSize: '0.55rem' }}>PLANNED</span></div>
+                  <div style={{ marginTop: '1rem' }}><span className="badge badge-grey" style={{ fontSize: '0.7rem' }}>PLANNED</span></div>
                 </SpotlightCard>
               </Reveal>
             ))}
@@ -567,10 +569,10 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
             <div>
               <Logo size="sm" />
-              <p style={{ color: '#565656', fontSize: '0.8rem', marginTop: '1rem', lineHeight: 1.6 }}>Secure the Content. Protect the Creator. Empower Learning.</p>
+              <p style={{ color: '#8B8B8B', fontSize: '0.8rem', marginTop: '1rem', lineHeight: 1.6 }}>Secure the Content. Protect the Creator. Empower Learning.</p>
             </div>
             <div>
-              <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '1rem' }}>PRODUCT</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '1rem' }}>PRODUCT</div>
               {NAV.map(([id, label]) => (
                 <div key={id} style={{ marginBottom: '0.5rem' }}>
                   <button onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })} className="lp-foot-link">{label}</button>
@@ -578,17 +580,17 @@ export default function LandingPage() {
               ))}
             </div>
             <div>
-              <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0', marginBottom: '1rem' }}>PLATFORM</div>
+              <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '1rem' }}>PLATFORM</div>
               {[['Login', '/login'], ['Create an account', '/login'], ['Creator login', '/creator/login']].map(([label, to]) => (
                 <div key={label} style={{ marginBottom: '0.5rem' }}><Link to={to} className="lp-foot-link">{label}</Link></div>
               ))}
             </div>
           </div>
           <div style={{ borderTop: '1px solid #292929', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
-              © {new Date().getFullYear()} VIDPROTECT AI. A SecureSphere — Cybersecurity & AI Product.
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
+              © {THIS_YEAR} VIDPROTECT AI. A SecureSphere — Cybersecurity & AI Product.
             </span>
-            <span className="mono" style={{ fontSize: '0.6rem', color: '#444' }}>BETA — Now in beta testing.</span>
+            <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>BETA — Now in beta testing.</span>
           </div>
         </div>
       </footer>

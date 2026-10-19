@@ -18,7 +18,7 @@ const applicants = () => getUsers().filter(u => u.role === 'creator' && u.creato
 function Detail({ label, children }) {
   return (
     <div style={{ marginBottom: '0.75rem' }}>
-      <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', marginBottom: '0.15rem' }}>{label}</div>
+      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.15rem' }}>{label}</div>
       <div style={{ fontSize: '0.85rem', color: '#F8F8F8', lineHeight: 1.5 }}>{children}</div>
     </div>
   );
@@ -58,7 +58,7 @@ export default function AdminCreators() {
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         {TABS.map(([key, label]) => (
-          <button key={key} type="button" className={tab === key ? 'btn btn-primary' : 'btn btn-ghost'} style={{ fontSize: '0.65rem' }} onClick={() => setTab(key)}>
+          <button key={key} type="button" className={tab === key ? 'btn btn-primary' : 'btn btn-ghost'} style={{ fontSize: '0.7rem' }} onClick={() => setTab(key)}>
             {label} ({count(key)})
           </button>
         ))}
@@ -76,15 +76,15 @@ export default function AdminCreators() {
             <div style={{ padding: '1.25rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
                 <div>
-                  <div style={{ fontSize: '1.05rem', color: '#F8F8F8' }}>{a.displayName || u.name} <span className={`badge ${BADGE[u.creatorStatus] || ''}`} style={{ fontSize: '0.55rem', marginLeft: 6 }}>{u.creatorStatus.toUpperCase()}</span></div>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>
+                  <div style={{ fontSize: '1.05rem', color: '#F8F8F8' }}>{a.displayName || u.name} <span className={`badge ${BADGE[u.creatorStatus] || ''}`} style={{ fontSize: '0.7rem', marginLeft: 6 }}>{u.creatorStatus.toUpperCase()}</span></div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>
                     {u.email}{u.emailVerified === false ? ' (EMAIL NOT VERIFIED)' : ''} · joined {u.joinDate} · submitted {a.submittedAt ? new Date(a.submittedAt).toLocaleDateString() : '—'}{a.submissions > 1 ? ` · attempt ${a.submissions}` : ''}
                   </div>
                 </div>
                 {u.creatorStatus === 'pending' && rejecting !== u.id && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                    <button className="btn btn-primary" style={{ fontSize: '0.65rem' }} disabled={busy} onClick={() => decide(u, true)}>APPROVE</button>
-                    <button className="btn btn-ghost" style={{ fontSize: '0.65rem', color: '#FF2028', borderColor: '#FF2028' }} disabled={busy} onClick={() => { setRejecting(u.id); setNote(''); }}>REJECT</button>
+                    <button className="btn btn-primary" style={{ fontSize: '0.7rem' }} disabled={busy} onClick={() => decide(u, true)}>APPROVE</button>
+                    <button className="btn btn-ghost" style={{ fontSize: '0.7rem', color: '#FF2028', borderColor: '#FF2028' }} disabled={busy} onClick={() => { setRejecting(u.id); setNote(''); }}>REJECT</button>
                   </div>
                 )}
               </div>
@@ -97,11 +97,11 @@ export default function AdminCreators() {
 
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
                 {a.cv
-                  ? <button type="button" className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={() => openCv(u)}><FileText size={12} /> CV: {a.cv.originalName}</button>
-                  : <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>NO CV UPLOADED</span>}
+                  ? <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => openCv(u)}><FileText size={12} /> CV: {a.cv.originalName}</button>
+                  : <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>NO CV UPLOADED</span>}
                 {linkedin
-                  ? <a href={linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ fontSize: '0.65rem' }}>LINKEDIN <ExternalLink size={11} /></a>
-                  : <span className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>NO LINKEDIN</span>}
+                  ? <a href={linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ fontSize: '0.7rem' }}>LINKEDIN <ExternalLink size={11} /></a>
+                  : <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>NO LINKEDIN</span>}
               </div>
 
               <Detail label="TEACHES ON ANOTHER PLATFORM">
@@ -121,8 +121,8 @@ export default function AdminCreators() {
                   <label className="form-label" htmlFor={`note-${u.id}`}>Reason for the applicant (they will see this)</label>
                   <textarea id={`note-${u.id}`} className="form-input" rows={3} maxLength={500} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Please add your CV so we can verify your experience." />
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-primary" style={{ fontSize: '0.65rem', background: '#FF2028' }} disabled={busy} onClick={() => decide(u, false)}>CONFIRM REJECTION</button>
-                    <button className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={() => setRejecting(null)}>CANCEL</button>
+                    <button className="btn btn-primary" style={{ fontSize: '0.7rem', background: '#FF2028' }} disabled={busy} onClick={() => decide(u, false)}>CONFIRM REJECTION</button>
+                    <button className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={() => setRejecting(null)}>CANCEL</button>
                   </div>
                 </div>
               )}

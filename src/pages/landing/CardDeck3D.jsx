@@ -192,7 +192,7 @@ export default function CardDeck3D({ cards, mode = 'coverflow', bg = '#101010', 
                       <div className="lp3d-glare" />
                       <span className="lp3d-num mono">{String(i + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}</span>
                       <div className="lp3d-icon"><Icon size={30} color="#FF2028" strokeWidth={1.5} /></div>
-                      {c.tag && <div className="lp3d-tag"><span className="badge badge-red" style={{ fontSize: '0.6rem' }}>{c.tag}</span></div>}
+                      {c.tag && <div className="lp3d-tag"><span className="badge badge-red" style={{ fontSize: '0.7rem' }}>{c.tag}</span></div>}
                       <div className="lp3d-title">{c.label}</div>
                       <p className="lp3d-text">{c.desc}</p>
                     </div>

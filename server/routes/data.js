@@ -67,8 +67,8 @@ router.get('/', requireAuthAllowLocked, (req, res) => {
   const alerts = isAdmin ? db.alerts : isCreator ? db.alerts.filter(a => myVideoIds.has(a.videoId)) : [];
 
   // Learners see their own payments, creators the payments for their courses, admins all
-  const payments = db.payments.filter(p =>
-    isAdmin || p.userId === me.id || (isCreator && myCourseIds.has(p.courseId)));
+  const payments = db.payments.filter(p => p.userId === me.id ||
+    (p.status !== 'created' && (isAdmin || (isCreator && myCourseIds.has(p.courseId)))));
 
   res.json({
     payments,

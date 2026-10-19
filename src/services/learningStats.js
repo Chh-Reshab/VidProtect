@@ -12,7 +12,7 @@ const pad = (n) => String(n).padStart(2, '0');
 export const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 // Calendar maths on 'YYYY-MM-DD' strings, done in UTC so daylight saving cannot shift a day
-const addDays = (ymd, n) => {
+export const addDays = (ymd, n) => {
   const [y, m, d] = ymd.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 };

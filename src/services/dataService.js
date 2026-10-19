@@ -45,6 +45,7 @@ export const restoreSession = async () => {
 
 export const authLogin = async (email, password, portal) => {
   const r = await request('POST', '/auth/login', { email, password, portal });
+  if (r.ok && r.data.mfaRequired) return { success: false, mfaRequired: true, mfaToken: r.data.mfaToken }; // password was right; a code is still needed
   if (!r.ok) return { success: false, error: r.data?.error || 'Sign in failed.', code: r.data?.code };
   setAccessToken(r.data.accessToken);
   await loadData();
@@ -55,6 +56,28 @@ export const authRegister = async (name, email, password) => {
   const r = await request('POST', '/auth/register', { name, email, password });
   return toResult(r);
 };
+
+// What the sign-in pages may offer (the "forgot password" link needs email to work)
+let authOptions;
+export const getAuthOptions = () => (authOptions ||= request('GET', '/auth/options').then(r => (r.ok ? r.data : { passwordReset: false })));
+export const authForgotPassword = async (email) => toResult(await request('POST', '/auth/forgot-password', { email }));
+export const authResetPassword = async (token, password) => toResult(await request('POST', '/auth/reset-password', { token, password }));
+
+// Second step of signing in with two-step verification on
+export const authMfaLogin = async (mfaToken, code) => {
+  const r = await request('POST', '/auth/mfa/login', { mfaToken, code });
+  if (!r.ok) return { success: false, error: r.data?.error || 'Sign in failed.', code: r.data?.code };
+  setAccessToken(r.data.accessToken);
+  await loadData();
+  return { success: true, user: cache.me || r.data.user };
+};
+
+// Two-step verification settings and account deletion (the account page)
+export const mfaSetup = async () => toResult(await request('POST', '/auth/mfa/setup'));
+export const mfaEnable = async (code) => toResult(await request('POST', '/auth/mfa/enable', { code }));
+export const mfaDisable = async (password, code) => toResult(await request('POST', '/auth/mfa/disable', { password, code }));
+export const mfaNewRecoveryCodes = async (password, code) => toResult(await request('POST', '/auth/mfa/recovery-codes', { password, code }));
+export const deleteMyAccount = async (password, code) => toResult(await request('DELETE', '/auth/account', { password, code }));
 
 export const authCreatorRegister = async (name, email, password) =>
   toResult(await request('POST', '/auth/creator/register', { name, email, password }));
@@ -96,6 +119,9 @@ export const getUserById = (id) => cache.users.find(u => u.id === id) || null;
 
 export const reviewCreatorApplication = (adminId, userId, approve, note = '') =>
   write(request('POST', `/admin/creators/${userId}/review`, { approve, note }));
+
+export const deleteUser = (adminId, userId) =>
+  write(request('DELETE', `/admin/users/${userId}`));
 
 export const setUserStatus = (adminId, userId, status) =>
   write(request('PATCH', `/admin/users/${userId}`, { status }));
@@ -191,6 +217,18 @@ export const checkoutCourse = async (courseId, payload) => {
   const r = await request('POST', `/courses/${courseId}/checkout`, payload);
   if (r.ok) await loadData();
   return r.ok ? { success: true, payment: r.data.payment } : toResult(r);
+};
+
+// Which checkout the site uses: { provider: 'razorpay' | 'test', testMode }
+let paymentConfig;
+export const getPaymentConfig = () => (paymentConfig ||= request('GET', '/payments/config').then(r => (r.ok ? r.data : { provider: 'test', testMode: true })));
+
+// Razorpay: the server creates the order (and decides the amount); after paying, the server checks the result
+export const createRazorpayOrder = async (courseId) => toResult(await request('POST', `/courses/${courseId}/checkout/order`));
+export const verifyRazorpayPayment = async (courseId, response) => {
+  const r = await request('POST', `/courses/${courseId}/checkout/verify`, response);
+  if (r.ok) await loadData();
+  return r.ok ? { success: true, payment: r.data.payment } : { success: false, error: r.data?.error || 'Could not verify the payment.', pending: r.status === 202 };
 };
 
 export const removeEnrollment = (actorId, enrollmentId) =>

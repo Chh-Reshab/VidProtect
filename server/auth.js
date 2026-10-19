@@ -25,7 +25,8 @@ const COOKIE = 'vp_refresh';
 export const toPublic = (u) => {
   if (!u) return null;
   // eslint-disable-next-line no-unused-vars
-  const { passwordHash, emailVerification, ...rest } = u;
+  const { passwordHash, emailVerification, passwordReset, mfa, ...rest } = u;
+  rest.mfaEnabled = !!mfa?.enabled;
   if (rest.creatorApplication?.cv) {
     const { name: _stored, ...cv } = rest.creatorApplication.cv; // the stored file name is internal
     rest.creatorApplication = { ...rest.creatorApplication, cv };
@@ -33,6 +34,15 @@ export const toPublic = (u) => {
   return rest;
 };
 
+
+// Short-lived proof that the password step passed; only good for the two-step verification route
+export const signMfaToken = (user) => jwt.sign({ purpose: 'mfa' }, secret(), { subject: user.id, expiresIn: 300, algorithm: 'HS256' });
+export const readMfaToken = (token) => {
+  try {
+    const claims = jwt.verify(String(token || ''), secret(), { algorithms: ['HS256'] });
+    return claims.purpose === 'mfa' ? db.users.find(u => u.id === claims.sub && u.status === 'active') || null : null;
+  } catch { return null; }
+};
 
 export const signAccess = (user, sid) =>
   jwt.sign({ role: user.role, sid }, secret(), { subject: user.id, expiresIn: ACCESS_TTL_SECONDS, algorithm: 'HS256' });

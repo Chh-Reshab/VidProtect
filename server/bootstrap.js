@@ -8,10 +8,9 @@
 //                     Real people's accounts are never touched.
 // ============================================
 
-import path from 'node:path';
 import bcrypt from 'bcryptjs';
 import { db, save, uid } from './db.js';
-import * as blobs from './blobs.js';
+import { removeUsers } from './accountData.js';
 import { revokeAllSessions } from './auth.js';
 import { validateEmail } from '../shared/validation.js';
 
@@ -83,28 +82,6 @@ export const removeDemoData = async () => {
     return;
   }
 
-  const courseIds = new Set(db.courses.filter(c => demoIds.has(c.creatorId)).map(c => c.id));
-  const gone = db.videos.filter(v => demoIds.has(v.creatorId) || courseIds.has(v.courseId));
-  const videoIds = new Set(gone.map(v => v.id));
-
-  db.users = db.users.filter(u => !demoIds.has(u.id));
-  db.courses = db.courses.filter(c => !courseIds.has(c.id));
-  db.videos = db.videos.filter(v => !videoIds.has(v.id));
-  db.enrollments = db.enrollments.filter(e => !demoIds.has(e.studentId) && !courseIds.has(e.courseId));
-  db.payments = db.payments.filter(p => !demoIds.has(p.userId) && !courseIds.has(p.courseId));
-  db.logs = db.logs.filter(l => !demoIds.has(l.userId) && !videoIds.has(l.videoId) && !courseIds.has(l.courseId));
-  db.alerts = db.alerts.filter(a => !demoIds.has(a.userId) && !videoIds.has(a.videoId));
-  db.audit = db.audit.filter(a => !demoIds.has(a.actorId));
-  db.sessions = db.sessions.filter(s => !demoIds.has(s.userId));
-  db.streamSessions = db.streamSessions.filter(s => !demoIds.has(s.userId) && !videoIds.has(s.videoId));
-  for (const map of [db.progress, db.settings, db.activity]) for (const id of demoIds) delete map[id];
-  for (const perUser of Object.values(db.progress)) for (const id of videoIds) delete perUser[id];
-  save();
-
-  // Stored files that belonged to the removed videos / courses
-  for (const v of gone) {
-    if (v.file?.name) await blobs.remove('videos', v.file.name).catch(() => {});
-    if (v.thumbUrl) await blobs.remove('thumbs', path.basename(v.thumbUrl)).catch(() => {});
-  }
-  console.log(`[demo] Removed ${demoIds.size} built-in beta account(s) and ${courseIds.size} sample course(s).`);
+  const removed = await removeUsers(demoIds, { payments: 'remove' });
+  console.log(`[demo] Removed ${removed.users} built-in beta account(s) and ${removed.courses} sample course(s).`);
 };

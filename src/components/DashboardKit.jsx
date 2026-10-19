@@ -30,7 +30,7 @@ export const Panel = ({ title, action, children, style }) => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', ...style }}>
     {title && (
       <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="mono" style={{ fontSize: '0.65rem', color: '#A0A0A0' }}>{title}</div>
+        <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0' }}>{title}</div>
         {action}
       </div>
     )}
@@ -43,7 +43,7 @@ export const formatPrice = (amount) =>
   amount > 0 ? `₹${Number(amount).toLocaleString('en-IN')}` : 'Free';
 
 export const PriceBadge = ({ price }) => (
-  <span className={`badge ${price > 0 ? 'badge-grey' : 'badge-green'}`} style={{ fontSize: '0.6rem', color: price > 0 ? '#F8F8F8' : undefined }}>
+  <span className={`badge ${price > 0 ? 'badge-grey' : 'badge-green'}`} style={{ fontSize: '0.7rem', color: price > 0 ? '#F8F8F8' : undefined }}>
     {formatPrice(price).toUpperCase()}
   </span>
 );
@@ -79,12 +79,12 @@ export const ThumbnailField = ({ url, file, onSelect, onRemove, label = 'Thumbna
 
   return (
     <div className="form-group">
-      <label className="form-label">{label} <span style={{ color: '#565656' }}>(optional)</span></label>
+      <label className="form-label">{label} <span style={{ color: '#8B8B8B' }}>(optional)</span></label>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ width: 160, aspectRatio: '16 / 9', background: '#101010', border: '1px solid #292929', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
           {preview
             ? <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <ImageIcon size={22} color="#565656" />}
+            : <ImageIcon size={22} color="#8B8B8B" />}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
           <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={e => { pick(e.target.files[0]); e.target.value = ''; }} />
@@ -92,9 +92,9 @@ export const ThumbnailField = ({ url, file, onSelect, onRemove, label = 'Thumbna
             {preview ? 'Change image' : 'Choose image'}
           </button>
           {preview && onRemove && (
-            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.65rem' }} onClick={onRemove}>Remove</button>
+            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem' }} onClick={onRemove}>Remove</button>
           )}
-          <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>JPEG · PNG · WEBP · UP TO 5 MB</span>
+          <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>JPEG · PNG · WEBP · UP TO 5 MB</span>
         </div>
       </div>
     </div>

@@ -4,7 +4,9 @@
 
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { getUsers, setUserRole, setUserStatus } from '../../services/dataService';
+import { getUsers, setUserRole, setUserStatus, deleteUser } from '../../services/dataService';
+import { usePaged } from '../../services/usePaged';
+import Pager from '../../components/Pager';
 import { SearchInput, SelectFilter, ConfirmDialog } from '../../components/SharedComponents';
 import { PageHeader, Panel } from '../../components/DashboardKit';
 
@@ -20,12 +22,24 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [suspendTarget, setSuspendTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const reload = () => setUsers(getUsers());
 
   const shown = users.filter(u =>
     (!roleFilter || u.role === roleFilter) &&
     (!search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())));
+
+  const paged = usePaged(shown, 25);
+
+  const removeUser = async () => {
+    const target = deleteTarget;
+    setDeleteTarget(null);
+    const result = await deleteUser(currentUser.id, target.id);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    reload();
+    showNotification(`${target.name} was deleted.`);
+  };
 
   const changeRole = async (user, role) => {
     const result = await setUserRole(currentUser.id, user.id, role);
@@ -56,13 +70,13 @@ export default function AdminUsers() {
               <tr><th>User</th><th>Role</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
             </thead>
             <tbody>
-              {shown.map(u => {
+              {paged.pageItems.map(u => {
                 const isSelf = u.id === currentUser.id;
                 return (
                   <tr key={u.id}>
                     <td>
-                      <div style={{ color: '#F8F8F8' }}>{u.name}{isSelf && <span className="mono" style={{ color: '#565656', fontSize: '0.6rem' }}> (you)</span>}</div>
-                      <div className="mono" style={{ fontSize: '0.6rem', color: '#565656' }}>{u.email}</div>
+                      <div style={{ color: '#F8F8F8' }}>{u.name}{isSelf && <span className="mono" style={{ color: '#8B8B8B', fontSize: '0.7rem' }}> (you)</span>}</div>
+                      <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{u.email}</div>
                     </td>
                     <td>
                       <select
@@ -74,15 +88,16 @@ export default function AdminUsers() {
                       </select>
                     </td>
                     <td>
-                      <span className={`badge ${u.status === 'active' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.55rem' }}>{u.status.toUpperCase()}</span>
-                      {u.creatorStatus === 'pending' && <span className="badge badge-yellow" style={{ fontSize: '0.55rem', marginLeft: 6 }}>CREATOR PENDING</span>}
+                      <span className={`badge ${u.status === 'active' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.7rem' }}>{u.status.toUpperCase()}</span>
+                      {u.creatorStatus === 'pending' && <span className="badge badge-yellow" style={{ fontSize: '0.7rem', marginLeft: 6 }}>CREATOR PENDING</span>}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {!isSelf && (u.status === 'active' ? (
-                        <button className="btn btn-ghost" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setSuspendTarget(u)}>SUSPEND</button>
+                        <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', color: '#FF2028', borderColor: '#FF2028' }} onClick={() => setSuspendTarget(u)}>SUSPEND</button>
                       ) : (
-                        <button className="btn btn-secondary" style={{ fontSize: '0.6rem', padding: '0.3rem 0.6rem' }} onClick={() => changeStatus(u, 'active')}>REACTIVATE</button>
+                        <button className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem' }} onClick={() => changeStatus(u, 'active')}>REACTIVATE</button>
                       ))}
+                      {!isSelf && <button className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', marginLeft: 6 }} onClick={() => setDeleteTarget(u)}>DELETE</button>}
                     </td>
                   </tr>
                 );
@@ -90,7 +105,18 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
+        <Pager {...paged} />
       </Panel>
+
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={removeUser}
+        title="DELETE ACCOUNT"
+        message={`Permanently delete ${deleteTarget?.name} and everything that belongs to them${deleteTarget?.role === 'creator' ? ' (courses, videos and CV included)' : ''}? This cannot be undone.`}
+        confirmLabel="DELETE FOREVER"
+        danger
+      />
 
       <ConfirmDialog
         isOpen={!!suspendTarget}

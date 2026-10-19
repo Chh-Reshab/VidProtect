@@ -40,14 +40,14 @@ export default function LearnerCourse() {
 
   return (
     <div style={{ padding: '2rem', animation: 'fadeIn 0.3s ease' }}>
-      <button className="btn btn-ghost" style={{ fontSize: '0.65rem', marginBottom: '1.5rem' }} onClick={() => navigate(-1)}>
+      <button className="btn btn-ghost" style={{ fontSize: '0.7rem', marginBottom: '1.5rem' }} onClick={() => navigate(-1)}>
         <ChevronLeft size={14} /> BACK
       </button>
 
       <Panel style={{ marginBottom: '1.5rem' }}>
         <CourseCover course={course} height={200} />
         <div style={{ padding: '1.5rem' }}>
-          <div className="mono" style={{ fontSize: '0.6rem', color: '#FF2028', marginBottom: '0.4rem' }}>
+          <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginBottom: '0.4rem' }}>
             COURSE{creator ? ` · BY ${creator.name.toUpperCase()}` : ''}
             {course.status !== 'active' && ' · UNPUBLISHED (ONLY YOU CAN SEE THIS)'}
           </div>
@@ -63,7 +63,7 @@ export default function LearnerCourse() {
                   <span style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.3rem', color: '#F8F8F8' }}>{prog.percent}%</span>
                 </ProgressRing>
                 <div style={{ flex: 1, minWidth: 220 }}>
-                  <div className="mono" style={{ fontSize: '0.6rem', color: '#808080', marginBottom: '0.3rem' }}>YOUR PROGRESS</div>
+                  <div className="mono" style={{ fontSize: '0.7rem', color: '#808080', marginBottom: '0.3rem' }}>YOUR PROGRESS</div>
                   <div style={{ fontSize: '1rem', color: '#F8F8F8', marginBottom: '0.5rem' }}>
                     {prog.percent === 100 ? 'Course completed' : `${prog.percent}% complete`}
                   </div>
@@ -81,9 +81,9 @@ export default function LearnerCourse() {
               </div>
             )
           ) : enrollment ? (
-            <span className="badge badge-red" style={{ fontSize: '0.65rem' }}>YOUR ENROLLMENT IS {enrollment.status.toUpperCase()}</span>
+            <span className="badge badge-red" style={{ fontSize: '0.7rem' }}>YOUR ENROLLMENT IS {enrollment.status.toUpperCase()}</span>
           ) : course.visibility === 'invite_only' ? (
-            <span className="badge badge-grey" style={{ fontSize: '0.65rem' }}><Lock size={10} style={{ marginRight: 4 }} />INVITE ONLY — ASK THE CREATOR TO ENROL YOU</span>
+            <span className="badge badge-grey" style={{ fontSize: '0.7rem' }}><Lock size={10} style={{ marginRight: 4 }} />INVITE ONLY — ASK THE CREATOR TO ENROL YOU</span>
           ) : (
             <button className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => navigate(`/learn/checkout/${course.id}`)}>
               {course.price > 0 ? `ENROLL · ${formatPrice(course.price)}` : 'ENROLL · FREE'}
@@ -94,7 +94,7 @@ export default function LearnerCourse() {
 
       <Panel title={`VIDEOS (${videos.length})`}>
         {videos.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#565656', fontSize: '0.85rem' }}>No videos have been added yet.</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#8B8B8B', fontSize: '0.85rem' }}>No videos have been added yet.</div>
         ) : videos.map((v, i) => {
           const p = progress[v.id];
           const fraction = prog.perVideo[v.id] || 0;
@@ -102,28 +102,28 @@ export default function LearnerCourse() {
           return (
             <div key={v.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ width: 24, flexShrink: 0 }}>
-                {!hasAccess ? <Lock size={16} color="#565656" />
+                {!hasAccess ? <Lock size={16} color="#8B8B8B" />
                   : p?.completed ? <CheckCircle size={16} color="#22c55e" />
-                  : <Circle size={16} color="#565656" />}
+                  : <Circle size={16} color="#8B8B8B" />}
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontSize: '0.9rem', color: hasAccess ? '#F8F8F8' : '#A0A0A0' }}>{i + 1}. {v.title}</div>
-                <div className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>{v.duration}</div>
+                <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>{v.duration}</div>
                 {showProgress && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.45rem', maxWidth: 340 }}>
                     <div style={{ flex: 1 }}><ProgressBar percent={pct} height={4} /></div>
-                    <span className="mono" style={{ fontSize: '0.6rem', color: p?.completed ? '#22c55e' : pct > 0 ? '#F8F8F8' : '#565656', minWidth: 74, textAlign: 'right' }}>
+                    <span className="mono" style={{ fontSize: '0.7rem', color: p?.completed ? '#22c55e' : pct > 0 ? '#F8F8F8' : '#565656', minWidth: 74, textAlign: 'right' }}>
                       {p?.completed ? 'COMPLETED' : pct > 0 ? `${pct}% WATCHED` : 'NOT STARTED'}
                     </span>
                   </div>
                 )}
               </div>
               {hasAccess ? (
-                <Link to={`/learn/watch/${v.id}`} className="btn btn-secondary" style={{ fontSize: '0.6rem', padding: '0.35rem 0.75rem' }}>
+                <Link to={`/learn/watch/${v.id}`} className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '0.35rem 0.75rem' }}>
                   <Play size={11} /> {p && !p.completed && p.positionSeconds > 0 ? 'RESUME' : p?.completed ? 'WATCH AGAIN' : 'WATCH'}
                 </Link>
               ) : (
-                <span className="mono" style={{ fontSize: '0.58rem', color: '#565656' }}>ENROL TO WATCH</span>
+                <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>ENROL TO WATCH</span>
               )}
             </div>
           );

@@ -8,16 +8,20 @@ export const findUser = (id) => db.users.find(u => u.id === id);
 export const findCourse = (id) => db.courses.find(c => c.id === id);
 export const findVideo = (id) => db.videos.find(v => v.id === id);
 
+// How much history is kept (the newest entries); raise these if you need a longer trail
+const AUDIT_LIMIT = Number(process.env.AUDIT_LIMIT || 5000);
+const LOG_LIMIT = Number(process.env.LOG_LIMIT || 10000);
+
 export const audit = (actorId, action, targetType, targetId, meta = {}) => {
   db.audit.unshift({ id: uid('aud'), actorId, action, targetType, targetId, meta, createdAt: new Date().toISOString() });
-  db.audit = db.audit.slice(0, 1000);
+  db.audit = db.audit.slice(0, AUDIT_LIMIT);
   save();
 };
 
 export const recordLog = (event, userObj = null) => {
   const log = { id: uid('log'), timestamp: new Date().toISOString(), ...event };
   db.logs.unshift(log);
-  db.logs = db.logs.slice(0, 2000);
+  db.logs = db.logs.slice(0, LOG_LIMIT);
   save();
   // Run velocity check after authorized streams (denial check is in logDenied)
   if (userObj && event.eventType === 'stream_authorized') {

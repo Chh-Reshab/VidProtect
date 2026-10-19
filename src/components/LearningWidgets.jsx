@@ -35,7 +35,7 @@ export const ProgressRing = ({ percent, size = 120, stroke = 10, color = '#22c55
 
 export const StatTile = ({ label, value, sub, accent }) => (
   <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '0.9rem 1rem', minWidth: 0 }}>
-    <div className="mono" style={{ fontSize: '0.58rem', color: '#565656', marginBottom: '0.35rem' }}>{label}</div>
+    <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '0.35rem' }}>{label}</div>
     <div style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.5rem', lineHeight: 1, color: accent || '#F8F8F8' }}>{value}</div>
     {sub && <div style={{ fontSize: '0.7rem', color: '#808080', marginTop: '0.35rem' }}>{sub}</div>}
   </div>
@@ -55,13 +55,13 @@ export const ActivityHeatmap = ({ activity }) => {
             {months.map(({ week, month }, i) => {
               const next = months[i + 1]?.week ?? 53;
               return next - week >= 3
-                ? <span key={`${month}-${week}`} className="mono" style={{ gridColumn: `${week + 1} / span 3`, fontSize: '0.6rem', color: '#808080', whiteSpace: 'nowrap' }}>{MONTHS[month - 1]}</span>
+                ? <span key={`${month}-${week}`} className="mono" style={{ gridColumn: `${week + 1} / span 3`, fontSize: '0.7rem', color: '#808080', whiteSpace: 'nowrap' }}>{MONTHS[month - 1]}</span>
                 : null;
             })}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <div style={{ display: 'grid', gridTemplateRows: `repeat(7, ${CELL}px)`, rowGap: GAP, width: 24 }} aria-hidden="true">
-              {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((d, i) => <span key={i} className="mono" style={{ fontSize: '0.55rem', color: '#565656', lineHeight: `${CELL}px` }}>{d}</span>)}
+              {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((d, i) => <span key={i} className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', lineHeight: `${CELL}px` }}>{d}</span>)}
             </div>
             <div style={{ display: 'grid', gridTemplateRows: `repeat(7, ${CELL}px)`, gridAutoFlow: 'column', gridAutoColumns: `${CELL}px`, gap: GAP }} aria-hidden="true">
               {weeks.flat().map(cell => (
@@ -76,9 +76,9 @@ export const ActivityHeatmap = ({ activity }) => {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'flex-end', marginTop: 4 }} aria-hidden="true">
-        <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>LESS</span>
+        <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>LESS</span>
         {LEVEL_COLORS.map(c => <span key={c} style={{ width: CELL, height: CELL, borderRadius: 2, background: c }} />)}
-        <span className="mono" style={{ fontSize: '0.55rem', color: '#565656' }}>MORE</span>
+        <span className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B' }}>MORE</span>
       </div>
     </div>
   );

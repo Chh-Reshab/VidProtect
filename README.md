@@ -64,10 +64,35 @@ Not yet done: encryption at rest, transcoding to HLS, cloud object storage, emai
 npm run build
 JWT_SECRET=<long random string> NODE_ENV=production npm run server   # serves the API and the built app
 ```
-Environment variables: `JWT_SECRET` (required in production), `API_PORT` (default 4000), `VP_DATA_DIR`, `VP_UPLOAD_DIR`, `AUTH_RATE_LIMIT` (login attempts per 15 min per IP, default 30).
+Environment variables: `JWT_SECRET` (required in production), `API_PORT` (default 4000), `VP_DATA_DIR`, `VP_UPLOAD_DIR`, `AUTH_RATE_LIMIT` (login attempts per 15 min per IP, default 30), `AUDIT_LIMIT` / `LOG_LIMIT` (how many audit-log / access-log entries are kept, default 5,000 / 10,000).
 
 ## 🔐 Accounts
 There are no demo accounts. Locally, sign in at `/login` as `admin@vidprotect.local` with `VidProtect@Admin1`. In production set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (at least 12 characters).
+
+## 🔒 Account security
+
+- **Passwords** are hashed with bcrypt and must be 8 to 72 bytes with a letter, a number and a special character.
+- **Forgot password:** the sign-in page offers a reset link by email (needs the email setup below; on a developer machine the link is printed in the console). Links work once for 1 hour and sign every device out.
+- **Two-step verification (TOTP):** on the profile / settings / admin account page anyone can turn on codes from an authenticator app (Google Authenticator, Authy...), with 10 one-time recovery codes. Strongly recommended for creators and admins. Secrets are stored encrypted with the master key (the `npm run rotate:key` script re-encrypts them too).
+- **Delete account:** each person can delete their own account and data (password, and a code if two-step is on). A creator whose published courses still have learners must unpublish them first, and the last admin cannot be deleted. Admins can delete accounts from the Users page. Payment records are kept without the person.
+- **Creator decisions** (approved / rejected, with the reviewer's note) are emailed to the applicant.
+- A strict **Content Security Policy** is sent with every response (scripts only from this site and Razorpay).
+
+## 🧪 Tests and quality
+
+```bash
+npm test        # ~550 checks: starts the real server on a free port per test file, no setup needed
+npm run lint
+```
+
+The suites cover sign-up and sign-in rules, roles and ownership, creator applications, password reset, two-step verification, account deletion, email verification, encryption and streaming, thumbnails, payments (built-in checkout and Razorpay with a fake Razorpay), the admin bootstrap, and security headers. `test/mongodb.test.js` also needs a real MongoDB: set `MONGODB_TEST_URI=mongodb://127.0.0.1:27017` to run it (it is skipped otherwise). GitHub Actions runs everything, with a MongoDB service, on every push (`.github/workflows/ci.yml`).
+
+## 🗄️ Backups and keys
+
+- `npm run backup` writes the database (accounts, courses, enrolments, payments, logs) to `backups/vidprotect-<date>.json`. It works with the JSON file and with MongoDB. The file holds password hashes: keep it private.
+- The encrypted videos live in S3 / MongoDB / the uploads folder: back those up in that service.
+- **Keep a copy of `VP_MASTER_KEY` somewhere safe.** Without it no video can be decrypted and two-step secrets cannot be read.
+- `npm run rotate:key -- <new 64-hex key>` swaps the master key (see the script header).
 
 ## 🤝 Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/Chh-Reshab/VidProtect/issues).
@@ -140,6 +165,19 @@ When a mail provider is configured, new accounts must confirm their email before
 **Brevo (alternative):** set `BREVO_API_KEY` and `MAIL_FROM` (an address verified in Brevo). Using a Gmail address there may land in spam; a domain you own works best. Gmail takes priority when both are set.
 
 Without any of these variables nothing is sent and sign-up needs no verification (the logs warn about this in production). To try the flow locally without email, set `REQUIRE_EMAIL_VERIFICATION=true`: the verification link is printed in the server log.
+
+### Payments with Razorpay (optional)
+
+Paid courses can be bought through Razorpay. **Test mode is free and needs no KYC**: no real money moves, and you pay with Razorpay's test cards.
+
+1. Create an account at razorpay.com and switch the dashboard to **Test Mode**. Under **Account & Settings → API Keys**, generate a key and copy the **Key Id** (`rzp_test_...`) and **Key Secret**.
+2. On Render add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. The checkout page then opens Razorpay's payment window.
+3. Recommended: under **Account & Settings → Webhooks** add `https://YOUR-SITE/api/webhooks/razorpay`, choose the event **payment.captured**, type a secret of your own, and put the same value in `RAZORPAY_WEBHOOK_SECRET`. This completes the purchase even if the buyer closes the tab right after paying.
+4. Pay in test mode with card `4111 1111 1111 1111` (any future expiry, any CVV, any OTP), or UPI `success@razorpay`.
+
+How it is protected: the server creates the order and fixes the price from the course record. A purchase counts only after the payment signature is valid **and** Razorpay itself confirms the order and amount. A buyer cannot change the price, reuse another person's payment or pay for one course and get another.
+
+To go live later, finish Razorpay's KYC, then replace the two keys with the `rzp_live_...` pair and add a live webhook. Without these variables the app keeps its built-in beta test checkout.
 
 ### Storing the encrypted videos in Amazon S3 (optional)
 
