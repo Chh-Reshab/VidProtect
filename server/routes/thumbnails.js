@@ -20,11 +20,11 @@ import { canManageCourse, canManageVideo } from '../../src/auth/permissions.js';
 const router = Router();
 
 const MAX_BYTES = 5 * 1024 * 1024;
-const EXT_BY_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
-const MIME_BY_EXT = { '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+export const EXT_BY_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+export const MIME_BY_EXT = { '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
 const NAME_RE = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
-const sniffImage = (filePath) => {
+export const sniffImage = (filePath) => {
   const fd = fs.openSync(filePath, 'r');
   const b = Buffer.alloc(12);
   fs.readSync(fd, b, 0, 12, 0);

@@ -152,3 +152,41 @@ export const validateCreatorApplication = (input, { hasCv = false } = {}) => {
     values: { displayName: name.value, teachingHistory, topics, yearsExperience: years, linkedinUrl, teachesElsewhere, otherPlatform },
   };
 };
+
+// ============================================
+// Creator public profile (what learners see before they enrol)
+// ============================================
+
+export const PROFILE_HEADLINE_MAX = 100;
+export const PROFILE_BIO_MAX = 1000;
+export const ACHIEVEMENT_MIN = 3;
+export const ACHIEVEMENT_MAX = 100;
+export const ACHIEVEMENTS_LIMIT = 8;
+
+export const validateCreatorProfile = (input = {}) => {
+  const errors = {};
+  const headline = cleanText(input.headline, PROFILE_HEADLINE_MAX).replace(/\n/g, ' ');
+  if (headline.length > PROFILE_HEADLINE_MAX) errors.headline = `Keep the headline under ${PROFILE_HEADLINE_MAX} characters.`;
+  const bio = cleanText(input.bio, PROFILE_BIO_MAX);
+  if (bio.length > PROFILE_BIO_MAX) errors.bio = `Keep the bio under ${PROFILE_BIO_MAX} characters.`;
+
+  let website = '';
+  if (typeof input.website === 'string' && input.website.trim()) {
+    const u = validateUrl(input.website);
+    if (u.error) errors.website = u.error; else website = u.value;
+  }
+
+  const list = Array.isArray(input.achievements) ? input.achievements : [];
+  const achievements = list.map(a => cleanText(a, ACHIEVEMENT_MAX).replace(/\n/g, ' ')).filter(Boolean);
+  if (list.length > ACHIEVEMENTS_LIMIT || achievements.length > ACHIEVEMENTS_LIMIT) errors.achievements = `Add at most ${ACHIEVEMENTS_LIMIT} achievements.`;
+  else if (achievements.some(a => a.length < ACHIEVEMENT_MIN || a.length > ACHIEVEMENT_MAX)) errors.achievements = `Each achievement must be ${ACHIEVEMENT_MIN} to ${ACHIEVEMENT_MAX} characters.`;
+
+  return {
+    errors,
+    values: {
+      headline, bio, website, achievements,
+      showExperience: input.showExperience !== false && input.showExperience !== 'false',
+      showLinks: input.showLinks === true || input.showLinks === 'true',
+    },
+  };
+};

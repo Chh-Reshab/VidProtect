@@ -15,11 +15,13 @@ import compression from 'compression';
 import { initDb, closeDb, mongoEnabled } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured, appUrl } from './mail.js';
+import { renderPrivacyHtml, prepareIndexHtml } from './publicPages.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
 import { ensureAdmin, removeDemoData } from './bootstrap.js';
 import authRoutes from './routes/auth.js';
 import creatorApplicationRoutes from './routes/creatorApplication.js';
 import mfaRoutes from './routes/mfa.js';
+import profileRoutes from './routes/profile.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
 import videoRoutes from './routes/videos.js';
@@ -77,21 +79,26 @@ app.use('/api/creator', creatorApplicationRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', thumbnailRoutes);
+app.use('/api', profileRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', videoRoutes);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 
+// The privacy policy is plain HTML (readable without scripts, by search engines and Google's reviewers)
+app.get('/privacy', (req, res) => res.setHeader('Cache-Control', 'no-cache').type('html').send(renderPrivacyHtml()));
+
 // Production: serve the built SPA
 const dist = path.join(here, '..', 'dist');
 if (fs.existsSync(dist)) {
+  const indexHtml = prepareIndexHtml(fs.readFileSync(path.join(dist, 'index.html'), 'utf8'));
   app.use(express.static(dist, {
     index: false,
     // Built files have a content hash in their name, so browsers may keep them for good; index.html must stay fresh
     setHeaders: (res, file) => res.setHeader('Cache-Control', file.includes(`${path.sep}assets${path.sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache'),
   }));
-  app.get('/{*splat}', (req, res) => res.setHeader('Cache-Control', 'no-cache').sendFile(path.join(dist, 'index.html')));
+  app.get('/{*splat}', (req, res) => res.setHeader('Cache-Control', 'no-cache').type('html').send(indexHtml));
 }
 
 // eslint-disable-next-line no-unused-vars

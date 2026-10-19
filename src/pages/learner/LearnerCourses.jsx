@@ -5,7 +5,7 @@
 // ============================================
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Lock, Video, Users, Search, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { getEnrolledCourses, getCatalog, getUserById } from '../../services/dataService';
@@ -97,7 +97,12 @@ const CatalogCard = ({ course, creator, enrolled, onOpen }) => {
           <div style={{ width: 28, height: 28, background: '#292929', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#A0A0A0', flexShrink: 0 }} aria-hidden="true">
             {initials(creator?.name)}
           </div>
-          <span style={{ fontSize: '0.8rem', color: '#A0A0A0' }}>{creator?.name || 'VidProtect creator'}</span>
+          {creator ? (
+            // opens the creator's profile instead of the course (the card itself is a link too)
+            <Link to={`/learn/creator/${creator.id}`} onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} style={{ fontSize: '0.8rem', color: '#A0A0A0', textDecoration: 'underline' }}>{creator.name}</Link>
+          ) : (
+            <span style={{ fontSize: '0.8rem', color: '#A0A0A0' }}>VidProtect creator</span>
+          )}
         </div>
 
         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#F8F8F8', lineHeight: 1.3 }}>{course.title}</h3>

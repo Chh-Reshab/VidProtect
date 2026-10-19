@@ -288,7 +288,7 @@ export default function LearnerCheckout() {
           <CourseCover course={course} height={140} />
           <div style={{ padding: '1.25rem' }}>
             <div style={{ fontSize: '1rem', color: '#F8F8F8', marginBottom: '0.25rem' }}>{course.title}</div>
-            {creator && <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1rem' }}>BY {creator.name.toUpperCase()} · {course.videoCount ?? 0} VIDEOS</div>}
+            {creator && <div className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1rem' }}>BY <Link to={`/learn/creator/${creator.id}`} style={{ color: '#A0A0A0', textDecoration: 'underline' }}>{creator.name.toUpperCase()}</Link> · {course.videoCount ?? 0} VIDEOS</div>}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderTop: '1px solid #292929', fontSize: '0.85rem', color: '#A0A0A0' }}>
               <span>Price</span><span>{isFree ? 'Free' : rupees(price)}</span>
             </div>

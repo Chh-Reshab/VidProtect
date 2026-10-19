@@ -581,7 +581,7 @@ export default function LandingPage() {
             </div>
             <div>
               <div className="mono" style={{ fontSize: '0.7rem', color: '#A0A0A0', marginBottom: '1rem' }}>PLATFORM</div>
-              {[['Login', '/login'], ['Create an account', '/login'], ['Creator login', '/creator/login']].map(([label, to]) => (
+              {[['Login', '/login'], ['Create an account', '/login'], ['Creator login', '/creator/login'], ['Privacy policy', '/privacy']].map(([label, to]) => (
                 <div key={label} style={{ marginBottom: '0.5rem' }}><Link to={to} className="lp-foot-link">{label}</Link></div>
               ))}
             </div>

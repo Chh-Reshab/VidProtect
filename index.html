@@ -17,7 +17,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Archivo+Black&family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Shown until the app loads (and to anything that does not run scripts, such as search engines and reviewers) -->
+      <main style="max-width:680px;margin:0 auto;padding:3rem 1.25rem;font:16px/1.65 Arial,Helvetica,sans-serif;color:#a0a0a0;background:#101010;min-height:100vh;box-sizing:border-box">
+        <h1 style="color:#f8f8f8;font-size:2rem;margin:0 0 .5rem">VidProtect AI</h1>
+        <p style="color:#f8f8f8;font-size:1.1rem;margin:0 0 1rem">Secure video hosting for online course creators.</p>
+        <p>VidProtect AI lets creators upload course videos that are encrypted and shown only to learners who are enrolled. Learners watch in a protected player with a viewer watermark, creators see who watched their videos, and an admin reviews every new creator before they can publish.</p>
+        <ul>
+          <li>AES-256 encrypted video storage</li>
+          <li>Access limited to enrolled learners</li>
+          <li>Watch activity and security alerts for creators</li>
+          <li>Creator applications reviewed by an admin</li>
+        </ul>
+        <p>VidProtect AI sends account emails (verification, password reset and notices) through the Gmail API using send-only access to its own mailbox. It does not read or access anyone's Gmail. See the <a href="/privacy" style="color:#ff2028">Privacy Policy</a>.</p>
+        <p><a href="/login" style="color:#ff2028">Sign in</a> &middot; <a href="/creator/login" style="color:#ff2028">Creator sign in</a> &middot; <a href="/privacy" style="color:#ff2028">Privacy Policy</a></p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -61,6 +61,17 @@ router.patch('/users/:id', (req, res) => {
   res.json({ success: true, user: toPublic(user) });
 });
 
+// Clears a creator's public profile (picture, headline, bio, achievements) if it breaks the content policy
+router.delete('/creators/:id/profile', (req, res) => {
+  const user = findUser(req.params.id);
+  if (!user || user.role !== 'creator') return res.status(404).json({ error: 'Creator not found.' });
+  if (user.profile?.avatar) blobs.remove('avatars', user.profile.avatar).catch(() => {});
+  delete user.profile;
+  save();
+  audit(req.user.id, 'creator.profile_clear', 'user', user.id);
+  res.json({ success: true });
+});
+
 // Permanently removes an account and its data
 router.delete('/users/:id', async (req, res) => {
   const user = findUser(req.params.id);

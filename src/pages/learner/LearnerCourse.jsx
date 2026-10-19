@@ -48,7 +48,7 @@ export default function LearnerCourse() {
         <CourseCover course={course} height={200} />
         <div style={{ padding: '1.5rem' }}>
           <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028', marginBottom: '0.4rem' }}>
-            COURSE{creator ? ` · BY ${creator.name.toUpperCase()}` : ''}
+            COURSE{creator && <> · BY <Link to={`/learn/creator/${creator.id}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{creator.name.toUpperCase()}</Link></>}
             {course.status !== 'active' && ' · UNPUBLISHED (ONLY YOU CAN SEE THIS)'}
           </div>
           <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.6rem', textTransform: 'uppercase', letterSpacing: '-0.02em', marginBottom: '0.75rem' }}>

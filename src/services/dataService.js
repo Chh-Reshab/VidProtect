@@ -237,6 +237,22 @@ export const reportCapture = async (videoId, signal) => {
   return r.ok ? r.data : null;
 };
 
+// ─── CREATOR PUBLIC PROFILE ──────────────────
+export const getCreatorProfile = async (creatorId) => {
+  const r = await request('GET', `/creators/${creatorId}`);
+  return r.ok ? { success: true, ...r.data } : { success: false, error: r.data?.error || 'Could not load this profile.' };
+};
+export const saveMyProfile = (fields) => write(request('PUT', '/profile', fields));
+export const removeMyAvatar = () => write(request('DELETE', '/profile/avatar'));
+export const uploadMyAvatar = async (file) => {
+  const form = new FormData();
+  form.append('image', file);
+  const r = await uploadForm('/profile/avatar', form);
+  if (r.ok) await loadData();
+  return r.ok ? { success: true, avatarUrl: r.data.avatarUrl } : { success: false, error: r.data?.error || 'Could not upload the picture.' };
+};
+export const clearCreatorProfile = (adminId, userId) => write(request('DELETE', `/admin/creators/${userId}/profile`));
+
 export const removeEnrollment = (actorId, enrollmentId) =>
   write(request('DELETE', `/enrollments/${enrollmentId}`));
 

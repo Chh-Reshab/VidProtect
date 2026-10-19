@@ -75,6 +75,7 @@ There are no demo accounts. Locally, sign in at `/login` as `admin@vidprotect.lo
 - **Forgot password:** the sign-in page offers a reset link by email (needs the email setup below; on a developer machine the link is printed in the console). Links work once for 1 hour and sign every device out.
 - **Two-step verification (TOTP):** on the profile / settings / admin account page anyone can turn on codes from an authenticator app (Google Authenticator, Authy...), with 10 one-time recovery codes. Strongly recommended for creators and admins. Secrets are stored encrypted with the master key (the `npm run rotate:key` script re-encrypts them too).
 - **Delete account:** each person can delete their own account and data (password, and a code if two-step is on). A creator whose published courses still have learners must unpublish them first, and the last admin cannot be deleted. Admins can delete accounts from the Users page. Payment records are kept without the person.
+- **Creator profiles:** before enrolling, a learner can click the creator's name (on a course, in the catalog or at checkout) to open their public profile: picture, headline, about, years of teaching and topics, links, achievements, and published courses. Badges ("Verified creator", number of courses and learners) are computed from real data; creators add their own highlights and choose whether to show their experience and links at `/studio/profile`. The CV and the application text are never shown. Admins can clear an inappropriate profile from the Users page.
 - **Creator decisions** (approved / rejected, with the reviewer's note) are emailed to the applicant.
 - **Screenshot / recording attempts:** while a video plays, the player watches for Print Screen and screenshot shortcuts (a website cannot see screen recorders, so this is a warning sign, not proof). 1st attempt: the learner is warned on screen and by email. 2nd and later: the creator gets an alert in the studio and an email, with a button to remove the learner from the course. Optional automatic suspension is **off by default**. Settings: `CAPTURE_ALERT_FROM` (default 2), `CAPTURE_BLOCK_AFTER` (default 0 = never; e.g. 5), `CAPTURE_DECAY_DAYS` (default 30), `CAPTURE_DEDUPE_MS` (default 30000). The privacy page tells learners about this.
 - A strict **Content Security Policy** is sent with every response (scripts only from this site and Razorpay).
@@ -166,6 +167,15 @@ When a mail provider is configured, new accounts must confirm their email before
 **Brevo (alternative):** set `BREVO_API_KEY` and `MAIL_FROM` (an address verified in Brevo). Using a Gmail address there may land in spam; a domain you own works best. Gmail takes priority when both are set.
 
 Without any of these variables nothing is sent and sign-up needs no verification (the logs warn about this in production). To try the flow locally without email, set `REQUIRE_EMAIL_VERIFICATION=true`: the verification link is printed in the server log.
+
+### Google OAuth verification (only if you publish the Gmail app)
+
+Google's reviewers open your home page and privacy page without signing in. The site now serves both as plain HTML: the home page explains what VidProtect AI is and links to the privacy policy, and `/privacy` is a full policy that includes the Gmail "Limited Use" statement. Set these on Render:
+
+- `CONTACT_EMAIL`: the address shown on the privacy page (defaults to `MAIL_FROM`).
+- `GOOGLE_SITE_VERIFICATION`: the token from Google Search Console's "HTML tag" method; the site adds the tag to the home page for you.
+
+Keep the service awake while Google checks it (a sleeping Render service looks "unresponsive").
 
 ### Payments with Razorpay (optional)
 

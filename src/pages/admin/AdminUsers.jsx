@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { getUsers, setUserRole, setUserStatus, deleteUser } from '../../services/dataService';
+import { getUsers, setUserRole, setUserStatus, deleteUser, clearCreatorProfile } from '../../services/dataService';
 import { usePaged } from '../../services/usePaged';
 import Pager from '../../components/Pager';
 import { SearchInput, SelectFilter, ConfirmDialog } from '../../components/SharedComponents';
@@ -23,6 +23,7 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('');
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [clearTarget, setClearTarget] = useState(null);
 
   const reload = () => setUsers(getUsers());
 
@@ -31,6 +32,15 @@ export default function AdminUsers() {
     (!search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())));
 
   const paged = usePaged(shown, 25);
+
+  const clearProfile = async () => {
+    const target = clearTarget;
+    setClearTarget(null);
+    const result = await clearCreatorProfile(currentUser.id, target.id);
+    if (!result.success) { showNotification(result.error, 'error'); return; }
+    reload();
+    showNotification(`${target.name}'s public profile was cleared.`);
+  };
 
   const removeUser = async () => {
     const target = deleteTarget;
@@ -107,6 +117,16 @@ export default function AdminUsers() {
         </div>
         <Pager {...paged} />
       </Panel>
+
+      <ConfirmDialog
+        isOpen={!!clearTarget}
+        onClose={() => setClearTarget(null)}
+        onConfirm={clearProfile}
+        title="CLEAR PUBLIC PROFILE"
+        message={`Remove ${clearTarget?.name}'s picture, headline, bio and achievements? Use this for content that breaks the policy. The creator can write a new profile.`}
+        confirmLabel="CLEAR"
+        danger
+      />
 
       <ConfirmDialog
         isOpen={!!deleteTarget}

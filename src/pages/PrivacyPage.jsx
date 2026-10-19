@@ -4,19 +4,9 @@
 
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/SharedComponents';
+import { PRIVACY_UPDATED, privacySections } from '../../shared/privacy.js';
 
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || ''; // optional: set VITE_CONTACT_EMAIL when building to show a contact address
-
-const sections = [
-  ['What we collect', 'When you create an account we store your name, email address and a hashed version of your password (we never store the password itself). While you use the service we store your course enrolments, watch progress and activity, payment records made in test mode, and security logs such as sign-in and playback events.'],
-  ['How we use it', 'We use this information to run your account, show your learning progress, let creators see who watched their videos, protect videos from misuse, and detect suspicious activity. Your email address is used only to send you an account verification link and essential service messages.'],
-  ['Videos', 'Uploaded videos are encrypted before they are stored and are decrypted only while an authorised, signed-in learner is watching.'],
-  ['Screenshot and recording attempts', 'While a video plays, the player watches for screenshot shortcuts (such as Print Screen). We cannot see screen recorders. A detected attempt is logged, you get a warning on screen and by email, and repeated attempts are reported to the creator of the video. Repeated attempts can lead to removal from a course or a suspended account. Detection is based on keyboard shortcuts, so it can be wrong; attempts older than 30 days stop counting.'],
-  ['Email', 'Verification emails are sent from our Gmail account using the Gmail API with permission to send mail only. We do not read, list or delete anyone\'s mail.'],
-  ['Sharing', 'We do not sell your personal information. We share it only with the services needed to run VidProtect AI (hosting, database and file storage providers) and when the law requires it.'],
-  ['Keeping and deleting your data', 'We keep your account data while your account is active. You can ask us to delete your account and the data linked to it at any time.'],
-  ['Changes', 'We may update this policy and will change the date below when we do.'],
-];
 
 export default function PrivacyPage() {
   return (
@@ -25,8 +15,8 @@ export default function PrivacyPage() {
         <div style={{ marginBottom: '2rem' }}><Link to="/" style={{ textDecoration: 'none' }}><Logo size="sm" /></Link></div>
         <div style={{ background: '#1D1D1D', border: '1px solid #292929', padding: '2rem' }}>
           <h1 style={{ fontFamily: 'Archivo Black, sans-serif', fontSize: '1.6rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Privacy Policy</h1>
-          <p className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1.5rem' }}>VIDPROTECT AI · LAST UPDATED OCTOBER 2026</p>
-          {sections.map(([title, body]) => (
+          <p className="mono" style={{ fontSize: '0.7rem', color: '#8B8B8B', marginBottom: '1.5rem' }}>VIDPROTECT AI · LAST UPDATED {PRIVACY_UPDATED.toUpperCase()}</p>
+          {privacySections.map(([title, body]) => (
             <section key={title} style={{ marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1rem', marginBottom: '0.4rem' }}>{title}</h2>
               <p style={{ color: '#A0A0A0', fontSize: '0.9rem', lineHeight: 1.6 }}>{body}</p>

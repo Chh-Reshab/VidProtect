@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Logo, NotificationToast, BetaBanner } from './SharedComponents';
+import Avatar from './Avatar';
 
 const STUDIO_NAV = [
   { to: '/studio/library', icon: Video, label: 'My Videos' },
@@ -21,6 +22,7 @@ const STUDIO_NAV = [
 const STUDIO_MORE = [
   { to: '/studio/logs', icon: ScrollText, label: 'Who watched' },
   { to: '/studio/alerts', icon: ShieldAlert, label: 'Security alerts' },
+  { to: '/studio/profile', icon: User, label: 'Public profile' },
   { to: '/studio/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -43,9 +45,6 @@ const ADMIN_MORE = [
   { to: '/admin/audit', icon: ClipboardList, label: 'Audit log' },
   { to: '/admin/account', icon: User, label: 'Account' },
 ];
-
-const initials = (name) =>
-  name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
 
 const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchTo, action }) => {
   const { currentUser, logout } = useApp();
@@ -122,17 +121,7 @@ const DashboardShell = ({ navItems, moreItems = [], roleLabel, homePath, switchT
 
         {/* User info */}
         <div style={{ padding: '1rem', borderBottom: '1px solid #292929', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: 32, height: 32,
-            background: '#FF2028',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'IBM Plex Mono, monospace',
-            fontSize: '0.7rem', fontWeight: 600,
-            color: '#fff',
-            flexShrink: 0,
-          }}>
-            {initials(currentUser?.name)}
-          </div>
+          <Avatar name={currentUser?.name} url={currentUser?.profile?.avatarUrl} size={32} accent />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F8F8F8', lineHeight: 1.2 }}>{currentUser?.name}</div>
             <div className="mono" style={{ fontSize: '0.7rem', color: '#FF2028' }}>{roleLabel}</div>

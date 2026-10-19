@@ -42,7 +42,10 @@ export const removeUsers = async (ids, { payments = 'anonymize' } = {}) => {
     if (v.thumbUrl) files.push(['thumbs', path.basename(v.thumbUrl)]);
   }
   for (const c of goneCourses) if (c.thumbUrl) files.push(['thumbs', path.basename(c.thumbUrl)]);
-  for (const u of removedUsers) if (u.creatorApplication?.cv?.name) files.push(['cvs', u.creatorApplication.cv.name]);
+  for (const u of removedUsers) {
+    if (u.creatorApplication?.cv?.name) files.push(['cvs', u.creatorApplication.cv.name]);
+    if (u.profile?.avatar) files.push(['avatars', u.profile.avatar]);
+  }
   await Promise.all(files.map(([bucket, name]) => blobs.remove(bucket, name).catch(() => {})));
 
   return { users: removedUsers.length, courses: goneCourses.length, videos: goneVideos.length };

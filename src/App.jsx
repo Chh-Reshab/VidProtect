@@ -35,6 +35,8 @@ const CoursesPage = page(() => import('./pages/CoursesPage'));
 const AccessLogsPage = page(() => import('./pages/AccessLogsPage'));
 const SecurityAlertsPage = page(() => import('./pages/SecurityAlertsPage'));
 const SettingsPage = page(() => import('./pages/SettingsPage'));
+const CreatorProfileEditor = page(() => import('./pages/CreatorProfileEditor'));
+const CreatorProfile = page(() => import('./pages/learner/CreatorProfile'));
 const LearnerHome = page(() => import('./pages/learner/LearnerHome'));
 const LearnerCourses = page(() => import('./pages/learner/LearnerCourses'));
 const LearnerCourse = page(() => import('./pages/learner/LearnerCourse'));
@@ -98,6 +100,7 @@ const AppRoutes = () => {
           <Route path="catalog" element={<LearnerCourses mode="catalog" />} />
           <Route path="course/:courseId" element={<LearnerCourse />} />
           <Route path="checkout/:courseId" element={<LearnerCheckout />} />
+          <Route path="creator/:creatorId" element={<CreatorProfile />} />
           <Route path="watch/:videoId" element={<LearnerWatch />} />
           <Route path="history" element={<LearnerHistory />} />
           <Route path="account" element={<LearnerAccount />} />
@@ -117,6 +120,7 @@ const AppRoutes = () => {
           <Route path="logs" element={<AccessLogsPage />} />
           <Route path="alerts" element={<SecurityAlertsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<CreatorProfileEditor />} />
         </Route>
       </Route>
 

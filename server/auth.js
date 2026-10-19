@@ -27,6 +27,7 @@ export const toPublic = (u) => {
   // eslint-disable-next-line no-unused-vars
   const { passwordHash, emailVerification, passwordReset, mfa, ...rest } = u;
   rest.mfaEnabled = !!mfa?.enabled;
+  if (rest.profile?.avatar) rest.profile = { ...rest.profile, avatarUrl: `/api/avatars/${rest.profile.avatar}` };
   if (rest.creatorApplication?.cv) {
     const { name: _stored, ...cv } = rest.creatorApplication.cv; // the stored file name is internal
     rest.creatorApplication = { ...rest.creatorApplication, cv };
