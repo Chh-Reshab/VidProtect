@@ -29,6 +29,7 @@ export const removeUsers = async (ids, { payments = 'anonymize' } = {}) => {
   db.audit = payments === 'remove'
     ? db.audit.filter(a => !ids.has(a.actorId))
     : db.audit.map(a => (ids.has(a.actorId) || ids.has(a.targetId) ? { ...a, actorId: ids.has(a.actorId) ? 'deleted-user' : a.actorId, targetId: ids.has(a.targetId) ? 'deleted-user' : a.targetId } : a));
+  db.chat = db.chat.filter(m => !ids.has(m.userId));
   db.sessions = db.sessions.filter(s => !ids.has(s.userId));
   db.streamSessions = db.streamSessions.filter(s => !ids.has(s.userId) && !videoIds.has(s.videoId));
   for (const map of [db.progress, db.settings, db.activity]) for (const id of ids) delete map[id];

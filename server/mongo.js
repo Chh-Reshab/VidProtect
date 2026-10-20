@@ -21,7 +21,7 @@ let mdb = null;
 // collection -> true when new items are added at the FRONT of the array (unshift)
 const ARRAYS = {
   users: false, courses: true, videos: true, enrollments: false, logs: true, alerts: true,
-  audit: true, payments: true, sessions: false, streamSessions: false,
+  audit: true, payments: true, chat: true, sessions: false, streamSessions: false,
 };
 const MAPS = ['progress', 'settings', 'activity'];
 

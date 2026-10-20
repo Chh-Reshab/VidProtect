@@ -253,6 +253,17 @@ export const uploadMyAvatar = async (file) => {
 };
 export const clearCreatorProfile = (adminId, userId) => write(request('DELETE', `/admin/creators/${userId}/profile`));
 
+// ─── DISCUSSION (community chat) ─────────────
+const chatResult = (r, fallback) => (r.ok ? { success: true, ...r.data } : { success: false, error: r.data?.error || fallback, mutedUntil: r.data?.mutedUntil });
+export const fetchChat = async (version) => chatResult(await request('GET', `/chat${version ? `?v=${version}` : ''}`), 'Could not load the discussion.');
+export const fetchOlderChat = async (beforeId) => chatResult(await request('GET', `/chat/older?before=${encodeURIComponent(beforeId)}`), 'Could not load older messages.');
+export const sendChatMessage = async (text) => chatResult(await request('POST', '/chat', { text }), 'Could not send the message.');
+export const deleteChatMessage = async (id) => chatResult(await request('DELETE', `/chat/${id}`), 'Could not delete the message.');
+export const reportChatMessage = async (id) => chatResult(await request('POST', `/chat/${id}/report`), 'Could not report the message.');
+export const getChatReports = async () => chatResult(await request('GET', '/chat/reports'), 'Could not load the reports.');
+export const reviewChatMessage = async (id, action) => chatResult(await request('POST', `/chat/${id}/review`, { action }), 'Could not update the message.');
+export const muteChatUser = async (userId, hours) => chatResult(await request('POST', `/chat/mute/${userId}`, { hours }), 'Could not change the mute.');
+
 export const removeEnrollment = (actorId, enrollmentId) =>
   write(request('DELETE', `/enrollments/${enrollmentId}`));
 

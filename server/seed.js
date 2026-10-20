@@ -15,5 +15,6 @@ export const buildSeed = () => ({
   settings: {},        // { [userId]: {...} }
   audit: [],
   sessions: [],        // refresh-token sessions
+  chat: [],            // community discussion messages, newest first
   streamSessions: [],  // short-lived playback sessions
 });

@@ -55,6 +55,7 @@ export const initDb = async () => {
   db.meta ||= {};
   db.activity ||= {};   // userId -> { 'YYYY-MM-DD': seconds watched }
   db.payments ||= [];   // added after the first release; older stores lack it
+  db.chat ||= [];       // community discussion messages, newest first
   initialised = true;
   if (!mongoEnabled()) writeJson(); // first run: create the file right away
 };

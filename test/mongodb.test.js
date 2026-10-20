@@ -36,6 +36,9 @@ if (!BASE_URI) {
   
     const reg = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acceptTerms: true, name: 'New Person', email: 'newperson@example.com', password: 'a-long-password-1' }) });
     ok('register a new account', reg.status === 201);
+    await call(maya, 'POST', '/chat', { text: 'First message' });
+    await sleep(1200);
+    await call(sarah, 'POST', '/chat', { text: 'Second message' });
   
     const course = (await call(maya, 'POST', '/courses', { title: 'Persistence Course', price: 250 })).json.course;
     await call(maya, 'PATCH', `/courses/${course.id}`, { status: 'active' });
@@ -64,6 +67,8 @@ if (!BASE_URI) {
     srv = await start(disk2);
     ok('local uploads folder is empty after the "restart"', fs.readdirSync(path.join(disk2.dir, 'uploads')).filter(f => f.endsWith('.vpe')).length === 0);
   
+    const roomAfter = (await call((await login('maya@creator.test')).token, 'GET', '/chat')).json.messages;
+    ok('discussion messages survive, in order', roomAfter.map(m => m.text).join('|') === 'First message|Second message', roomAfter.map(m => m.text));
     ok('registered account still exists', (await login('newperson@example.com', 'a-long-password-1')).status === 200);
     const maya2 = (await login('maya@creator.test')).token;
     const sarah2 = (await login('sarah@student.test')).token;

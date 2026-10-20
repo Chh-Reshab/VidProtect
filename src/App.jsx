@@ -39,6 +39,7 @@ const SecurityAlertsPage = page(() => import('./pages/SecurityAlertsPage'));
 const SettingsPage = page(() => import('./pages/SettingsPage'));
 const CreatorProfileEditor = page(() => import('./pages/CreatorProfileEditor'));
 const CreatorProfile = page(() => import('./pages/learner/CreatorProfile'));
+const ChatPage = page(() => import('./pages/ChatPage'));
 const LearnerHome = page(() => import('./pages/learner/LearnerHome'));
 const LearnerCourses = page(() => import('./pages/learner/LearnerCourses'));
 const LearnerCourse = page(() => import('./pages/learner/LearnerCourse'));
@@ -57,6 +58,7 @@ const TITLES = [
   ['/creator/login', 'Creator sign in'], ['/creator/apply', 'Creator application'], ['/login', 'Sign in'],
   ['/verify-email', 'Verify your email'], ['/reset-password', 'Reset your password'], ['/privacy', 'Privacy policy'],
   ['/terms', 'Terms of service'], ['/refund-policy', 'Refund policy'],
+  ['/learn/chat', 'Discussion'], ['/studio/chat', 'Discussion'], ['/admin/chat', 'Discussion moderation'],
   ['/learn', 'Learn'], ['/studio', 'Creator studio'], ['/admin', 'Admin'],
 ];
 const DEFAULT_TITLE = 'VidProtect AI — Secure the Content. Protect the Creator.';
@@ -106,6 +108,7 @@ const AppRoutes = () => {
           <Route path="course/:courseId" element={<LearnerCourse />} />
           <Route path="checkout/:courseId" element={<LearnerCheckout />} />
           <Route path="creator/:creatorId" element={<CreatorProfile />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="watch/:videoId" element={<LearnerWatch />} />
           <Route path="history" element={<LearnerHistory />} />
           <Route path="account" element={<LearnerAccount />} />
@@ -126,6 +129,7 @@ const AppRoutes = () => {
           <Route path="alerts" element={<SecurityAlertsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<CreatorProfileEditor />} />
+          <Route path="chat" element={<ChatPage />} />
         </Route>
       </Route>
 
@@ -138,6 +142,7 @@ const AppRoutes = () => {
           <Route path="content" element={<AdminContent />} />
           <Route path="audit" element={<AdminAudit />} />
           <Route path="account" element={<AdminAccount />} />
+          <Route path="chat" element={<ChatPage />} />
         </Route>
       </Route>
 

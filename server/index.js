@@ -22,6 +22,7 @@ import authRoutes from './routes/auth.js';
 import creatorApplicationRoutes from './routes/creatorApplication.js';
 import mfaRoutes from './routes/mfa.js';
 import profileRoutes from './routes/profile.js';
+import chatRoutes from './routes/chat.js';
 import dataRoutes from './routes/data.js';
 import courseRoutes from './routes/courses.js';
 import videoRoutes from './routes/videos.js';
@@ -76,6 +77,7 @@ app.get('/sitemap.xml', (req, res) => {
 app.use('/api/auth/mfa', mfaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/creator', creatorApplicationRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', thumbnailRoutes);

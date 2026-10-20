@@ -8,8 +8,7 @@ import {
   LayoutDashboard, Video, Upload, BookOpen, ScrollText,
   ShieldAlert, Settings, LogOut,
   Menu, X, Compass, History, User, Users,
-  UserCheck, Layers, ClipboardList, Repeat
-} from 'lucide-react';
+  UserCheck, Layers, ClipboardList, Repeat, MessagesSquare } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Logo, NotificationToast, BetaBanner } from './SharedComponents';
 import Avatar from './Avatar';
@@ -18,6 +17,7 @@ const STUDIO_NAV = [
   { to: '/studio/library', icon: Video, label: 'My Videos' },
   { to: '/studio/upload', icon: Upload, label: 'Upload' },
   { to: '/studio/courses', icon: BookOpen, label: 'Courses' },
+  { to: '/studio/chat', icon: MessagesSquare, label: 'Discussion' },
 ];
 const STUDIO_MORE = [
   { to: '/studio/logs', icon: ScrollText, label: 'Who watched' },
@@ -29,6 +29,7 @@ const STUDIO_MORE = [
 const LEARNER_NAV = [
   { to: '/learn', icon: LayoutDashboard, label: 'Home', end: true },
   { to: '/learn/catalog', icon: Compass, label: 'Browse courses' },
+  { to: '/learn/chat', icon: MessagesSquare, label: 'Discussion' },
 ];
 const LEARNER_MORE = [
   { to: '/learn/history', icon: History, label: 'Watch history' },
@@ -40,6 +41,7 @@ const ADMIN_NAV = [
   { to: '/admin/creators', icon: UserCheck, label: 'Creator approvals' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/content', icon: Layers, label: 'Content' },
+  { to: '/admin/chat', icon: MessagesSquare, label: 'Discussion' },
 ];
 const ADMIN_MORE = [
   { to: '/admin/audit', icon: ClipboardList, label: 'Audit log' },
