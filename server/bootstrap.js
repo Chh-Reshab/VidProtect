@@ -13,8 +13,9 @@ import { db, save, uid } from './db.js';
 import { removeUsers } from './accountData.js';
 import { revokeAllSessions } from './auth.js';
 import { validateEmail } from '../shared/validation.js';
+import { isProduction } from './env.js';
 
-const isProd = () => process.env.NODE_ENV === 'production';
+const isProd = isProduction;
 // Development convenience: used ONLY outside production, when ADMIN_EMAIL / ADMIN_PASSWORD are not set.
 // Production never uses them: it requires its own ADMIN_EMAIL and ADMIN_PASSWORD (the code is public).
 const LOCAL_ADMIN_EMAIL = 'admin@vidprotect.local';
@@ -59,14 +60,21 @@ export const ensureAdmin = () => {
       status: 'active',
       passwordHash: bcrypt.hashSync(chosen, 12),
       joinDate: new Date().toISOString().slice(0, 10),
+      ...(usingDefault ? { localOnly: true } : {}), // the public default password only works from this computer
     });
     save();
     console.log(`[admin] Created the admin account ${email}.${usingDefault ? ' (local development default; set ADMIN_EMAIL and ADMIN_PASSWORD to choose your own)' : ''}`);
     return;
   }
 
+  // An earlier version created the local admin without the local-only mark
+  if (!password && existing.email === LOCAL_ADMIN_EMAIL && !existing.localOnly && bcrypt.compareSync(LOCAL_ADMIN_PASSWORD, existing.passwordHash)) {
+    existing.localOnly = true;
+    save();
+  }
   if (password && !bcrypt.compareSync(password, existing.passwordHash)) {
     existing.passwordHash = bcrypt.hashSync(password, 12);
+    delete existing.localOnly;
     revokeAllSessions(existing.id); // anyone signed in with the old password is signed out
     save();
     console.log('[admin] Admin password set from ADMIN_PASSWORD.');

@@ -103,6 +103,11 @@ router.post(
     if (course.status === 'taken_down') {
       return res.status(403).json({ error: 'This course was taken down by a moderator.' });
     }
+    // A few uploads at a time per creator: each one is encrypted in the background and uses disk and CPU
+    const busy = db.videos.filter(v => v.creatorId === req.user.id && v.uploadStatus === 'processing').length;
+    if (busy >= Number(process.env.MAX_PROCESSING_PER_CREATOR || 3)) {
+      return res.status(429).json({ error: 'You already have several videos processing. Wait for them to finish, then upload again.' });
+    }
     req.course = course;
     return next();
   },
@@ -201,6 +206,13 @@ router.post('/videos/:id/stream-session', requireAuth, (req, res) => {
   }
 
   pruneSessions();
+  // One person holds a limited number of playback sessions at once: the oldest end
+  const maxSessions = Number(process.env.MAX_STREAM_SESSIONS_PER_USER || 20);
+  const own = db.streamSessions.filter(s => s.userId === user.id);
+  if (own.length >= maxSessions) {
+    const drop = new Set(own.slice(0, own.length - maxSessions + 1).map(s => s.id));
+    db.streamSessions = db.streamSessions.filter(s => !drop.has(s.id));
+  }
   const session = { id: `ss-${crypto.randomBytes(18).toString('hex')}`, userId: user.id, videoId: video.id, createdAt: Date.now(), expiresAt: Date.now() + SESSION_MS };
   db.streamSessions.push(session);
 

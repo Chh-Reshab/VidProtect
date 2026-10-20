@@ -108,6 +108,7 @@ export default function LearnerCheckout() {
   };
 
   const online = !isFree && config?.provider === 'razorpay';
+  const unavailable = !isFree && config?.provider === 'none'; // paid course on a site with no payment setup
 
   // Razorpay: server order -> Razorpay's window -> the server checks the result before enrolling
   const payOnline = async () => {
@@ -179,6 +180,10 @@ export default function LearnerCheckout() {
         <form onSubmit={pay}>
           <Panel title="PAYMENT">
             <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {unavailable && (
+                <div role="alert" style={{ color: '#eab308', fontSize: '0.85rem', lineHeight: 1.6 }}>Paid courses cannot be bought yet: online payments are not set up on this site. Free courses can still be joined.</div>
+              )}
+
               {inviteOnly && (
                 <div style={{ color: '#eab308', fontSize: '0.85rem' }}>This course is invite-only. Ask the creator to enrol you.</div>
               )}
@@ -276,7 +281,7 @@ export default function LearnerCheckout() {
 
               {error && <div className="form-error" role="alert">⊗ {error}</div>}
 
-              <button className="btn btn-primary" type="submit" disabled={busy || inviteOnly} style={{ justifyContent: 'center', fontSize: '0.9rem', padding: '0.9rem' }}>
+              <button className="btn btn-primary" type="submit" disabled={busy || inviteOnly || unavailable} style={{ justifyContent: 'center', fontSize: '0.9rem', padding: '0.9rem' }}>
                 {busy ? (online ? 'Waiting for payment…' : 'Processing…') : isFree ? 'Complete enrollment · ₹0' : <><Lock size={14} /> Pay {rupees(price)}</>}
               </button>
             </div>

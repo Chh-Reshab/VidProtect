@@ -51,7 +51,7 @@ export const startServer = async (options = {}) => {
       NODE_ENV: 'test',
       VP_DATA_DIR: dataDir, VP_UPLOAD_DIR: path.join(dir, 'uploads'), API_PORT: String(port),
       VP_MASTER_KEY: 'a'.repeat(64), VP_MIN_STAGE_MS: '0',
-      AUTH_RATE_LIMIT: '100000', APPLICATION_RATE_LIMIT: '100000',
+      AUTH_RATE_LIMIT: '100000', APPLICATION_RATE_LIMIT: '100000', API_RATE_LIMIT: '1000000',
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],

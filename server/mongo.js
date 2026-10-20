@@ -33,7 +33,7 @@ export const connect = async (uri, dbName) => {
     mdb = client.db(dbName || undefined);
     await mdb.command({ ping: 1 });
   } catch (err) {
-    throw new Error(`Could not connect to MongoDB (${err.message}). Check MONGODB_URI and, on Atlas, that Network Access allows this server.`);
+    throw new Error(`Could not connect to MongoDB (${String(err.message).replace(/\/\/[^@\s/]+@/g, '//***@')}). Check MONGODB_URI and, on Atlas, that Network Access allows this server.`); // never echo the password from the address
   }
   await enforceUserRules();
   return mdb;

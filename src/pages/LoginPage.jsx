@@ -363,7 +363,7 @@ export default function LoginPage({ portal = 'learner' }) {
                     <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.8rem', color: '#A0A0A0', cursor: 'pointer', lineHeight: 1.5 }}>
                       <input type="checkbox" checked={regTerms} onChange={e => { setRegTerms(e.target.checked); touch('terms'); }} style={{ marginTop: 3 }} />
                       <span>
-                        I agree to the <Link to="/terms" target="_blank" style={{ color: '#FF2028' }}>Terms of Service</Link>, the <Link to="/privacy" target="_blank" style={{ color: '#FF2028' }}>Privacy Policy</Link> and the <Link to="/refund-policy" target="_blank" style={{ color: '#FF2028' }}>Refund Policy</Link>.
+                        I agree to the <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>Terms of Service</Link>, the <Link to="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>Privacy Policy</Link> and the <Link to="/refund-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>Refund Policy</Link>.
                       </span>
                     </label>
                     {fieldError(shown('terms'))}

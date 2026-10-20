@@ -82,6 +82,17 @@ There are no demo accounts. Locally, sign in at `/login` as `admin@vidprotect.lo
 - **Screenshot / recording attempts:** while a video plays, the player watches for Print Screen and screenshot shortcuts (a website cannot see screen recorders, so this is a warning sign, not proof). 1st attempt: the learner is warned on screen and by email. 2nd and later: the creator gets an alert in the studio and an email, with a button to remove the learner from the course. Optional automatic suspension is **off by default**. Settings: `CAPTURE_ALERT_FROM` (default 2), `CAPTURE_BLOCK_AFTER` (default 0 = never; e.g. 5), `CAPTURE_DECAY_DAYS` (default 30), `CAPTURE_DEDUPE_MS` (default 30000). The privacy page tells learners about this.
 - A strict **Content Security Policy** is sent with every response (scripts only from this site and Razorpay).
 
+## 🛡️ Security notes
+
+- **Production is detected automatically** (`NODE_ENV=production`, or running on Render and similar hosts). There the server refuses to start without `JWT_SECRET` (32+ characters), `ADMIN_EMAIL` and `ADMIN_PASSWORD`, and the built-in local admin is not created.
+- **The local development admin** (`admin@vidprotect.local`) can only sign in from the computer running the server.
+- **Sign-in protection:** 10 wrong passwords for one account lock it for 15 minutes, whichever addresses they come from (`LOGIN_FAIL_LIMIT`, `LOGIN_LOCK_MS`); each address is also limited (`AUTH_RATE_LIMIT`). The whole API is limited per address (`API_RATE_LIMIT`, default 600 a minute; video bytes and images are exempt). One person keeps at most 10 sign-ins and 20 playback sessions at once (`MAX_STREAM_SESSIONS_PER_USER`), and a creator can have 3 videos processing at once (`MAX_PROCESSING_PER_CREATOR`).
+- **Proxy setting:** `TRUST_PROXY` is how many proxies sit in front of the app (default 1, right for Render). Use 0 if the app is reached directly.
+- **Simulated payments are off on a real deployment.** The built-in test checkout accepts a published test card, so unless Razorpay is set up, paid courses cannot be bought in production. To keep the beta test checkout, set `ALLOW_TEST_PAYMENTS=true` (no real money moves; nobody pays).
+- **Links in emails** are built from `APP_URL` / the host, never from request headers, and one-time links are never written to production logs.
+- **Turn on email verification** (Gmail or Brevo variables). Without it, anyone can create an account with someone else's email address first.
+- **Known limits:** rate limits and lockouts are kept in memory, so a restart clears them and two server instances would not share them (the app is built for one instance). `npm test` includes `test/security.test.js` with the attacks above.
+
 ## 🧪 Tests and quality
 
 ```bash

@@ -20,6 +20,7 @@ import { db, save, uid } from '../db.js';
 import { requireAuth } from '../auth.js';
 import { findCourse } from '../access.js';
 import { addEnrollment } from './courses.js';
+import { isProduction } from '../env.js';
 import {
   razorpayEnabled, razorpayTestMode, publicKeyId, webhookEnabled, createOrder, fetchPayment, capturePayment,
   checkoutSignatureValid, webhookSignatureValid,
@@ -83,8 +84,13 @@ const readMethod = (body) => {
 };
 
 // Which checkout the site uses (the page shows Razorpay's button or the test form)
+// The built-in test checkout accepts a published test card, so on a real deployment it is OFF unless the
+// owner turns it on (ALLOW_TEST_PAYMENTS=true, for a beta). Otherwise anyone could "buy" a paid course for free.
+const testCheckoutAllowed = () => !isProduction() || process.env.ALLOW_TEST_PAYMENTS === 'true';
+
 router.get('/payments/config', (req, res) => {
-  res.json(razorpayEnabled() ? { provider: 'razorpay', testMode: razorpayTestMode() } : { provider: 'test', testMode: true });
+  if (razorpayEnabled()) return res.json({ provider: 'razorpay', testMode: razorpayTestMode() });
+  res.json(testCheckoutAllowed() ? { provider: 'test', testMode: true } : { provider: 'none', testMode: false });
 });
 
 // The checks every purchase needs; returns { course } or { status, error }
@@ -105,6 +111,7 @@ router.post('/courses/:id/checkout', requireAuth, limiter, (req, res) => {
 
   const amount = course.price || 0; // never taken from the request
   if (amount > 0 && razorpayEnabled()) return res.status(400).json({ error: 'Use the online payment button to buy this course.' });
+  if (amount > 0 && !testCheckoutAllowed()) return res.status(503).json({ error: 'Paid courses cannot be bought yet: online payments are not set up.' });
   const base = {
     id: uid('pay'),
     userId: user.id,

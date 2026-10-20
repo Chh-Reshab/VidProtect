@@ -197,7 +197,7 @@ export default function ChatPage() {
 
       <div style={{ background: '#101010', border: '1px solid #292929', borderLeft: '3px solid #eab308', padding: '0.7rem 1rem', marginBottom: '1rem', fontSize: '0.8rem', color: '#A0A0A0', lineHeight: 1.6 }}>
         Be respectful and stay on topic. Do not share course videos, other people's personal details or spam. Messages are plain text and visible to everyone signed in; use the flag to report a message.
-        See the <Link to="/terms" target="_blank" style={{ color: '#FF2028' }}>Terms</Link>.
+        See the <Link to="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#FF2028' }}>Terms</Link>.
       </div>
 
       {moderator && <ReportQueue key={queueKey} onChanged={refresh} />}

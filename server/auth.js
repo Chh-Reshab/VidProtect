@@ -9,12 +9,16 @@ import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { db, save, uid } from './db.js';
 import { sha256 } from './util.js';
+import { isProduction } from './env.js';
 import { isCreatorLocked } from '../src/auth/permissions.js';
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = isProduction();
 
 if (isProd && !process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be set in production.');
+}
+if (isProd && process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters in production (use a long random value).');
 }
 const secret = () => process.env.JWT_SECRET || db.meta.jwtSecret;
 
@@ -63,10 +67,12 @@ export const createSession = (user, req) => {
     expiresAt: new Date(Date.now() + REFRESH_DAYS * 86400000).toISOString(),
     revokedAt: null,
   });
-  // keep the table small
-  db.sessions = db.sessions
-    .filter(s => !s.revokedAt || Date.now() - new Date(s.revokedAt) < 86400000)
-    .slice(-500);
+  // keep the table small: drop old ones, and let one person hold at most 10 sign-ins at once (the oldest end),
+  // so nobody can push other people's sign-ins out by logging in over and over
+  const now = Date.now();
+  db.sessions = db.sessions.filter(s => (!s.revokedAt || now - new Date(s.revokedAt) < 86400000) && new Date(s.expiresAt) > now);
+  const mine = db.sessions.filter(s => s.userId === user.id && !s.revokedAt);
+  for (const old of mine.slice(0, Math.max(0, mine.length - 10))) old.revokedAt = new Date().toISOString();
   save();
   return { sid, cookieValue: `${sid}.${token}` };
 };

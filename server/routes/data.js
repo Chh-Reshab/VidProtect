@@ -24,7 +24,9 @@ export const publicVideo = (v) => {
   };
 };
 
-const slimUser = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, status: u.status, joinDate: u.joinDate });
+const maskEmail = (email = '') => { const [name, domain = ''] = email.split('@'); return `${name.slice(0, 1)}•••@${domain}`; };
+// A creator sees the real email of their own learners; everyone else's address is masked (enough to tell people apart)
+const slimUser = (u, showEmail) => ({ id: u.id, name: u.name, email: showEmail ? u.email : maskEmail(u.email), role: u.role, status: u.status, joinDate: u.joinDate });
 
 export const settingsFor = (user) => ({
   ...DEFAULT_SETTINGS,
@@ -57,7 +59,10 @@ router.get('/', requireAuthAllowLocked, (req, res) => {
 
   let users;
   if (isAdmin) users = db.users.map(toPublic);
-  else if (isCreator) users = db.users.filter(u => u.role !== 'admin').map(slimUser);
+  else if (isCreator) {
+    const mine = new Set(db.enrollments.filter(e => myCourseIds.has(e.courseId)).map(e => e.studentId));
+    users = db.users.filter(u => u.role !== 'admin').map(u => slimUser(u, u.id === me.id || mine.has(u.id)));
+  }
   else {
     const creatorIds = new Set(courses.map(c => c.creatorId));
     users = db.users.filter(u => creatorIds.has(u.id) || u.id === me.id).map(u => ({ id: u.id, name: u.name, role: u.role }));

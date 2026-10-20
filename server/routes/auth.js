@@ -14,6 +14,7 @@ import { removeUsers } from '../accountData.js';
 import { audit } from '../access.js';
 import { validateRegistration, validatePassword, validateEmail } from '../../shared/validation.js';
 import { LEGAL_UPDATED } from '../../shared/legal.js';
+import { numberSetting } from '../env.js';
 import {
   toPublic, signAccess, signMfaToken, createSession, setRefreshCookie, clearRefreshCookie,
   rotateRefresh, revokeSession, revokeAllSessions, requireAuthAllowLocked,
@@ -145,6 +146,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   const check = validatePassword(req.body?.password, { name: user.name, email: user.email });
   if (check.error) return res.status(400).json({ error: check.error, fields: { password: check.error } });
   user.passwordHash = await bcrypt.hash(check.value, 12);
+  delete user.localOnly;
   delete user.passwordReset;
   if (user.emailVerified === false) { user.emailVerified = true; delete user.emailVerification; } // they just proved they own the inbox
   save();
@@ -152,14 +154,39 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   res.json({ success: true, message: 'Password updated. Sign in with your new password.', portal: user.role === 'creator' ? 'creator' : 'learner' });
 });
 
+// Wrong passwords are counted per account name, whatever address they come from, so guessing from many
+// addresses is also stopped. An email that does not exist is counted the same way, so the answers never
+// reveal which accounts exist. The count lives in memory and a restart clears it.
+const failures = new Map(); // email -> { fails, until, last }
+const FAIL_WINDOW_MS = 15 * 60_000;
+const locked = (email) => (failures.get(email)?.until || 0) > Date.now();
+const noteFailure = (email) => {
+  const now = Date.now();
+  let entry = failures.get(email);
+  if (!entry || now - entry.last > FAIL_WINDOW_MS) entry = { fails: 0, until: 0, last: now };
+  entry.fails += 1;
+  entry.last = now;
+  if (entry.fails >= numberSetting('LOGIN_FAIL_LIMIT', 10)) { entry.until = now + numberSetting('LOGIN_LOCK_MS', 15 * 60_000); entry.fails = 0; }
+  failures.set(email, entry);
+  if (failures.size > 20_000) for (const [key, value] of failures) if (value.until < now && now - value.last > FAIL_WINDOW_MS) failures.delete(key);
+};
+
+// The built-in local admin (development default password) may only be used from the machine running the server
+const isLocalRequest = (req) => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress) && !req.headers['x-forwarded-for'] && !req.headers.forwarded;
+
 router.post('/login', authLimiter, async (req, res) => {
   const email = clean(req.body?.email, 254).toLowerCase();
   const password = typeof req.body?.password === 'string' ? req.body.password.slice(0, 1000) : '';
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+  if (locked(email)) return res.status(429).json({ error: 'Too many attempts. Try again in a few minutes.' });
   const user = db.users.find(u => u.email.toLowerCase() === email);
 
   const ok = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
-  if (!user || !ok) return res.status(401).json({ error: 'Invalid email or password.' });
+  if (!user || !ok) { noteFailure(email); return res.status(401).json({ error: 'Invalid email or password.' }); }
+  failures.delete(email);
+  if (user.localOnly && !isLocalRequest(req)) {
+    return res.status(403).json({ error: 'This built-in account only works on the computer that runs the server. Set ADMIN_EMAIL and ADMIN_PASSWORD to create a real admin.', code: 'LOCAL_ONLY' });
+  }
   const portal = req.body?.portal;
   if (portal === 'creator' && user.role !== 'creator') {
     return res.status(403).json({ error: 'This is the creator sign-in. Learners and admins sign in on the main login page.', code: 'WRONG_PORTAL' });
@@ -206,6 +233,7 @@ router.post('/change-password', requireAuthAllowLocked, authLimiter, async (req,
   if (check.error) return res.status(400).json({ error: check.error });
   if (next === current) return res.status(400).json({ error: 'The new password must be different from the current one.' });
   req.user.passwordHash = await bcrypt.hash(next, 12);
+  delete req.user.localOnly; // it now has a password of its own
   save();
   revokeAllSessions(req.user.id, req.sid); // sign out every other device
   res.json({ success: true });

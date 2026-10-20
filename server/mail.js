@@ -8,15 +8,18 @@
 // REQUIRE_EMAIL_VERIFICATION=true for local testing, the links are printed in the server log).
 // ============================================
 
+import { isProduction } from './env.js';
+
 const gmailConfigured = () => Boolean(process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN && process.env.MAIL_FROM);
 const brevoConfigured = () => Boolean(process.env.BREVO_API_KEY && process.env.MAIL_FROM);
 
 export const mailConfigured = () => gmailConfigured() || brevoConfigured();
 export const verificationRequired = () => mailConfigured() || process.env.REQUIRE_EMAIL_VERIFICATION === 'true';
 
-// Public address of the site, used to build links in emails
+// Public address of the site, used to build links in emails. Never taken from the Origin or X-Forwarded-Host
+// headers: a caller could set those to point a password-reset link at their own website.
 export const appUrl = (req) => (
-  process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || req.get('origin') || `${req.protocol}://${req.get('host')}`
+  process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get('host')}`
 ).replace(/\/+$/, '');
 
 const escapeHtml = (text) => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -152,7 +155,9 @@ const sendViaBrevo = async ({ to, name, subject, text, html }) => {
 // Sends one of the messages above. Without a provider the link is printed in the server log instead.
 const deliver = async (kind, { to, name, link, ...rest }) => {
   if (!mailConfigured()) {
-    console.log(`[mail] (not sent, no mail provider configured) ${kind} link for ${to}: ${link}`);
+    // Links carry one-time tokens: they are printed only on a developer machine, never in a real deployment's logs
+    if (isProduction()) console.warn(`[mail] No mail provider is configured, so a ${kind} email to ${to} was not sent.`);
+    else console.log(`[mail] (not sent, no mail provider configured) ${kind} link for ${to}: ${link}`);
     return;
   }
   const message = { to, name, ...messages[kind]({ name, link, ...rest }) };
@@ -161,7 +166,7 @@ const deliver = async (kind, { to, name, link, ...rest }) => {
 };
 
 // In production a real provider is needed; on a developer machine the links go to the console
-export const emailAvailable = () => mailConfigured() || process.env.NODE_ENV !== 'production';
+export const emailAvailable = () => mailConfigured() || !isProduction();
 
 export const sendVerificationEmail = (to) => deliver('verification', to);
 export const sendPasswordResetEmail = (to) => deliver('password reset', to);

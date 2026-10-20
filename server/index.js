@@ -15,6 +15,8 @@ import compression from 'compression';
 import { initDb, closeDb, mongoEnabled } from './db.js';
 import { backend } from './blobs.js';
 import { mailConfigured, appUrl } from './mail.js';
+import { isProduction, numberSetting } from './env.js';
+import rateLimit from 'express-rate-limit';
 import { renderPrivacyHtml, renderTermsHtml, renderRefundHtml, prepareIndexHtml } from './publicPages.js';
 import { migrateEncryption, recoverInterruptedUploads, backfillActivity, migrateCreatorApplications } from './migrate.js';
 import { ensureAdmin, removeDemoData } from './bootstrap.js';
@@ -34,10 +36,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 // Hosts like Render hand the port over in PORT. In development PORT belongs to Vite
 // (concurrently sets it), so it is only honoured in production.
-const PORT = Number(process.env.API_PORT || (process.env.NODE_ENV === 'production' && process.env.PORT) || 4000);
+const PORT = Number(process.env.API_PORT || (isProduction() && process.env.PORT) || 4000);
 
 app.disable('x-powered-by');
-app.set('trust proxy', 1); // behind Vite's proxy / a load balancer: use the real client IP
+// How many proxies sit in front of the app (Render: 1). The client's real address is read from that many hops from
+// the right of X-Forwarded-For, so extra addresses a caller adds on the left are ignored. Use 0 when nothing is in front.
+app.set('trust proxy', numberSetting('TRUST_PROXY', 1));
 // A strict Content Security Policy: only this site's own scripts run; the exceptions are Google Fonts
 // (styles and fonts) and Razorpay's payment window. The app styles itself inline, hence 'unsafe-inline' for styles only.
 app.use(helmet({
@@ -60,10 +64,25 @@ app.use(helmet({
     },
   },
 }));
+// Browsers may not use the camera, microphone, location or other sensors on this site
+app.use((req, res, next) => { res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()'); next(); });
 app.use(compression()); // JSON and the site's JS/CSS shrink a lot; video and other already-compressed types are skipped automatically
 app.use(cookieParser());
 // The webhook needs the exact bytes that were signed, so keep them for that route
 app.use(express.json({ limit: '100kb', verify: (req, res, buf) => { if (req.originalUrl.startsWith('/api/webhooks/')) req.rawBody = buf; } }));
+
+// Private answers are never kept by browsers or shared caches (images and files set their own rules)
+app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+
+// One address cannot flood the API (video bytes, images, the host's health check and payment webhooks are exempt)
+app.use('/api', rateLimit({
+  windowMs: 60_000,
+  limit: () => numberSetting('API_RATE_LIMIT', 600),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path.startsWith('/avatars/') || req.path.startsWith('/thumbnails/') || req.path.startsWith('/webhooks/') || /^\/videos\/[^/]+\/stream$/.test(req.path),
+  message: { error: 'Too many requests. Please slow down a little.' },
+}));
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
@@ -108,15 +127,20 @@ if (fs.existsSync(dist)) {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  // A body that is too big or is not valid JSON is the caller's mistake (4xx), not a server error
+  const status = err.status || err.statusCode;
+  if (status >= 400 && status < 500) {
+    return res.status(status).json({ error: status === 413 ? 'That request is too large.' : status === 415 ? 'That content type is not supported.' : 'The request could not be read.' });
+  }
   console.error(err);
-  res.status(500).json({ error: 'Something went wrong.' });
+  return res.status(500).json({ error: 'Something went wrong.' });
 });
 
 await initDb(); // loads the data (JSON file or MongoDB) before anything uses it
-if (process.env.NODE_ENV === 'production' && !mongoEnabled()) {
+if (isProduction() && !mongoEnabled()) {
   console.warn('[db] MONGODB_URI is not set: data and uploaded videos are kept on this machine\'s disk and will be lost if the host resets it.');
 }
-if (process.env.NODE_ENV === 'production' && !mailConfigured()) {
+if (isProduction() && !mailConfigured()) {
   console.warn('[mail] No mail provider is configured (Gmail or Brevo variables): new accounts are NOT email-verified.');
 }
 ensureAdmin(); // creates / updates the admin from ADMIN_EMAIL + ADMIN_PASSWORD (required in production)
@@ -147,4 +171,5 @@ const crashed = async (err) => {
   process.exit(1);
 };
 process.on('uncaughtException', crashed);
-process.on('unhandledRejection', crashed);
+// A promise nobody was waiting for failed: log it and keep serving (one bad request must not take the site down)
+process.on('unhandledRejection', (reason) => console.error('[unhandled rejection]', reason));
