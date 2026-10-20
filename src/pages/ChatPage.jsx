@@ -37,32 +37,55 @@ function AuthorName({ author }) {
   );
 }
 
-function Message({ m, moderator, onDelete, onReport, onMute }) {
-  const canDelete = m.mine || moderator;
-  return (
-    <div style={{ display: 'flex', gap: '0.75rem', padding: '0.55rem 0.25rem', alignItems: 'flex-start' }}>
-      <Avatar name={m.author.name} url={m.author.avatarUrl} size={34} accent={m.author.role === 'creator'} />
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'baseline', flexWrap: 'wrap' }}>
-          <AuthorName author={m.author} />
-          <span className="mono" style={{ fontSize: '0.65rem', color: '#8B8B8B' }}>{timeLabel(m.createdAt)}</span>
+// One message as a chat bubble: yours on the right, everyone else's on the left (like WhatsApp)
+function Message({ m, moderator, grouped, onDelete, onReport, onMute }) {
+  const mine = m.mine;
+  const canDelete = mine || moderator;
+  const accent = m.author.role === 'creator' ? '#FF2028' : m.author.role === 'admin' ? '#eab308' : '#7DB5FF';
+  const actions = (
+    <div className="chat-actions" style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', alignSelf: 'center', flexShrink: 0 }}>
+      {!mine && (
+        <button type="button" className="btn btn-ghost" title={m.reportedByMe ? 'You reported this' : 'Report this message'} aria-label="Report this message" disabled={m.reportedByMe} style={{ padding: '0.25rem 0.4rem', opacity: m.reportedByMe ? 0.4 : 1 }} onClick={() => onReport(m)}><Flag size={12} /></button>
+      )}
+      {moderator && !mine && m.author.role !== 'admin' && (
+        <select aria-label={`Mute ${m.author.name}`} className="form-input" style={{ padding: '0.2rem 0.3rem', fontSize: '0.65rem', width: 'auto' }} value="" onChange={e => { if (e.target.value) onMute(m.author, Number(e.target.value)); }}>
+          <option value="">Mute…</option>
+          <option value="1">1 hour</option>
+          <option value="24">24 hours</option>
+          <option value="168">7 days</option>
+        </select>
+      )}
+      {canDelete && <button type="button" className="btn btn-ghost" title="Delete message" aria-label="Delete message" style={{ padding: '0.25rem 0.4rem' }} onClick={() => onDelete(m)}><Trash2 size={12} /></button>}
+    </div>
+  );
+
+  const bubble = (
+    <div style={{
+      maxWidth: 'min(72%, 560px)', minWidth: 0, padding: '0.45rem 0.7rem 0.3rem',
+      background: mine ? '#3a1417' : '#1D1D1D', border: `1px solid ${mine ? '#5a1f23' : '#292929'}`,
+      borderRadius: mine ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+    }}>
+      {!mine && !grouped && (
+        <div style={{ marginBottom: '0.15rem' }}>
+          {m.author.role === 'creator'
+            ? <Link to={`/learn/creator/${m.author.id}`} style={{ color: accent, textDecoration: 'none', fontWeight: 600, fontSize: '0.8rem' }}>{m.author.name}</Link>
+            : <span style={{ color: accent, fontWeight: 600, fontSize: '0.8rem' }}>{m.author.name}</span>}
+          {ROLE_BADGE[m.author.role] && <span className="mono" style={{ fontSize: '0.6rem', color: accent, border: `1px solid ${accent}`, padding: '0 0.3rem', marginLeft: '0.45rem' }}>{ROLE_BADGE[m.author.role][0]}</span>}
         </div>
-        <div style={{ color: m.mine ? '#F8F8F8' : '#C8C8C8', fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.text}</div>
-      </div>
-      <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0, alignItems: 'center' }}>
-        {!m.mine && (
-          <button type="button" className="btn btn-ghost" title={m.reportedByMe ? 'You reported this' : 'Report this message'} aria-label="Report this message" disabled={m.reportedByMe} style={{ padding: '0.25rem 0.4rem', opacity: m.reportedByMe ? 0.4 : 1 }} onClick={() => onReport(m)}><Flag size={12} /></button>
-        )}
-        {moderator && !m.mine && m.author.role !== 'admin' && (
-          <select aria-label={`Mute ${m.author.name}`} className="form-input" style={{ padding: '0.2rem 0.3rem', fontSize: '0.65rem', width: 'auto' }} value="" onChange={e => { if (e.target.value) onMute(m.author, Number(e.target.value)); }}>
-            <option value="">Mute…</option>
-            <option value="1">1 hour</option>
-            <option value="24">24 hours</option>
-            <option value="168">7 days</option>
-          </select>
-        )}
-        {canDelete && <button type="button" className="btn btn-ghost" title="Delete message" aria-label="Delete message" style={{ padding: '0.25rem 0.4rem' }} onClick={() => onDelete(m)}><Trash2 size={12} /></button>}
-      </div>
+      )}
+      <div style={{ color: '#F1F1F1', fontSize: '0.9rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{m.text}</div>
+      <div className="mono" style={{ fontSize: '0.6rem', color: '#8B8B8B', textAlign: 'right', marginTop: '0.1rem' }}>{timeLabel(m.createdAt)}</div>
+    </div>
+  );
+
+  return (
+    <div className="chat-row" style={{ display: 'flex', gap: '0.5rem', justifyContent: mine ? 'flex-end' : 'flex-start', alignItems: 'flex-end', marginTop: grouped ? 2 : 10 }}>
+      {mine && actions}
+      {!mine && (grouped
+        ? <div style={{ width: 30, flexShrink: 0 }} />
+        : <Avatar name={m.author.name} url={m.author.avatarUrl} size={30} accent={m.author.role === 'creator'} style={{ borderRadius: '50%' }} />)}
+      {bubble}
+      {!mine && actions}
     </div>
   );
 }
@@ -186,14 +209,14 @@ export default function ChatPage() {
           {hasMore && <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', display: 'flex', margin: '0 auto 0.75rem' }} onClick={loadOlder}><ChevronUp size={12} /> LOAD OLDER MESSAGES</button>}
           {!loading && !error && messages.length === 0 && <div style={{ color: '#8B8B8B', textAlign: 'center', padding: '3rem 1rem', fontSize: '0.9rem' }}>No messages yet. Say hello!</div>}
           {messages.map((m, i) => {
+            const prev = messages[i - 1];
             const day = dayLabel(m.createdAt);
-            const header = i === 0 || day !== dayLabel(messages[i - 1].createdAt)
-              ? <div key={`d-${m.id}`} className="mono" style={{ textAlign: 'center', fontSize: '0.65rem', color: '#8B8B8B', margin: '0.9rem 0 0.4rem' }}>— {day.toUpperCase()} —</div>
-              : null;
+            const newDay = i === 0 || day !== dayLabel(prev.createdAt);
+            const grouped = !newDay && prev.author.id === m.author.id && Date.parse(m.createdAt) - Date.parse(prev.createdAt) < 5 * 60_000;
             return (
               <div key={m.id}>
-                {header}
-                <Message m={m} moderator={moderator} onDelete={onDelete} onReport={onReport} onMute={onMute} />
+                {newDay && <div className="mono" style={{ textAlign: 'center', margin: '0.9rem 0 0.3rem' }}><span style={{ fontSize: '0.65rem', color: '#8B8B8B', background: '#1D1D1D', border: '1px solid #292929', padding: '0.15rem 0.6rem', borderRadius: 10 }}>{day.toUpperCase()}</span></div>}
+                <Message m={m} moderator={moderator} grouped={grouped} onDelete={onDelete} onReport={onReport} onMute={onMute} />
               </div>
             );
           })}

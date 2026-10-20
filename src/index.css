@@ -406,3 +406,9 @@ select.form-input {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Discussion: message actions appear on hover or focus (always visible on touch screens) */
+@media (hover: hover) {
+  .chat-row .chat-actions { opacity: 0; transition: opacity 0.15s; }
+  .chat-row:hover .chat-actions, .chat-row:focus-within .chat-actions { opacity: 1; }
+}
